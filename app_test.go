@@ -21,6 +21,7 @@ import (
 
 const (
 	testLocalKey     = "test-local-key"
+	testRemoteKey    = "test-remote-key"
 	testPresenterKey = "test-presenter-key"
 )
 
@@ -43,7 +44,7 @@ func startTestApp(t *testing.T) *testApp {
 		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
 		NATSStoreDir:  t.TempDir(),
 		LocalKey:      testLocalKey,
-		RemoteKey:     "test-remote-key",
+		RemoteKey:     testRemoteKey,
 		SessionSecret: "test-session-secret",
 	})
 	if err != nil {
@@ -83,7 +84,13 @@ func (app *testApp) newPresenter() *http.Client {
 // post sends a request to a route under the local invite key and returns the status code.
 func (app *testApp) post(client *http.Client, path string) int {
 	app.t.Helper()
-	response, err := client.Post(app.server.URL+"/"+testLocalKey+path, "", nil)
+	return app.postAs(client, testLocalKey, path)
+}
+
+// postAs sends a request to a route under inviteKey (local or remote audience) and returns the status code.
+func (app *testApp) postAs(client *http.Client, inviteKey string, path string) int {
+	app.t.Helper()
+	response, err := client.Post(app.server.URL+"/"+inviteKey+path, "", nil)
 	if err != nil {
 		app.t.Fatalf("POST %s failed: %v", path, err)
 	}
