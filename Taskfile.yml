@@ -39,6 +39,12 @@ tasks:
     cmds:
       - ./bin/main
 
+  test:
+    deps:
+      - build:templ
+    cmds:
+      - go test ./...
+
   default:
     cmds:
       - task: start

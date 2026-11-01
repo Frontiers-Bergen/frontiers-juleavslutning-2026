@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	_ "embed"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -23,13 +21,9 @@ import (
 	"github.com/joho/godotenv"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go/jetstream"
-	_ "modernc.org/sqlite"
 )
 
 const inviteSessionName = "invite"
-
-//go:embed schema.sql
-var schemaSQL string
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -37,32 +31,12 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		logger.Info("no .env file loaded (this is fine in prod)", slog.String("error", err.Error()))
 	}
-	db, dbErr := sql.Open("sqlite", "presentation.db")
-
-	if dbErr != nil {
-		logger.Error("failed to open DB", slog.String("error", dbErr.Error()))
-		return
-	}
-	_, pragmaErr := db.Exec(`
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 5000;
-		`)
-	if pragmaErr != nil {
-		logger.Error("failed to set pragmas", slog.String("error", pragmaErr.Error()))
-		return
-	}
-
-	if pingErr := db.Ping(); pingErr != nil {
-		logger.Error("failed to ping DB", slog.String("error", pingErr.Error()))
+	db, err := openDatabase("presentation.db")
+	if err != nil {
+		logger.Error("failed to open database", slog.String("error", err.Error()))
 		return
 	}
 	defer db.Close()
-
-	if _, schemaErr := db.Exec(schemaSQL); schemaErr != nil {
-		logger.Error("failed to apply schema.sql", slog.String("error", schemaErr.Error()))
-		return
-	}
 
 	localKey := readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key")
 	remoteKey := readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key")
