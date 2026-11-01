@@ -13,7 +13,6 @@ import (
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
@@ -118,11 +117,6 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 		return nil, nil, fmt.Errorf("failed to start embedded nats server: %w", err)
 	}
 
-	ebs, err := services.NewEmojiBalloonService(ns)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create emoji balloon service: %w", err)
-	}
-
 	nc, err := ns.Client()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create nats client: %w", err)
@@ -149,7 +143,7 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {
 		inviteRouter.Use(inviteKeyMiddleware(sessionStore, config.LocalKey, config.RemoteKey, logger))
-		root.RootLayoutRoute(inviteRouter, db, sessionStore, kv, logger, config.LocalKey, config.RemoteKey, ns, ebs)
+		root.RootLayoutRoute(inviteRouter, db, sessionStore, kv, logger, config.LocalKey, config.RemoteKey, nc)
 	})
 
 	return router, closeDatabase, nil

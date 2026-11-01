@@ -7,12 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -27,8 +26,7 @@ func RootLayoutRoute(
 	logger *slog.Logger,
 	localKey string,
 	remoteKey string,
-	ns *embeddednats.Server,
-	ebs *services.EmojiBalloonService,
+	nc *nats.Conn,
 ) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -116,7 +114,7 @@ func RootLayoutRoute(
 				}
 			})
 
-			IncrementEmojiRoute(rootApiRouter, ebs)
+			IncrementEmojiRoute(rootApiRouter, db, nc, logger)
 			TopNavigationRoutes(db, rootApiRouter, kv, store)
 
 			// Poll feature routes (vote writes DB + broadcast update).
