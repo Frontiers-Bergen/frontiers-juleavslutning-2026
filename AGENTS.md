@@ -111,7 +111,9 @@ func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
 - Stack: Go, templ, Datastar (SSE), embedded NATS JetStream KV for live updates, SQLite.
 - Group code by feature, not by technical role. A simple feature can be a single file; a feature with several related files gets its own folder.
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
-- Schema changes belong in `schema.sql`; never edit the runtime database file.
+- `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
+  There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
+- Data that must survive the evening (ideas, votes, feedback) lives in SQLite, not in NATS KV; KV is for live updates and has a TTL.
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
 - Domain terms are listed in `domain_dictionary.md` and are used unchanged everywhere: code, database, UI and docs.

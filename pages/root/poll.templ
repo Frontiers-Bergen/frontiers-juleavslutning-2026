@@ -13,25 +13,6 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-/*
-SQL (run once):
-
-CREATE TABLE IF NOT EXISTS poll_votes (
-  invite_key     TEXT NOT NULL,
-  poll_key       TEXT NOT NULL,
-  session_id     TEXT NOT NULL,
-  option_key     TEXT NOT NULL,
-  voted_at_unix  INTEGER NOT NULL,
-  PRIMARY KEY (invite_key, poll_key, session_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_invite
-  ON poll_votes (poll_key, invite_key);
-
-CREATE INDEX IF NOT EXISTS idx_poll_votes_poll_option_invite
-  ON poll_votes (poll_key, option_key, invite_key);
-*/
-
 type PollOption struct {
 	Key      string
 	Text     string
