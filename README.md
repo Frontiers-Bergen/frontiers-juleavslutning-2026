@@ -120,4 +120,5 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - `task start` — templ watch + hot reload on http://localhost:8080
 - `task build` — production binary in `bin/main`
+- `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
