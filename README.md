@@ -83,6 +83,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Read the session secret from `SESSION_SECRET` instead of the hardcoded `"session-secret"`
 - [ ] Replace the Todo-example state (`models/state.go`) used as the broadcast payload in `helpers/nats_helpers.go`, and move that code out of the `helpers` package. It is not dead code: `BroadcastUpdate` drives every live update
 - [x] Remove unused slides that are not in the deck, and unreferenced images
+- [x] Replace the January deck with a placeholder deck: a welcome slide and the app name poll with its results
+- [ ] Remove the January `/demo` page (`handler/`, `services/demo_service.go`, `pages/demo.templ`, `components/demo.templ`)
 - [x] BDD helper (`bdd/bdd.go`, from conorganizer) and first behavior tests (`database_test.go`)
 - [ ] Bring over conorganizer's `testutil/templtest` when the first template test needs it
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
