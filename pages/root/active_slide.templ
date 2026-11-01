@@ -20,68 +20,12 @@ func deck(
 	localKey string,
 	remoteKey string,
 ) []slideEntry {
-	poll := MustPoll("dom-checkbox-limit")
-	pollConcurrency := MustPoll("regncon-concurrency")
+	appNamePoll := MustPoll("app-name")
 
 	return []slideEntry{
-		{Title: "Lobby welcome", Render: func() templ.Component { return slides.LobbyWelcome(isPresenter) }},
-		{Title: "Why this talk", Render: func() templ.Component { return slides.WhyThisTalk(isPresenter) }},
-
-		{Title: "Agenda: Who we are", Render: func() templ.Component { return slides.Agenda(slides.AgendaWhoWeAre, isPresenter) }},
-		{Title: "What is Regncon?", Render: func() templ.Component { return slides.WhatIsRegncon(isPresenter) }},
-		{Title: "Why this software exists", Render: func() templ.Component { return slides.ProjectVision(isPresenter) }},
-		{Title: "Who we are", Render: func() templ.Component { return slides.WhoWeAre(isPresenter) }},
-		{Title: "Different viewpoints", Render: func() templ.Component { return slides.DifferentViewpoints(isPresenter) }},
-
-		{Title: "Agenda: 2024", Render: func() templ.Component { return slides.Agenda(slides.Agenda2024, isPresenter) }},
-		{Title: "2024: Why Next.js + Firebase", Render: func() templ.Component { return slides.Build2024Philosophy(isPresenter) }},
-		{Title: "What we built in 2024", Render: func() templ.Component { return slides.Build2024Snapshot(isPresenter) }},
-		{Title: "How did it go in 2024?", Render: func() templ.Component { return slides.Build2024HowDidItGo(isPresenter) }},
-
-		{Title: "Agenda: 2025", Render: func() templ.Component { return slides.Agenda(slides.Agenda2025, isPresenter) }},
-		{Title: "2025: The opposite experiment", Render: func() templ.Component { return slides.Build2025Philosophy(isPresenter) }},
-		{Title: "Grug brain developer?", Render: func() templ.Component { return slides.GrugBrainMeme(isPresenter) }},
-		{Title: "How we chose the stack (2025)", Render: func() templ.Component { return slides.Build2025HowWeChoseTheStack(isPresenter) }},
-		{Title: "What is templ?", Render: func() templ.Component { return slides.WhatIsTempl(isPresenter) }},
-
-		{Title: "What is Datastar?", Render: func() templ.Component { return slides.WhatIsDatastar(isPresenter) }},
-		{Title: "Datastar demo", Render: func() templ.Component { return slides.DatastarCheckboxTrickSetup(isPresenter) }},
-		{Title: "Poll: " + poll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, poll) }},
-		{Title: "Results: " + poll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, poll, localKey, remoteKey) }},
-		{Title: "Datastar demo (reveal)", Render: func() templ.Component { return slides.DatastarCheckboxTrickReveal(isPresenter) }},
-		{Title: "Datastar demo (live)", Render: func() templ.Component { return slides.DatastarCheckboxTrickDemo(isPresenter) }},
-		{Title: "What we built in 2025", Render: func() templ.Component { return slides.Build2025Snapshot(isPresenter) }},
-		{Title: "How did it go in 2025? (question)", Render: func() templ.Component { return slides.Build2025HowDidItGoQuestion(isPresenter) }},
-		{Title: "2025 server explosion", Render: func() templ.Component { return slides.Build2025ServerExplosion(isPresenter) }},
-		{Title: "How did it go in 2025?", Render: func() templ.Component { return slides.Build2025HowDidItGo(isPresenter) }},
-
-		{Title: "Agenda: Compare", Render: func() templ.Component { return slides.Agenda(slides.AgendaCompare, isPresenter) }},
-		{Title: "Stack (2024)", Render: func() templ.Component { return slides.Stack2024GoodBad(isPresenter) }},
-		{Title: "Next.js CVE impact", Render: func() templ.Component { return slides.NextJSCVE202555182Impact(isPresenter) }},
-		{Title: "Stack (2025)", Render: func() templ.Component { return slides.Stack2025GoodBad(isPresenter) }},
-
-		{Title: "Scaling", Render: func() templ.Component { return slides.RegnconConcurrencyPollSetup(isPresenter) }},
-		{Title: "Poll: " + pollConcurrency.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, pollConcurrency) }},
-		{Title: "Results: " + pollConcurrency.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, pollConcurrency, localKey, remoteKey) }},
-		{Title: "Scaling (reveal)", Render: func() templ.Component { return slides.RegnconConcurrencyPollReveal(isPresenter) }},
-
-		{Title: "Language: Go (KO)", Render: func() templ.Component { return slides.LanguageGoKOSlide(isPresenter) }},
-		{Title: "Language: Go", Render: func() templ.Component { return slides.LanguageGoWins(isPresenter) }},
-		{Title: "Go is not perfect", Render: func() templ.Component { return slides.LanguageGoNotPerfect(isPresenter) }},
-		{Title: "Error handling", Render: func() templ.Component { return slides.LanguageGoErrorHandling(isPresenter) }},
-		{Title: "JS/TS wins", Render: func() templ.Component { return slides.LanguageJSTSWins(isPresenter) }},
-		{Title: "Complexity", Render: func() templ.Component { return slides.ComplexityEssentialVsAccidental(isPresenter) }},
-
-		{Title: "Structure", Render: func() templ.Component { return slides.StructureGoodBad(isPresenter) }},
-		{Title: "Next.Js src tree", Render: func() templ.Component { return slides.NextJSSrcTree(isPresenter) }},
-
-		{Title: "Tooling / DX (KO)", Render: func() templ.Component { return slides.ToolingDXKOSlide(isPresenter) }},
-		{Title: "Tooling / DX", Render: func() templ.Component { return slides.ToolingAndDXGoodBad(isPresenter) }},
-		{Title: "Styling", Render: func() templ.Component { return slides.StylingGoodBad(isPresenter) }},
-		{Title: "LLM assistance", Render: func() templ.Component { return slides.LLMAssistanceGoodBad(isPresenter) }},
-		{Title: "Agenda: What's next", Render: func() templ.Component { return slides.Agenda(slides.AgendaWhatsNext, isPresenter) }},
-		{Title: "What's next?", Render: func() templ.Component { return slides.WhatsNext2026_2027(isPresenter) }},
-		{Title: "Agenda: QnA", Render: func() templ.Component { return slides.Agenda(slides.Discussion, isPresenter) }},
+		{Title: "Welcome", Render: func() templ.Component { return slides.Welcome(isPresenter) }},
+		{Title: "Poll: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
+		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll, localKey, remoteKey) }},
 	}
 }
 

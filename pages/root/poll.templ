@@ -27,52 +27,15 @@ type PollDefinition struct {
 }
 
 var pollDefinitions = map[string]PollDefinition{
-	"dom-checkbox-limit": {
-		Key:          "dom-checkbox-limit",
-		QuestionText: "How many checkboxes can a simple Datastar + Go + SQLite app handle on a cheap VPS?",
+	// The app name vote at the workshop (see README). The winner becomes the name on the big screen.
+	"app-name": {
+		Key:          "app-name",
+		QuestionText: "What should we call this app?",
 		Options: []PollOption{
-			{
-				Key:      "two",
-				Text:     "2 (DOM is slow)",
-				ImageURL: "/static/slow.webp",
-			}, {
-				Key:      "tenk",
-				Text:     "About ~10,000 before the dom struggles)",
-				ImageURL: "/static/over-nine-thousand.webp",
-			}, {
-				Key:      "fourfifty",
-				Text:     "The dom has gotten fast. About ~452,600 on my laptop)",
-				ImageURL: "/static/pitch-meetings-super-easy.png",
-			}, {
-				Key:      "oneb",
-				Text:     "One billion",
-				ImageURL: "/static/one_billion.webp",
-			},
-		},
-	},
-
-	"regncon-concurrency": {
-		Key:          "regncon-concurrency",
-		QuestionText: "How many concurrent users does Regncon have?",
-		Options: []PollOption{
-			{
-				Key:      "mostly-0",
-				Text:     "Mostly 0, sometimes 1",
-				ImageURL: "/static/no-one-here.gif",
-			},
-			{
-				Key:      "twenty-thirty",
-				Text:     "20–30 (that’s when you start ‘thinking about scaling’)",
-				ImageURL: "/static/sweating.jpg",
-			}, {
-				Key:      "two-hundred",
-				Text:     "200 (there were 200 people at the festival)",
-				ImageURL: "/static/everyone.jpg",
-			}, {
-				Key:      "oneb",
-				Text:     "One billion",
-				ImageURL: "/static/one_billion.webp",
-			},
+			{Key: "rage-against-the-debounce", Text: "Rage Against the Debounce"},
+			{Key: "last-christmas", Text: "Last Christmas I Gave You My Clicks"},
+			{Key: "its-tiiime", Text: "It's Tiiime"},
+			{Key: "smash-the-halls", Text: "Smash the Halls"},
 		},
 	},
 }
