@@ -71,8 +71,10 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Code health
 
-- [ ] Stop ignoring errors (`NewEmojiBalloonService`, `NewDemoHandler`, `http.Error` after SSE has started)
-- [ ] Read the session secret from env instead of the hardcoded `"session-secret"`
+- [x] Stop ignoring errors in `main.go`, the demo handler and the root/presenter pages (`http.Error` after SSE has started)
+- [ ] Stop ignoring errors in templates (`{{ x, _ := GetCurrentSlideIndex(db) }}`); needs data loaded before rendering — part of the architecture refactor
+- [ ] Clean up the emoji SSE handlers (`pages/root/emoji_counter.templ`, `handler/handler.go`) together with the emoji counting fix
+- [x] Read the session secret from `SESSION_SECRET` instead of the hardcoded `"session-secret"`
 - [ ] Replace the Todo-example state (`models/state.go`) used as the broadcast payload in `helpers/nats_helpers.go`, and move that code out of the `helpers` package. It is not dead code: `BroadcastUpdate` drives every live update
 - [x] Remove unused slides that are not in the deck, and unreferenced images
 - [ ] Test setup based on conorganizer (`testutil/bdd`, `testutil/templtest`) and a first behavior test in given-when-then form
@@ -122,3 +124,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - `task build` — production binary in `bin/main`
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
+
+Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
+
+- `ATTENDEE_LOCAL_KEY`, `ATTENDEE_REMOTE_KEY` — the URL keys that give access to the deck
+- `PRESENTER_KEY` — unlocks presenter mode at `/presenter`
+- `SESSION_SECRET` — signs the session cookies

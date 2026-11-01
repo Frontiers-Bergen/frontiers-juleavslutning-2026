@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
@@ -17,7 +18,10 @@ type demoHandler struct {
 }
 
 func NewDemoHandler(ns *embeddednats.Server, emojiService *services.EmojiBalloonService) (*demoHandler, error) {
-	demoService, _ := services.NewDemoService(ns, emojiService)
+	demoService, err := services.NewDemoService(ns, emojiService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create demo service: %w", err)
+	}
 	dm := demoHandler{demoService: demoService, emojiService: emojiService}
 	return &dm, nil
 }

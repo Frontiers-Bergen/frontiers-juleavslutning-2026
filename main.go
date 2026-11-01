@@ -61,7 +61,8 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
+	sessionSecret := readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret")
+	sessionStore := sessions.NewCookieStore([]byte(sessionSecret))
 	sessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   int(24 * time.Hour / time.Second),
@@ -97,8 +98,16 @@ func main() {
 		panic(fmt.Sprintf("failed to start embedded nats server: %v", err))
 	}
 
-	ebs, _ := services.NewEmojiBalloonService(ns)
-	demoHandler, _ := handler.NewDemoHandler(ns, ebs)	
+	ebs, err := services.NewEmojiBalloonService(ns)
+	if err != nil {
+		logger.Error("failed to create emoji balloon service", slog.String("error", err.Error()))
+		return
+	}
+	demoHandler, err := handler.NewDemoHandler(ns, ebs)
+	if err != nil {
+		logger.Error("failed to create demo handler", slog.String("error", err.Error()))
+		return
+	}
 	router.Get("/demo", demoHandler.DemoRoute)
 	router.Get("/demo/sse", demoHandler.DemoSSE)
 
