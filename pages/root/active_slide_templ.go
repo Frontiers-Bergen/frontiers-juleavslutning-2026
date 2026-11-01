@@ -43,8 +43,6 @@ func deck(
 
 		{Title: "Agenda: 2024", Render: func() templ.Component { return slides.Agenda(slides.Agenda2024, isPresenter) }},
 		{Title: "2024: Why Next.js + Firebase", Render: func() templ.Component { return slides.Build2024Philosophy(isPresenter) }},
-		//{Title: "What is Next.js?", Render: func() templ.Component { return slides.WhatIsNextJS(isPresenter) }},
-		//{Title: "What is Firebase?", Render: func() templ.Component { return slides.WhatIsFirebase(isPresenter) }},
 		{Title: "What we built in 2024", Render: func() templ.Component { return slides.Build2024Snapshot(isPresenter) }},
 		{Title: "How did it go in 2024?", Render: func() templ.Component { return slides.Build2024HowDidItGo(isPresenter) }},
 
@@ -52,7 +50,6 @@ func deck(
 		{Title: "2025: The opposite experiment", Render: func() templ.Component { return slides.Build2025Philosophy(isPresenter) }},
 		{Title: "Grug brain developer?", Render: func() templ.Component { return slides.GrugBrainMeme(isPresenter) }},
 		{Title: "How we chose the stack (2025)", Render: func() templ.Component { return slides.Build2025HowWeChoseTheStack(isPresenter) }},
-		//{Title: "What is Go?", Render: func() templ.Component { return slides.WhatIsGo(isPresenter) }},
 		{Title: "What is templ?", Render: func() templ.Component { return slides.WhatIsTempl(isPresenter) }},
 
 		{Title: "What is Datastar?", Render: func() templ.Component { return slides.WhatIsDatastar(isPresenter) }},
@@ -61,8 +58,6 @@ func deck(
 		{Title: "Results: " + poll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, poll, localKey, remoteKey) }},
 		{Title: "Datastar demo (reveal)", Render: func() templ.Component { return slides.DatastarCheckboxTrickReveal(isPresenter) }},
 		{Title: "Datastar demo (live)", Render: func() templ.Component { return slides.DatastarCheckboxTrickDemo(isPresenter) }},
-		//{Title: "What is SQLite?", Render: func() templ.Component { return slides.WhatIsSQLite(isPresenter) }},
-		//{Title: "What is NATS?", Render: func() templ.Component { return slides.WhatIsNATS(isPresenter) }},
 		{Title: "What we built in 2025", Render: func() templ.Component { return slides.Build2025Snapshot(isPresenter) }},
 		{Title: "How did it go in 2025? (question)", Render: func() templ.Component { return slides.Build2025HowDidItGoQuestion(isPresenter) }},
 		{Title: "2025 server explosion", Render: func() templ.Component { return slides.Build2025ServerExplosion(isPresenter) }},
@@ -170,7 +165,7 @@ func ActiveSlide(
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("{ slideIndex: %d }", index))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/active_slide.templ`, Line: 138, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/active_slide.templ`, Line: 133, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {

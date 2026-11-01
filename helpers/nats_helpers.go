@@ -16,6 +16,10 @@ func notifyUpdate(sessionID string) {
 	_ = sessionID
 }
 
+// BroadcastUpdate makes every connected client re-render.
+// Each client's SSE handler (pages/root/root_index.templ) watches its own session key in the KV bucket
+// and patches the whole page when that key changes. Re-saving every session's state, even unchanged,
+// fires all those watchers. The stored state itself is a leftover from the Datastar Todo example.
 func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 	ctx := r.Context()
 
