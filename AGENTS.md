@@ -1,139 +1,124 @@
-# Copilot Instructions (Go · templ · SQL)
+# Agent Instructions
 
-## Core Philosophy
+Read the **Why** section in `README.md` first. Every change should serve it: the people at the Frontiers juleavslutning having fun.
+The README also holds the checklist of planned work and the non-goals.
 
-Optimize for clarity, locality, and long-term maintainability.
+## Engineering principles
 
-The primary audience for the code is a future developer reading it for the first time.
-The secondary audience is the compiler.
+The goal while coding is to create a maintainable, high-quality solution that is easy to understand, change, and verify.
 
-Prefer simple, explicit solutions over clever, abstract, or flexible ones.
+- Keep in mind good engineering practices such as KISS and YAGNI.
+- Aim for low coupling, high cohesion and separation of concerns. Code that changes together should stay together.
+- Avoid adding new dependencies without a clear benefit.
+- Prefer clear names, straightforward control flow, and familiar project conventions.
+- Complexity is our enemy. Avoid accidental complexity.
+- Be pragmatic. If the rules conflict, use your judgment to decide which is more important for the current change.
 
----
+### Abstraction and duplication
 
-## General Coding Principles
+Do not prematurely abstract. Only share code when it represents the same underlying concept or business rule.
+Never duplicate a business rule; duplicate incidental code freely until the third copy (Martin Fowler's rule of three).
 
-- Keep the code simple, explicit, and easy to understand.
-- Prioritize readability and maintainability over cleverness, brevity, or reuse.
-- Avoid clever code. If a solution feels smart, simplify it.
-- Use clear, descriptive, and explicit naming, even if names become long.
-- Prefer longer names over comments.
-- Write hardened, production-ready Go code:
-  - Explicit error handling
-  - No ignored errors
-  - Clear failure paths
-- Favor high cohesion:
-  - Code that changes together should live together.
-- Favor low abstraction:
-  - Introduce abstractions only when they solve a concrete, existing problem.
-  - Do not abstract for hypothetical reuse.
+### Avoid primitive obsession
 
----
+Give domain concepts their own types instead of passing raw strings and ints around.
+A named type (`type InviteKey string`, `type PollKey string`, `type SessionID string`) lets the compiler catch mixed-up arguments,
+gives the concept a home for its rules, and makes function signatures read like the domain.
+Parse and validate at the boundary (HTTP request, database row) and pass the typed value inward.
+Use a named type when a value has rules or is easily confused with another value of the same primitive type; do not wrap values that are just data.
 
-## Comments & Documentation
+### Small changes
 
-- Do not add comments unless the code is not obvious from naming and structure.
-- Do not explain what the code does if it is clear.
-- Only comment why something non-obvious is done.
-- Prefer clear naming and structure over explanatory comments.
+Strive for small, cohesive changes. Solve one problem completely and keep unrelated cleanup separate.
+Small changes are easier to review, understand, and roll back. Work towards the smallest coherent change.
 
-If comments seem necessary, reconsider the structure or naming first.
+## Working with the user
 
----
+- First inspect the relevant code and tests, then discuss.
+- Ask clarifying questions, or interview the user, when the request is unclear.
+- Always share your thoughts and recommendations.
+- Challenge the user's assumptions when you see a better approach.
+- Do not over-engineer. Discuss with the user before adding accidental complexity.
 
-## Refactoring Rules
+## Pull request workflow
 
-- Follow Martin Fowler’s Rule of Three:
-  - One instance: do nothing.
-  - Two instances: duplication is acceptable.
-  - Three instances: refactor.
-- Prefer duplication over premature abstraction.
-- Do not extract helpers, interfaces, or packages unless duplication or complexity already exists.
+Every feature follows three steps:
 
----
+1. **Tidy first.** Before adding the feature, look at the code it will touch. If a refactor or improvement makes the feature easier to add, do that first, without changing behavior.
+2. **Add the feature.** The behavior change, with tests.
+3. **Refactor before finalizing.** Clean up what adding the feature revealed, again without changing behavior.
 
-## Go-Specific Guidelines
+Keep structural changes (tidying, refactoring) and behavior changes apart so each can be reviewed on its own terms.
+For small tidyings, separate commits in one pull request are enough.
+When a step is big enough to deserve its own review, use stacked pull requests (GitHub stacked PRs, `gh stack` CLI extension): each step is one PR based on the previous, merged bottom-up.
+Skip steps that are not needed; an empty tidy or refactor step is fine.
 
-- Follow standard Go conventions where they improve clarity.
-- Prefer concrete types over interfaces.
-- Introduce interfaces only at the point of use.
-- Avoid “helpers”, “utils”, or “common” packages.
+## Comments and documentation
+
+Comments and documentation are primarily written for other agents.
+Add them where they explain purpose, business rules, constraints, and non-obvious decisions — context that cannot easily be read from the code.
+Do not repeat implementation details. Update existing comments and documentation when behavior changes.
+
+Document features with a user story focused on one user goal.
+The word "and" can indicate that a story contains unrelated goals, but it is not a problem by itself; keep related behavior together when it serves one coherent goal.
+Use other documentation formats when a user story is not a good fit.
+
+The code is the source of truth for what the system currently does. Requirements and acceptance criteria describe what it should do.
+If the code, tests, and documentation disagree, point out the discrepancy.
+Do not assume the current implementation is correct, and do not change tests or documentation just to match it.
+
+## Testing
+
+Test behavior, not implementation. Verify meaningful outcomes, important failure cases, and regressions.
+A test should keep passing when implementation details change and the behavior stays the same.
+
+Write tests in given-when-then form so they read from intent to verification:
+
+- Start each test with three lines of BDD metadata describing the test in plain words: Given some initial context, When an event occurs, Then the expected outcome.
+  Use the project's BDD helper when it has one; otherwise use three comment lines.
+- Split the body into three visible sections: `// Given`, `// When`, `// Then`.
+- Start the Given section with the expected result, so the test's purpose is clear before the setup details.
+- Keep each test to one behavior and give it a specific name. Split creation, idempotency, validation, and error cases into separate tests.
+- Move noisy setup and repeated assertions into local test helpers when that makes the test read like behavior.
+
+```go
+// Given a poll nobody has voted on.
+// When the results are counted.
+// Then every option has zero votes.
+func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
+	// Given
+	expected := map[string]int{"yes": 0, "no": 0}
+	db := createTestDatabase(t)
+	poll := createPoll(t, db, "yes", "no")
+
+	// When
+	actual := countVotes(t, db, poll)
+
+	// Then
+	assertVoteCounts(t, expected, actual)
+}
+```
+
+## Go
+
+- Handle every error explicitly. Never ignore an error; make failure paths obvious.
+- Prefer concrete types. Introduce interfaces only at the point of use, when they are needed.
+- Avoid packages named `helpers`, `utils` or `common`; put code next to the feature that uses it.
 - Prefer explicit parameters over hidden state.
-- Avoid magic behavior.
 
----
+## Project conventions
 
-## File & Folder Structure
+- Stack: Go, templ, Datastar (SSE), embedded NATS JetStream KV for live updates, SQLite.
+- Group code by feature, not by technical role. A simple feature can be a single file; a feature with several related files gets its own folder.
+- Write explicit SQL, keep it close to where it is used, and handle every database error.
+- Schema changes belong in `schema.sql`; never edit the runtime database file.
+- Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
+- Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
+- Domain terms are listed in `domain_dictionary.md` and are used unchanged everywhere: code, database, UI and docs.
+  Everything else is in English. Frontiers runs its events in English, so the app is English only (no bilingual frontend).
 
-- Keep the folder structure shallow.
-- Avoid nesting unless it clearly improves understanding.
-- Folder names must be clear and intention-revealing.
-- The root directory should immediately communicate what the project does and how it is structured.
+## Generated files
 
-Only create subfolders when:
-- A feature contains multiple closely related files, or
-- Grouping clearly improves comprehension.
+Do not edit `*_templ.go` files. Edit the `.templ` source and run `go tool templ generate` (or `task build:templ`).
 
-Do not create folders for single files.
-
----
-
-## Feature-Based Structure (templ)
-
-Group by feature, not by technical role.
-
-Simple feature:
-slides/simple_slide.tmpl
-
-Complex feature:
-slides/more_complex_slide/
-├── more_complex_slide.tmpl
-└── more_complex_slide_helper.go
-
-Keep all logic for a feature together.
-
----
-
-## Generated Files (templ)
-
-- Do not edit `*_templ.go` files; edit the `.templ` sources and run `go tool templ generate` (or `task build:templ`).
-
----
-
-## templ + SQL Workflow
-
-- Keep templates close to their data access logic.
-- If a template both reads from and writes to the database, keep both operations in the same file or feature folder when practical.
-- Avoid splitting read/write logic across packages when they belong to the same UI workflow.
-
----
-
-## SQL Usage
-
-- Write explicit SQL.
-- Prefer clarity over clever queries.
-- Keep SQL close to where it is used.
-- Handle all database errors explicitly.
-- Make failure cases obvious.
-
----
-
-## Presentation Structure
-
-- Slide ordering is defined in `pages/root/active_slide.templ`; add new slides there and keep content under `slides/`.
-- Schema changes belong in `schema.sql`; avoid editing the runtime DB file directly.
-- Slide intent/design notes live in top-of-file comments in `slides/*.templ`; keep them aligned with the slide content.
-- Keep `project_summary.md` and `agent_project.md` updated when the narrative or deck structure changes.
-
----
-
-## Over-Engineering Guardrails
-
-- Do not introduce interfaces, patterns, or abstractions unless required by existing duplicated usage.
-- Do not optimize for hypothetical future needs.
-- Do not split code across files purely for cleanliness if it reduces locality.
-
-If deviating from these rules, briefly explain why.
-
-## Template Instructions
-Here is a link to the go templ template llm instructions: https://templ.guide/llms.md
+templ reference for LLMs: https://templ.guide/llms.md
