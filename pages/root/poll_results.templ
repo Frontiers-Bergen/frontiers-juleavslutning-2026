@@ -38,14 +38,6 @@ func getPollOptionCountsForInviteKey(db *sql.DB, pollKey string, inviteKey strin
 	return counts, nil
 }
 
-func sumCounts(counts map[string]int64) int64 {
-	var total int64
-	for _, v := range counts {
-		total += v
-	}
-	return total
-}
-
 func maxOptionTotal(poll PollDefinition, localCounts, remoteCounts map[string]int64) int64 {
 	var max int64
 	for _, opt := range poll.Options {
@@ -57,122 +49,196 @@ func maxOptionTotal(poll PollDefinition, localCounts, remoteCounts map[string]in
 	return max
 }
 
+var pollResultsStylesOnce = templ.NewOnceHandle()
+
 templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKey string) {
 	{{ localCounts, localErr := getPollOptionCountsForInviteKey(db, poll.Key, localKey) }}
 	{{ remoteCounts, remoteErr := getPollOptionCountsForInviteKey(db, poll.Key, remoteKey) }}
-	{{
-		if localErr != nil || remoteErr != nil {
-			// Fail closed visually; no hidden partial results.
-		}
-	}}
+	@pollResultsStylesOnce.Once() {
+		<style>
+			@layer features {
+				.poll-results {
+					gap: 1.25rem;
+					height: 100%;
+
+					& h1 {
+						margin: 0;
+					}
+
+					.poll-results-error {
+						margin: 0;
+					}
+
+					.poll-results-options {
+						display: grid;
+						grid-template-columns: repeat(2, minmax(0, 1fr));
+						gap: 1rem;
+						flex: 1;
+					}
+
+					/* Set per option: --option-color (kahootThemeForIndex), --share (width relative to the
+					   top option) and --remote-share (the remote audience's part of this option's bar). */
+					.poll-result {
+						display: flex;
+						flex-direction: column;
+						gap: 0.75rem;
+						padding: 1rem;
+						border-radius: 18px;
+						border: 2px solid rgba(0, 0, 0, 0.12);
+						color: var(--color-bg-base);
+						background: white;
+						box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+					}
+
+					.poll-result-header {
+						display: flex;
+						align-items: center;
+						gap: 0.75rem;
+					}
+
+					.poll-result-badge {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 3rem;
+						min-width: 3rem;
+						height: 3rem;
+						border-radius: 14px;
+						background: var(--option-color);
+						color: white;
+						font-size: 1.75rem;
+						font-weight: 900;
+					}
+
+					.poll-result-title {
+						display: flex;
+						flex-direction: column;
+						gap: 0.2rem;
+						min-width: 0;
+					}
+
+					.poll-result-text {
+						font-size: 1.15rem;
+						font-weight: 900;
+						line-height: 1.1;
+						word-break: break-word;
+					}
+
+					.poll-result-votes {
+						opacity: 0.85;
+						font-weight: 800;
+					}
+
+					.poll-result-vote-count {
+						font-size: 1.4rem;
+					}
+
+					.poll-result-votes-label {
+						opacity: 0.8;
+					}
+
+					.poll-result-image {
+						max-width: 100%;
+						max-height: 16vh;
+						border-radius: 14px;
+						object-fit: cover;
+						background: rgba(0, 0, 0, 0.04);
+					}
+
+					.poll-result-share {
+						display: flex;
+						flex-direction: column;
+						gap: 0.35rem;
+					}
+
+					.poll-result-percent {
+						align-self: flex-end;
+						font-weight: 800;
+					}
+
+					.poll-result-bar {
+						height: 16px;
+						border-radius: 999px;
+						background: rgba(0, 0, 0, 0.08);
+						overflow: hidden;
+					}
+
+					.poll-result-bar-fill {
+						position: relative;
+						height: 100%;
+						width: var(--share);
+						border-radius: 999px;
+						background: var(--option-color);
+					}
+
+					.poll-result-bar-remote {
+						height: 100%;
+						width: var(--remote-share);
+						background: rgba(255, 255, 255, 0.35);
+					}
+				}
+			}
+		</style>
+	}
 	if localErr != nil || remoteErr != nil {
-		<div class="slide" style="display:flex; flex-direction:column; gap:1rem;">
-			<h1 style="margin:0;">Poll results</h1>
-			<p style="margin:0;">Unable to load poll results.</p>
+		<div class="slide poll-results">
+			<h1>Poll results</h1>
+			<p class="poll-results-error">Unable to load poll results.</p>
 		</div>
 	} else {
 		{{ maxTotal := maxOptionTotal(poll, localCounts, remoteCounts) }}
-		{{ localTotal := sumCounts(localCounts) }}
-		{{ remoteTotal := sumCounts(remoteCounts) }}
-		{{ grandTotal := localTotal + remoteTotal }}
-		<div class="slide" data-poll-results={ poll.Key } style="display:flex; flex-direction:column; gap:1.25rem; width:100%; height:100%;">
-			<div style="display:flex; flex-direction:column; gap:0.4rem;">
-				if poll.QuestionText != "" {
-					<h1 style="margin:0;">{ poll.QuestionText }</h1>
-				} else {
-					<h1 style="margin:0;">Poll results</h1>
-				}
-				<div style="display:none; gap:0.75rem; flex-wrap:wrap; align-items:baseline;">
-					<div style="font-size:2rem; font-weight:900; letter-spacing:-0.02em;">
-						Total: { fmt.Sprintf("%d", grandTotal) }
-					</div>
-					<div style="opacity:0.85; font-weight:700;">
-						Local { fmt.Sprintf("%d", localTotal) } · Remote { fmt.Sprintf("%d", remoteTotal) }
-					</div>
-				</div>
-			</div>
-			<div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; flex:1;">
+		<div class="slide poll-results" data-poll-results={ poll.Key }>
+			if poll.QuestionText != "" {
+				<h1>{ poll.QuestionText }</h1>
+			} else {
+				<h1>Poll results</h1>
+			}
+			<div class="poll-results-options">
 				for i, opt := range poll.Options {
-					{{ bg, badge := kahootThemeForIndex(i) }}
-					{{ local := localCounts[opt.Key] }}
+					{{ optionColor, badge := kahootThemeForIndex(i) }}
 					{{ remote := remoteCounts[opt.Key] }}
-					{{ total := local + remote }}
-					{{ pct := 0.0 }}
+					{{ total := localCounts[opt.Key] + remote }}
+					{{ share := 0.0 }}
+					{{ remoteShare := 0.0 }}
 					{{
 						if maxTotal > 0 {
-							pct = (float64(total) / float64(maxTotal)) * 100.0
+							share = float64(total) / float64(maxTotal) * 100
 						}
-					}}
-					{{ localPct := 0.0 }}
-					{{ remotePct := 0.0 }}
-					{{
 						if total > 0 {
-							localPct = (float64(local) / float64(total)) * 100.0
-							remotePct = (float64(remote) / float64(total)) * 100.0
+							remoteShare = float64(remote) / float64(total) * 100
 						}
 					}}
 					<div
+						class="poll-result"
 						data-option-key={ opt.Key }
 						data-vote-count={ fmt.Sprintf("%d", total) }
-						style={ fmt.Sprintf(
-						`display:flex; flex-direction:column; gap:0.75rem; padding:1rem; border-radius:18px; border:2px solid rgba(0,0,0,0.12); color: #1a1b26; background:white; box-shadow:0 8px 24px rgba(0,0,0,0.08);`,
-					) }
+						style={ fmt.Sprintf("--option-color: %s; --share: %.2f%%; --remote-share: %.2f%%;", optionColor, share, remoteShare) }
 					>
-						<div style="display:flex; align-items:center; gap:0.75rem;">
-							<div
-								style={ fmt.Sprintf(
-								`display:flex; align-items:center; justify-content:center; width:3rem; min-width:3rem; height:3rem; border-radius:14px; background:%s; color:white; font-size:1.75rem; font-weight:900;`,
-								bg,
-							) }
-							>
-								{ badge }
-							</div>
-							<div style="display:flex; flex-direction:column; gap:0.2rem; min-width:0;">
+						<div class="poll-result-header">
+							<div class="poll-result-badge">{ badge }</div>
+							<div class="poll-result-title">
 								if opt.Text != "" {
-									<div style="font-size:1.15rem; font-weight:900; line-height:1.1; word-break:break-word;">
-										{ opt.Text }
-									</div>
+									<div class="poll-result-text">{ opt.Text }</div>
 								}
-								<div style="opacity:0.85; font-weight:800;">
-									<span style="font-size:1.4rem;">{ fmt.Sprintf("%d", total) }</span>
-									<span style="opacity:0.8;">votes</span>
-									<span style="display:none; opacity:0.75;">(L { fmt.Sprintf("%d", local) } · R { fmt.Sprintf("%d", remote) })</span>
+								<div class="poll-result-votes">
+									<span class="poll-result-vote-count">{ fmt.Sprintf("%d", total) }</span>
+									<span class="poll-result-votes-label">votes</span>
 								</div>
 							</div>
 						</div>
 						if opt.ImageURL != "" {
-							<img src={ opt.ImageURL } alt="" style="max-width:100%; max-height:16vh; border-radius:14px; object-fit:cover; background:rgba(0,0,0,0.04);"/>
+							<img class="poll-result-image" src={ opt.ImageURL } alt=""/>
 						}
-						<div style="display:flex; flex-direction:column; gap:0.35rem;">
-							<div style="display:flex; justify-content:space-between; font-weight:800;">
-								<span style="opacity:0;">Strength</span>
-								<span>{ fmt.Sprintf("%.0f%%", pct) }</span>
-							</div>
-							<div style="height:16px; border-radius:999px; background:rgba(0,0,0,0.08); overflow:hidden;">
-								<div
-									style={ fmt.Sprintf(
-									`height:100%%; width:%.2f%%; background:%s; position:relative; border-radius:999px;`,
-									pct, bg,
-								) }
-								>
-									<div
-										style={ fmt.Sprintf(
-										`height:100%%; width:%.2f%%; background:rgba(255,255,255,0.35);`,
-										remotePct,
-									) }
-									></div>
+						<div class="poll-result-share">
+							<span class="poll-result-percent">{ fmt.Sprintf("%.0f%%", share) }</span>
+							<div class="poll-result-bar">
+								<div class="poll-result-bar-fill">
+									<div class="poll-result-bar-remote"></div>
 								</div>
-							</div>
-							<div style="display:none; justify-content:space-between; gap:0.75rem; font-weight:800; opacity:0.85;">
-								<span>Local { fmt.Sprintf("%.0f%%", localPct) }</span>
-								<span>Remote { fmt.Sprintf("%.0f%%", remotePct) }</span>
 							</div>
 						</div>
 					</div>
 				}
-			</div>
-			<div style="display:none; opacity:0.75; font-weight:700;">
-				Tip: local vs remote is per option (L/R), and “Strength” is relative to the current top option.
 			</div>
 		</div>
 	}

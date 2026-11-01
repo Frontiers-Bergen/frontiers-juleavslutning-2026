@@ -7,14 +7,37 @@ templ NeedKeyPage() {
 }
 
 templ NeedKeyContent() {
-	<main style="max-width: 48rem; margin: 5rem auto; padding: 0 1rem; text-align: center;">
-		<h1 style="font-size: 2rem; margin-bottom: 1rem;">You need an invite link</h1>
-		<p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem;">
+	<style>
+		@layer features {
+			.need-key {
+				max-width: 48rem;
+				margin: 5rem auto;
+				padding: 0 1rem;
+				text-align: center;
+
+				& h1 {
+					font-size: 2rem;
+					margin-bottom: 1rem;
+				}
+
+				.need-key-explanation {
+					font-size: 1.1rem;
+					line-height: 1.6;
+					margin-bottom: 1rem;
+				}
+
+				.need-key-hint {
+					opacity: 0.8;
+				}
+			}
+		}
+	</style>
+	<main class="need-key">
+		<h1>You need an invite link</h1>
+		<p class="need-key-explanation">
 			These slides are shared via an unlisted URL.
 			Open the invite link you received (it looks like <code>/&lt;key&gt;/</code>).
 		</p>
-		<p style="opacity: 0.8;">
-			If you don’t have the link, ask the organizer in the meetup chat.
-		</p>
+		<p class="need-key-hint">If you don’t have the link, ask the organizer in the meetup chat.</p>
 	</main>
 }

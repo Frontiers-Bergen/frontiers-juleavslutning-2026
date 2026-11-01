@@ -126,37 +126,66 @@ func presenterErrorMessage(r *http.Request) string {
 }
 
 templ PresenterPage(isPresenter bool, errorMessage string) {
-	<div style="max-width: 42rem; margin: 4rem auto; padding: 0 1rem;">
-		<h1 style="font-size: 2rem; margin-bottom: 0.75rem;">Presenter mode</h1>
+	<style>
+		@layer features {
+			.presenter-login {
+				max-width: 42rem;
+				margin: 4rem auto;
+				padding: 0 1rem;
+
+				& h1 {
+					font-size: 2rem;
+					margin-bottom: 0.75rem;
+				}
+
+				& p {
+					opacity: 0.85;
+					margin-bottom: 1rem;
+				}
+
+				& button {
+					padding: 0.65rem 0.9rem;
+					border-radius: 10px;
+				}
+
+				.presenter-login-error {
+					padding: 0.75rem 1rem;
+					border-radius: var(--radius);
+					border: 1px solid rgba(255, 0, 0, 0.35);
+					margin-bottom: 1rem;
+				}
+
+				.presenter-login-form {
+					display: flex;
+					gap: 0.5rem;
+					align-items: center;
+					flex-wrap: wrap;
+
+					& input {
+						flex: 1;
+						min-width: 16rem;
+						padding: 0.65rem 0.75rem;
+						border-radius: 10px;
+					}
+				}
+			}
+		}
+	</style>
+	<div class="presenter-login">
+		<h1>Presenter mode</h1>
 		if errorMessage != "" {
-			<div style="padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,0,0,0.35); margin-bottom: 1rem;">
-				{ errorMessage }
-			</div>
+			<div class="presenter-login-error">{ errorMessage }</div>
 		}
 		if !isPresenter {
-			<p style="opacity: 0.85; margin-bottom: 1rem;">
-				Enter the presenter key to enable presenter controls on this device.
-			</p>
-			<form method="post" action="/presenter/login" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-				<input
-					type="password"
-					name="key"
-					placeholder="Presenter key"
-					autocomplete="current-password"
-					style="flex:1; min-width: 16rem; padding: 0.65rem 0.75rem; border-radius: 10px;"
-				/>
-				<button type="submit" style="padding: 0.65rem 0.9rem; border-radius: 10px;">
-					Unlock
-				</button>
+			<p>Enter the presenter key to enable presenter controls on this device.</p>
+			<form class="presenter-login-form" method="post" action="/presenter/login">
+				<input type="password" name="key" placeholder="Presenter key" autocomplete="current-password"/>
+				<button type="submit">Unlock</button>
 			</form>
 		} else {
-			<p style="opacity: 0.85; margin-bottom: 1rem;">
-				This device is currently in presenter mode.
-			</p>
+			<p>This device is currently in presenter mode.</p>
 			<form method="post" action="/presenter/logout">
-				<button type="submit" style="padding: 0.65rem 0.9rem; border-radius: 10px;">
-					Log out presenter mode
-				</button>
+				<button type="submit">Log out presenter mode</button>
 			</form>
 		}
 	</div>

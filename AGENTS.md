@@ -124,10 +124,13 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Develop mobile first. Attendees use their phones as controllers, so every feature must work well on a small touch screen, one-handed.
   The big screen is the shared stage; design for both, starting with the phone.
 - Styling is plain CSS. No Tailwind or other CSS frameworks; the project started from the northstar example and its Tailwind leftovers were removed on purpose.
-- Shared CSS (design tokens, element defaults, app layout) lives in `static/index.css`.
-  A feature's CSS lives in its `.templ` file, in a `<style>` block nested under the feature's root class (`.poll { ... }`), so features cannot break each other.
+- Shared CSS (design tokens, element defaults, app layout) lives in `static/index.css`, which declares the layers `tokens, base, layout, features`.
+  A feature's CSS lives in its `.templ` file, in a `<style>` block wrapped in `@layer features` and nested under the feature's root class (`.poll { ... }`),
+  so features cannot break each other and always win over the shared layout. Reuse the tokens (`var(--space-2)`, `var(--radius)`, ...).
+  Components that can render more than once per page (slides render in the presenter's previews too) wrap their `<style>` in a
+  `templ.NewOnceHandle()` so the CSS is sent once; `pages/root/poll.templ` is the example.
   No inline styles, except to pass dynamic values as custom properties (`style="--share: 42%"`).
-  (Provisional: to be confirmed with Torstein before the CSS refactor is final.)
+  (Provisional: CSS inside templ files is to be confirmed with Torstein.)
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
 - `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
   There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
