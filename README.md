@@ -51,7 +51,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Verify a fresh clone works on Linux, macOS and Windows
 - [ ] Update Go (go.mod says 1.25.4) and dependencies (templ, datastar-go, nats)
 - [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go
-- [ ] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
+- [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [ ] Replace `agent_project.md` / `project_summary.md` with docs for the new purpose
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] First example multiplayer game that shows the pattern end to end
