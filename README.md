@@ -44,9 +44,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
 - [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
 - [x] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026`
-- [ ] Remove `presentation.db*` from git and un-comment the ignore rules
-- [ ] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file
-- [ ] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
+- [x] Remove `presentation.db*` from git and un-comment the ignore rules
+- [x] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file (no migrations; decided against goose)
+- [x] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
 - [ ] One-command setup for attendees (`task start`), documented in this README
 - [ ] Verify a fresh clone works on Linux, macOS and Windows
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
@@ -85,8 +85,6 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Remove unused slides that are not in the deck, and unreferenced images
 - [ ] Test setup based on conorganizer (`testutil/bdd`, `testutil/templtest`) and a first behavior test in given-when-then form
 - [ ] Refactor the CSS
-- [ ] Generate `schema.sql` from the database when tests run, like conorganizer (`task test` runs `sqlite3 <db> ".schema --indent --nosys" > schema.sql` before `go test ./...`).
-      Keeps `schema.sql` from drifting (today it lacks `poll_votes`). Conflicts with "apply `schema.sql` at startup" — decide together in the database topic.
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
 - [ ] Setup styling (carried over — `gotailwind` is a tool dependency but unused?)
 
@@ -116,6 +114,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
       and shared hotspots like the slide list in `pages/root/active_slide.templ` should not force everyone to edit the same lines.
 
 ### To discuss later
+
+- [ ] Demo data in a separate `.sql` file, if we need it
 
 - [ ] Reconnecting without a password. Links, especially on Android, often open in a temporary in-app browser session instead of the full browser, so the session cookie is lost. Maybe store a token in local storage?
 

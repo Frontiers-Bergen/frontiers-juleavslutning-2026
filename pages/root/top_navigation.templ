@@ -11,17 +11,6 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-/*
-SQL (run once):
-
-CREATE TABLE IF NOT EXISTS slide_state (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
-  current_index INTEGER NOT NULL DEFAULT 0
-);
-
-INSERT OR IGNORE INTO slide_state (id, current_index) VALUES (1, 0);
-*/
-
 // --- DB helpers (owned by TopNavigation) ---
 
 func GetCurrentSlideIndex(db *sql.DB) (int, error) {

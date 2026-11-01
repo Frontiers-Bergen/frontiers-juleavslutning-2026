@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,6 +27,9 @@ import (
 )
 
 const inviteSessionName = "invite"
+
+//go:embed schema.sql
+var schemaSQL string
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -54,6 +58,11 @@ func main() {
 		return
 	}
 	defer db.Close()
+
+	if _, schemaErr := db.Exec(schemaSQL); schemaErr != nil {
+		logger.Error("failed to apply schema.sql", slog.String("error", schemaErr.Error()))
+		return
+	}
 
 	localKey := readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key")
 	remoteKey := readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key")
