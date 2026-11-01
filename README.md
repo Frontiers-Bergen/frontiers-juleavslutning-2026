@@ -86,7 +86,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Safety net for polls before the CSS refactor (`poll_voting_test.go`): changing a vote replaces it, local + remote votes add up, unknown options are rejected
 - [ ] Bring over conorganizer's `testutil/templtest` when a test needs to render a component on its own (not needed yet: HTTP tests read semantic `data-` attributes)
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
-- [ ] Refactor the CSS: `@layer tokens, base, layout` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, remove dead January classes
+- [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
+- [ ] Mobile first pass: on phones the poll options break words mid-word ("Christ mas") and the badge column wastes space
 - [ ] Confirm the CSS approach (CSS inside templ files) with Torstein (coldasice)
 - [x] **Fix: any attendee can change the presenter's slide.** `POST /{inviteKey}/root/api/slides/set` does not check presenter mode, so anyone with the invite link can move the deck (curl or devtools). Start with a test.
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)

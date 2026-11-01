@@ -154,61 +154,142 @@ func kahootThemeForIndex(index int) (bg string, badge string) {
 	}
 }
 
+var pollStylesOnce = templ.NewOnceHandle()
+
 templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinition) {
 	{{ selectedOptionKey, _ := getMyPollVote(db, inviteKey, poll.Key, sessionID) }}
-	<div class="slide" style="display:flex; flex-direction:column; gap:1.5rem; width:100%; height:100%;">
-		<div style="display:flex; flex-direction:column; gap:0.75rem;">
+	@pollStylesOnce.Once() {
+		<style>
+			@layer features {
+				.poll {
+					gap: 1.5rem;
+					height: 100%;
+
+					& h1 {
+						margin: 0;
+					}
+
+					.poll-question {
+						display: flex;
+						flex-direction: column;
+						gap: 0.75rem;
+					}
+
+					.poll-question-image {
+						max-width: 100%;
+						max-height: 40vh;
+						border-radius: 16px;
+						object-fit: contain;
+					}
+
+					.poll-hint {
+						margin: 0;
+						opacity: 0.85;
+					}
+
+					.poll-options {
+						display: grid;
+						grid-template-columns: repeat(2, minmax(0, 1fr));
+						gap: 1rem;
+						flex: 1;
+					}
+
+					/* --option-color is set per option from kahootThemeForIndex. */
+					.poll-option {
+						display: flex;
+						align-items: stretch;
+						justify-content: stretch;
+						gap: 0.75rem;
+						width: 100%;
+						min-height: 6.5rem;
+						padding: 1rem;
+						border-radius: 18px;
+						border: 2px solid rgba(255, 255, 255, 0.25);
+						background: var(--option-color);
+						color: white;
+						text-align: left;
+						cursor: pointer;
+
+						&[aria-pressed="true"] {
+							border: 4px solid rgba(255, 255, 255, 0.95);
+							box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.18);
+						}
+					}
+
+					.poll-option-badge {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 3rem;
+						min-width: 3rem;
+						font-size: 1.75rem;
+						font-weight: 900;
+						background: rgba(0, 0, 0, 0.18);
+						border-radius: 14px;
+					}
+
+					.poll-option-body {
+						display: flex;
+						flex-direction: column;
+						gap: 0.5rem;
+						flex: 1;
+						min-width: 0;
+					}
+
+					.poll-option-image {
+						max-width: 100%;
+						max-height: 14vh;
+						border-radius: 14px;
+						object-fit: cover;
+						background: rgba(255, 255, 255, 0.08);
+					}
+
+					.poll-option-text {
+						font-size: 1.25rem;
+						font-weight: 800;
+						line-height: 1.15;
+						word-break: break-word;
+					}
+
+					.poll-option-selected {
+						font-size: 0.95rem;
+						font-weight: 700;
+						opacity: 0.95;
+					}
+				}
+			}
+		</style>
+	}
+	<div class="slide poll">
+		<div class="poll-question">
 			if poll.QuestionText != "" {
-				<h1 style="margin:0;">{ poll.QuestionText }</h1>
+				<h1>{ poll.QuestionText }</h1>
 			}
 			if poll.QuestionImageURL != "" {
-				<img src={ poll.QuestionImageURL } alt="Poll question image" style="max-width:100%; max-height:40vh; border-radius:16px; object-fit:contain;"/>
+				<img class="poll-question-image" src={ poll.QuestionImageURL } alt="Poll question image"/>
 			}
-			<p style="margin:0; opacity:0.85;">
-				Pick one. You can change your vote anytime.
-			</p>
+			<p class="poll-hint">Pick one. You can change your vote anytime.</p>
 		</div>
-		<div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; flex:1;">
+		<div class="poll-options">
 			for i, opt := range poll.Options {
-				{{ bg, badge := kahootThemeForIndex(i) }}
-				{{ isSelected := (opt.Key == selectedOptionKey) }}
+				{{ optionColor, badge := kahootThemeForIndex(i) }}
 				<button
 					type="button"
+					class="poll-option"
+					style={ "--option-color: " + optionColor }
 					data-on:click={ templ.URL(pollVotePostURL(inviteKey, poll.Key, opt.Key)) }
-					aria-pressed={ fmt.Sprintf("%t", isSelected) }
-					style={ fmt.Sprintf(
-						`display:flex; align-items:stretch; justify-content:stretch; gap:0.75rem; padding:1rem; border-radius:18px; border:%s; background:%s; color:white; cursor:pointer; text-align:left; width:100%%; min-height:6.5rem; box-shadow:%s;`,
-						func() string {
-							if isSelected {
-								return "4px solid rgba(255,255,255,0.95)"
-							}
-							return "2px solid rgba(255,255,255,0.25)"
-						}(),
-						bg,
-						func() string {
-							if isSelected {
-								return "0 0 0 6px rgba(255,255,255,0.18)"
-							}
-							return "0 0 0 0 rgba(0,0,0,0)"
-						}(),
-					) }
+					aria-pressed={ fmt.Sprintf("%t", opt.Key == selectedOptionKey) }
 				>
-					<div style="display:flex; align-items:center; justify-content:center; width:3rem; min-width:3rem; font-size:1.75rem; font-weight:900; background:rgba(0,0,0,0.18); border-radius:14px;">
-						{ badge }
-					</div>
-					<div style="display:flex; flex-direction:column; gap:0.5rem; flex:1; min-width:0;">
+					<div class="poll-option-badge">{ badge }</div>
+					<div class="poll-option-body">
 						if opt.ImageURL != "" {
-							<img src={ opt.ImageURL } alt="" style="max-width:100%; max-height:14vh; border-radius:14px; object-fit:cover; background:rgba(255,255,255,0.08);"/>
+							<img class="poll-option-image" src={ opt.ImageURL } alt=""/>
 						}
 						if opt.Text != "" {
-							<div style="font-size:1.25rem; font-weight:800; line-height:1.15; word-break:break-word;">
-								{ opt.Text }
-							</div>
+							<div class="poll-option-text">{ opt.Text }</div>
 						}
-						if isSelected {
-							<div style="font-size:0.95rem; font-weight:700; opacity:0.95;">
-								Selected
-							</div>
+						if opt.Key == selectedOptionKey {
+							<div class="poll-option-selected">Selected</div>
 						}
 					</div>
 				</button>

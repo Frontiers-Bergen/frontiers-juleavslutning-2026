@@ -1,454 +1,239 @@
+/*
+Shared CSS: design tokens, element defaults and the app layout (stage, slide, presenter shell, reactions bar).
+
+A feature's own CSS lives in its .templ file, in a <style> block inside `@layer features`, nested under
+the feature's root class (see AGENTS.md). The layer order below makes feature styles win over the shared
+layout without specificity fights. Write mobile first: phones are the controllers, the big screen is the stage.
+*/
+@layer tokens, base, layout, features;
+
 @view-transition {
 	navigation: auto;
 }
 
-:root {
-	/* Colors */
-	--color-text-strong: #f1f3f9;
-	--color-text-soft: #ccd1e9;
-	--color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
-
-	--color-primary-text: var(--color-text-soft);
-	--color-bg-base: #1a1b26;
-
-	/* Layout */
-	--stage-max-width: 68rem;
-
-	/* Spacing (base: 1rem = 16px) */
-	--space-1: 0.5rem;
-	/* 8px */
-	--space-2: 1rem;
-	/* 16px */
-	--space-3: 1.5rem;
-	/* 24px */
-	--space-4: 2rem;
-	/* 32px */
-	--space-5: 3rem;
-	/* 48px */
-
-	/* Type scale (bigger on desktop) */
-	--font-body: clamp(1.2rem, 1vw + 1rem, 2.1rem);
-	--font-h1: clamp(2.4rem, 2.4vw + 1.4rem, 4.6rem);
-	--font-small: clamp(1.05rem, 0.4vw + 1rem, 1.35rem);
-
-	/* Surfaces */
-	--surface-presenter: hsl(from var(--color-bg-base) h s calc(l + 6%) / 85%);
-	--surface-glass: hsl(from var(--color-bg-base) h s l / 90%);
-	--border-subtle: 1px solid var(--color-text-soft-50);
-
-	--radius: 12px;
-
-	/* Reserve space so sticky reactions never overlap stage content */
-	--reactions-min-height: 3.75rem;
-}
-
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-}
-
-html {
-	color-scheme: dark;
-	height: 100%;
-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-}
-
-body {
-	height: 100%;
-	margin: 0;
-	display: flex;
-	background: var(--color-bg-base);
-	color: var(--color-primary-text);
-}
-
-#root-page-wrapper {
-	min-height: 100vh;
-	display: flex;
-	flex: 1;
-	flex-direction: column;
-}
-
-.app {
-	display: flex;
-	flex: 1;
-	flex-direction: column;
-}
-
-/* Presenter UI (not part of the slide stage) */
-.presenter-bar {
-	background: var(--surface-presenter);
-	border-bottom: var(--border-subtle);
-	padding: var(--space-2) var(--space-3);
-}
-
-.presenter-bar>* {
-	max-width: var(--stage-max-width);
-	margin: 0 auto;
-}
-
-.presenter-layout {
-	display: flex;
-	flex: 1;
-}
-
-.presenter-layout .presenter-main {
-	height: 100vh;
-}
-
-.presenter-sidebar {
-	flex: 0 0 20rem;
-	max-width: 20rem;
-	flex: 1;
-	overflow-y: auto;
-	padding: var(--space-2);
-	background: var(--surface-presenter);
-	border-right: var(--border-subtle);
-}
-
-.presenter-main {
-	flex: 1;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	position: sticky;
-	top: 0;
-}
-
-.presenter-nav {
-	display: flex;
-	gap: var(--space-2);
-	align-items: center;
-	flex-wrap: wrap;
-	justify-content: center;
-}
-
-.presenter-bar .presenter-nav {
-	max-width: none;
-	margin: 0;
-}
-
-.presenter-nav-button {
-	padding: 0.5rem 0.75rem;
-	border-radius: 10px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.presenter-nav-home-icon {
-	width: 1.25rem;
-	height: 1.25rem;
-	display: block;
-}
-
-.presenter-nav-preview {
-	display: grid;
-	grid-template-columns: 13rem 14rem;
-	grid-template-areas: "meta preview";
-	gap: 0.5rem;
-	align-items: center;
-	padding: 0.5rem;
-	border-radius: 12px;
-	cursor: pointer;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.presenter-nav-preview-next {
-	grid-template-areas: "preview meta";
-	grid-template-columns: 14rem 13rem;
-}
-
-.presenter-nav-preview[data-disabled="true"] {
-	opacity: 0.55;
-	cursor: not-allowed;
-	pointer-events: none;
-}
-
-.presenter-nav-preview-meta {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	min-width: 0;
-	grid-area: meta;
-}
-
-.presenter-nav-preview-label {
-	font-size: 0.95rem;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	opacity: 0.75;
-}
-
-.presenter-nav-preview-title {
-	font-weight: 650;
-	line-height: 1.2;
-	max-width: 13rem;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.presenter-nav-count {
-	font-weight: 650;
-	opacity: 0.8;
-	font-size: 2rem;
-}
-
-.slide-preview-frame {
-	--preview-scale: 0.24;
-	--preview-width: var(--stage-max-width);
-	--preview-height: 35rem;
-	position: relative;
-	width: 100%;
-	height: calc(var(--preview-height) * var(--preview-scale));
-	border-radius: 12px;
-	overflow: hidden;
-	background: #0f111a;
-	border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.presenter-nav-preview .slide-preview-frame {
-	width: 100%;
-	grid-area: preview;
-}
-
-.presenter-slide-item .slide-preview-frame {
-	width: 100%;
-}
-
-.slide-preview-inner {
-	width: var(--preview-width);
-	height: var(--preview-height);
-	transform: scale(var(--preview-scale));
-	transform-origin: top left;
-	pointer-events: none;
-}
-
-.slide-preview-placeholder {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 700;
-	opacity: 0.6;
-}
-
-.presenter-slide-list {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-2);
-}
-
-.presenter-slide-item {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	padding: 0.5rem;
-	border-radius: 12px;
-	border: 1px solid transparent;
-	background: transparent;
-	color: inherit;
-	text-align: left;
-	cursor: pointer;
-}
-
-.presenter-slide-item[data-active="true"] {
-	border-color: rgba(255, 255, 255, 0.35);
-	background: rgba(255, 255, 255, 0.08);
-}
-
-.presenter-slide-meta {
-	display: flex;
-	gap: 0.5rem;
-	align-items: baseline;
-	min-width: 0;
-}
-
-.presenter-slide-index {
-	font-weight: 700;
-	opacity: 0.65;
-}
-
-.presenter-slide-title {
-	font-weight: 650;
-	line-height: 1.2;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-/* Stage wrapper */
-.stage {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-
-	padding: clamp(1rem, 3vw, 2rem);
-	padding-bottom: calc(clamp(1rem, 3vw, 2rem) + var(--reactions-min-height) + env(safe-area-inset-bottom));
-}
-
-.stage>* {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-}
-
-/* Slide "canvas" */
-.slide {
-	flex: 1;
-	width: 100%;
-	max-width: var(--stage-max-width);
-	margin: 0 auto;
-
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-
-	/* Bias content downward: more top padding than bottom padding */
-	padding-top: clamp(2.5rem, 12vh, 9rem);
-	padding-bottom: clamp(1.5rem, 6vh, 5rem);
-}
-
-.slide h1 {
-	margin: 0 0 var(--space-3) 0;
-	font-size: var(--font-h1);
-	line-height: 1.12;
-	letter-spacing: -0.02em;
-	color: var(--color-text-strong);
-}
-
-.slide ul {
-	margin: 0;
-	padding-left: 1.2em;
-	font-size: var(--font-body);
-	line-height: 1.45;
-	color: var(--color-text-soft);
-}
-
-.slide li {
-	margin-bottom: var(--space-2);
-}
-
-.slide li:last-child {
-	margin-bottom: 0;
-}
-
-.slide li::marker {
-	color: var(--color-text-soft-50);
-}
-
-/* Presenter notes (backstage strip at bottom) */
-.presenter-notes {
-	width: 100%;
-	max-width: var(--stage-max-width);
-
-	position: fixed;
-	left: 50%;
-	bottom: calc(var(--reactions-min-height) + var(--space-2));
-	transform: translateX(-50%);
-	z-index: 5;
-	margin: 0;
-
-	padding: var(--space-3);
-	border: var(--border-subtle);
-	border-radius: var(--radius);
-	background: #0f111af7;
-
-	font-size: var(--font-small);
-	line-height: 1.4;
-	color: var(--color-text-soft);
-}
-
-.presenter-layout .presenter-notes {
-	left: calc(50% + 10rem);
-}
-
-.presenter-notes::before {
-	content: "Presenter notes";
-	display: block;
-	margin-bottom: var(--space-2);
-
-	font-size: 0.85em;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: var(--color-text-soft-50);
-}
-
-/* Reactions bar */
-.reactions {
-	position: sticky;
-	bottom: 0;
-
-	min-height: var(--reactions-min-height);
-
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-1);
-
-	padding: var(--space-2) var(--space-3);
-	padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-
-	background: var(--surface-glass);
-	backdrop-filter: blur(8px);
-	border-top: var(--border-subtle);
-}
-
-/* Landing page slide */
-.slide-landing-card-container {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 4rem;
-}
-
-.slide-landing-card {
-	flex: 1;
-	border: 2px solid rgba(255, 255, 255, 0.15);
-	border-radius: 18px;
-	padding: 1.25rem 1.5rem;
-	width: 100%;
-	position: relative;
-}
-
-.slide-landing-card-year {
-	position: absolute;
-	width: fit-content;
-	bottom: 0;
-	left: 50%;
-	transform: translateY(50%) translateX(-50%);
-	background-color: var(--color-bg-base);
-	border: 2px solid rgba(255, 255, 255, 0.15);
-	border-radius: 18px;
-	padding: 0.2rem 1rem;
-}
-
-@media screen and (width < 575px) {
-	.slide-landing-card-container {
-		grid-template-columns: 1fr;
-	}
-
-	.slide-landing-font-face {
-		margin: 0 !important;
+@layer tokens {
+	:root {
+		/* Colors */
+		--color-text-strong: #f1f3f9;
+		--color-text-soft: #ccd1e9;
+		--color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
+
+		--color-primary-text: var(--color-text-soft);
+		--color-bg-base: #1a1b26;
+
+		/* Layout */
+		--stage-max-width: 68rem;
+
+		/* Spacing (base: 1rem = 16px) */
+		--space-1: 0.5rem;
+		--space-2: 1rem;
+		--space-3: 1.5rem;
+		--space-4: 2rem;
+		--space-5: 3rem;
+
+		/* Type scale (bigger on desktop) */
+		--font-body: clamp(1.2rem, 1vw + 1rem, 2.1rem);
+		--font-h1: clamp(2.4rem, 2.4vw + 1.4rem, 4.6rem);
+		--font-small: clamp(1.05rem, 0.4vw + 1rem, 1.35rem);
+
+		/* Surfaces */
+		--surface-presenter: hsl(from var(--color-bg-base) h s calc(l + 6%) / 85%);
+		--surface-glass: hsl(from var(--color-bg-base) h s l / 90%);
+		--surface-backstage: #0f111a;
+		--border-subtle: 1px solid var(--color-text-soft-50);
+
+		--radius: 12px;
+
+		/* Reserve space so the sticky reactions bar never overlaps stage content */
+		--reactions-min-height: 3.75rem;
 	}
 }
 
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
 
+	html {
+		color-scheme: dark;
+		height: 100%;
+		font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+	}
 
-
-.emoji-balloon-button {
-	padding: 6px;
-	font-size: 18px;
+	body {
+		height: 100%;
+		margin: 0;
+		display: flex;
+		background: var(--color-bg-base);
+		color: var(--color-primary-text);
+	}
 }
 
-emoji-balloon {
-	font-size: 18px;
-}
+@layer layout {
+	#root-page-wrapper {
+		min-height: 100vh;
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+	}
 
-.slide-logo {
-	height: 4rem;
-	width: auto;
+	.app {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+	}
+
+	/* Presenter shell: slide list on the left, controls on top, the stage below. Not part of the slide. */
+	.presenter-layout {
+		display: flex;
+		flex: 1;
+	}
+
+	.presenter-sidebar {
+		flex: 1;
+		max-width: 20rem;
+		overflow-y: auto;
+		padding: var(--space-2);
+		background: var(--surface-presenter);
+		border-right: var(--border-subtle);
+	}
+
+	.presenter-main {
+		flex: 1;
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
+		position: sticky;
+		top: 0;
+	}
+
+	.presenter-bar {
+		background: var(--surface-presenter);
+		border-bottom: var(--border-subtle);
+		padding: var(--space-2) var(--space-3);
+
+		& > * {
+			max-width: var(--stage-max-width);
+			margin: 0 auto;
+		}
+	}
+
+	/* The stage holds the active slide. */
+	.stage {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+
+		padding: clamp(1rem, 3vw, 2rem);
+		padding-bottom: calc(clamp(1rem, 3vw, 2rem) + var(--reactions-min-height) + env(safe-area-inset-bottom));
+
+		& > * {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+	}
+
+	/* The slide "canvas" every slide starts from. */
+	.slide {
+		flex: 1;
+		width: 100%;
+		max-width: var(--stage-max-width);
+		margin: 0 auto;
+
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+
+		/* Bias content downward: more top padding than bottom padding */
+		padding-top: clamp(2.5rem, 12vh, 9rem);
+		padding-bottom: clamp(1.5rem, 6vh, 5rem);
+
+		& h1 {
+			margin: 0 0 var(--space-3) 0;
+			font-size: var(--font-h1);
+			line-height: 1.12;
+			letter-spacing: -0.02em;
+			color: var(--color-text-strong);
+		}
+
+		& ul {
+			margin: 0;
+			padding-left: 1.2em;
+			font-size: var(--font-body);
+			line-height: 1.45;
+			color: var(--color-text-soft);
+		}
+
+		& li {
+			margin-bottom: var(--space-2);
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+
+			&::marker {
+				color: var(--color-text-soft-50);
+			}
+		}
+	}
+
+	/* Presenter notes: a backstage strip above the reactions bar, only rendered for the presenter. */
+	.presenter-notes {
+		width: 100%;
+		max-width: var(--stage-max-width);
+
+		position: fixed;
+		left: 50%;
+		bottom: calc(var(--reactions-min-height) + var(--space-2));
+		transform: translateX(-50%);
+		z-index: 5;
+		margin: 0;
+
+		padding: var(--space-3);
+		border: var(--border-subtle);
+		border-radius: var(--radius);
+		background: hsl(from var(--surface-backstage) h s l / 97%);
+
+		font-size: var(--font-small);
+		line-height: 1.4;
+		color: var(--color-text-soft);
+
+		.presenter-layout & {
+			left: calc(50% + 10rem);
+		}
+
+		&::before {
+			content: "Presenter notes";
+			display: block;
+			margin-bottom: var(--space-2);
+
+			font-size: 0.85em;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--color-text-soft-50);
+		}
+	}
+
+	/* The reactions bar is pinned to the bottom of every screen. */
+	.reactions {
+		position: sticky;
+		bottom: 0;
+
+		min-height: var(--reactions-min-height);
+
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+
+		padding: var(--space-2) var(--space-3);
+		padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+
+		background: var(--surface-glass);
+		backdrop-filter: blur(8px);
+		border-top: var(--border-subtle);
+	}
 }

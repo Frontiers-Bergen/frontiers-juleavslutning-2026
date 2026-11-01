@@ -1,22 +1,14 @@
 package components
 
-import ()
-
 templ BaseLayout(title string, children templ.Component) {
 	<!DOCTYPE html>
-	<html lang="en" data-theme="dark">
+	<html lang="en">
 		<head>
 			<title>{ title }</title>
 			<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
-			<link rel="preconnect" href="https://fonts.googleapis.com"/>
-			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-			<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@300..700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="preload" as="style"/>
-			<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Fira+Code:wght@300..700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet"/>
 			<link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
 			<script type="module" src="/static/datastar.js"></script>
 			<script type="module" src="/static/emoji-balloon.js"></script>
-			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/dist/backdrop.css"/>
-			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/animations/scale-subtle.css"/>
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 		</head>
 		<body>

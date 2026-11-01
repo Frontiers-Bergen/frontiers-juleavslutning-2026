@@ -182,8 +182,29 @@ func emojiVoteSSEGetURL(inviteKey string) string {
 }
 
 templ EmojiVoteWidget(inviteKey string) {
+	<style>
+		@layer features {
+			.reaction-bar {
+				display: flex;
+				justify-content: center;
+				flex: 1;
+				gap: 12px;
+				padding: 4px;
+
+				.emoji-balloon-button {
+					padding: 6px;
+					font-size: 18px;
+				}
+			}
+
+			/* Not nested: balloons are appended to <body>, outside the reaction bar (see the SSE handler above). */
+			emoji-balloon {
+				font-size: 18px;
+			}
+		}
+	</style>
 	<div
-		style="display: flex; justify-content: center; flex: 1; gap: 12px; padding: 4px;"
+		class="reaction-bar"
 		data-init={ emojiVoteSSEGetURL(inviteKey) }
 		data-on:click__stop={ emojiIncrementPostURL(inviteKey) }
 	>
