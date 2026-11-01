@@ -75,7 +75,7 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteK
 		{{ localTotal := sumCounts(localCounts) }}
 		{{ remoteTotal := sumCounts(remoteCounts) }}
 		{{ grandTotal := localTotal + remoteTotal }}
-		<div class="slide" style="display:flex; flex-direction:column; gap:1.25rem; width:100%; height:100%;">
+		<div class="slide" data-poll-results={ poll.Key } style="display:flex; flex-direction:column; gap:1.25rem; width:100%; height:100%;">
 			<div style="display:flex; flex-direction:column; gap:0.4rem;">
 				if poll.QuestionText != "" {
 					<h1 style="margin:0;">{ poll.QuestionText }</h1>
@@ -112,6 +112,8 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteK
 						}
 					}}
 					<div
+						data-option-key={ opt.Key }
+						data-vote-count={ fmt.Sprintf("%d", total) }
 						style={ fmt.Sprintf(
 						`display:flex; flex-direction:column; gap:0.75rem; padding:1rem; border-radius:18px; border:2px solid rgba(0,0,0,0.12); color: #1a1b26; background:white; box-shadow:0 8px 24px rgba(0,0,0,0.08);`,
 					) }
