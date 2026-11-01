@@ -119,7 +119,13 @@ Run them with `go tool task test`. `database_test.go` is a working example.
 
 - Stack: Go, templ, Datastar (SSE), embedded NATS JetStream KV for live updates, SQLite.
 - Group code by feature, not by technical role. A simple feature can be a single file; a feature with several related files gets its own folder.
+- Develop mobile first. Attendees use their phones as controllers, so every feature must work well on a small touch screen, one-handed.
+  The big screen is the shared stage; design for both, starting with the phone.
 - Styling is plain CSS. No Tailwind or other CSS frameworks; the project started from the northstar example and its Tailwind leftovers were removed on purpose.
+- Shared CSS (design tokens, element defaults, app layout) lives in `static/index.css`.
+  A feature's CSS lives in its `.templ` file, in a `<style>` block nested under the feature's root class (`.poll { ... }`), so features cannot break each other.
+  No inline styles, except to pass dynamic values as custom properties (`style="--share: 42%"`).
+  (Provisional: to be confirmed with Torstein before the CSS refactor is final.)
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
 - `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
   There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
