@@ -30,25 +30,62 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		logger.Info("no .env file loaded (this is fine in prod)", slog.String("error", err.Error()))
 	}
-	db, err := openDatabase("presentation.db")
+
+	config := appConfig{
+		DatabasePath:  "presentation.db",
+		LocalKey:      readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key"),
+		RemoteKey:     readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key"),
+		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
+	}
+
+	app, closeApp, err := newApp(context.Background(), logger, config)
 	if err != nil {
-		logger.Error("failed to open database", slog.String("error", err.Error()))
+		logger.Error("failed to start app", slog.String("error", err.Error()))
 		return
 	}
-	defer func() {
+	defer closeApp()
+
+	address := ":8080"
+	logger.Info("starting HTTP server", slog.String("address", address))
+
+	httpServerError := http.ListenAndServe(address, app)
+	if httpServerError != nil {
+		logger.Error("HTTP server error", slog.String("error", httpServerError.Error()))
+	}
+}
+
+type appConfig struct {
+	DatabasePath string
+	// NATSStoreDir is where JetStream keeps its data. Empty means the NATS default (a temp dir).
+	NATSStoreDir  string
+	LocalKey      string
+	RemoteKey     string
+	SessionSecret string
+}
+
+// newApp wires the whole application: database, embedded NATS, sessions and routes.
+// main and the HTTP tests both use it, so tests exercise the real router.
+// The embedded NATS server shuts down when ctx is cancelled; closeApp closes the database.
+func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app http.Handler, closeApp func(), err error) {
+	db, err := openDatabase(config.DatabasePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	closeDatabase := func() {
 		if err := db.Close(); err != nil {
 			logger.Error("failed to close database", slog.String("error", err.Error()))
 		}
+	}
+	defer func() {
+		if err != nil {
+			closeDatabase()
+		}
 	}()
-
-	localKey := readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key")
-	remoteKey := readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key")
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	sessionSecret := readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret")
-	sessionStore := sessions.NewCookieStore([]byte(sessionSecret))
+	sessionStore := sessions.NewCookieStore([]byte(config.SessionSecret))
 	sessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   int(24 * time.Hour / time.Second),
@@ -57,8 +94,7 @@ func main() {
 
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
-		logger.Error("failed to get free port for nats", slog.String("error", err.Error()))
-		return
+		return nil, nil, fmt.Errorf("failed to get free port for nats: %w", err)
 	}
 
 	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -73,33 +109,31 @@ func main() {
 		}
 	})
 
-	rootCtx := context.Background()
-
-	ns, err := embeddednats.New(rootCtx, embeddednats.WithNATSServerOptions(&natsserver.Options{
+	ns, err := embeddednats.New(ctx, embeddednats.WithNATSServerOptions(&natsserver.Options{
 		JetStream: true,
 		Port:      natsPort,
+		StoreDir:  config.NATSStoreDir,
 	}))
 	if err != nil {
-		panic(fmt.Sprintf("failed to start embedded nats server: %v", err))
+		return nil, nil, fmt.Errorf("failed to start embedded nats server: %w", err)
 	}
 
 	ebs, err := services.NewEmojiBalloonService(ns)
 	if err != nil {
-		logger.Error("failed to create emoji balloon service", slog.String("error", err.Error()))
-		return
+		return nil, nil, fmt.Errorf("failed to create emoji balloon service: %w", err)
 	}
 
 	nc, err := ns.Client()
 	if err != nil {
-		panic(fmt.Sprintf("failed to create nats client: %v", err))
+		return nil, nil, fmt.Errorf("failed to create nats client: %w", err)
 	}
 
 	js, err := jetstream.New(nc)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create jetstream context: %v", err))
+		return nil, nil, fmt.Errorf("failed to create jetstream context: %w", err)
 	}
 
-	kv, err := js.CreateOrUpdateKeyValue(rootCtx, jetstream.KeyValueConfig{
+	kv, err := js.CreateOrUpdateKeyValue(ctx, jetstream.KeyValueConfig{
 		Bucket:      "presentation",
 		Description: "Frontiers Meetup Presentation Bucket",
 		Compression: true,
@@ -107,24 +141,18 @@ func main() {
 		MaxBytes:    16 * 1024 * 1024,
 	})
 	if err != nil {
-		panic(fmt.Sprintf("failed to create or update key value store: %v", err))
+		return nil, nil, fmt.Errorf("failed to create or update key value store: %w", err)
 	}
 
 	pages.PresenterRoutes(router, sessionStore, logger)
 
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {
-		inviteRouter.Use(inviteKeyMiddleware(sessionStore, localKey, remoteKey, logger))
-		root.RootLayoutRoute(inviteRouter, db, sessionStore, kv, logger, localKey, remoteKey, ns, ebs)
+		inviteRouter.Use(inviteKeyMiddleware(sessionStore, config.LocalKey, config.RemoteKey, logger))
+		root.RootLayoutRoute(inviteRouter, db, sessionStore, kv, logger, config.LocalKey, config.RemoteKey, ns, ebs)
 	})
 
-	address := ":8080"
-	logger.Info("starting HTTP server", slog.String("address", address))
-
-	httpServerError := http.ListenAndServe(address, router)
-	if httpServerError != nil {
-		logger.Error("HTTP server error", slog.String("error", httpServerError.Error()))
-	}
+	return router, closeDatabase, nil
 }
 
 func readEnvOrDefault(logger *slog.Logger, name, fallback string) string {

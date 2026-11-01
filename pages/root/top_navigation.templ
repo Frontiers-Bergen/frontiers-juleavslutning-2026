@@ -8,6 +8,7 @@ import (
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -34,8 +35,14 @@ func SetCurrentSlideIndex(db *sql.DB, index int) error {
 
 // --- Routing (owned by TopNavigation) ---
 
-func TopNavigationRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue) {
+func TopNavigationRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, store sessions.Store) {
 	router.Post("/slides/set", func(w http.ResponseWriter, r *http.Request) {
+		// Attendees share the same invite URL as the presenter, so the URL alone proves nothing.
+		if !isPresenterFromSession(r, store) {
+			http.Error(w, "only the presenter can change slides", http.StatusForbidden)
+			return
+		}
+
 		indexStr := r.URL.Query().Get("index")
 		index, err := strconv.Atoi(indexStr)
 		if err != nil {

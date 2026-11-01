@@ -117,7 +117,7 @@ func RootLayoutRoute(
 			})
 
 			IncrementEmojiRoute(rootApiRouter, ebs)
-			TopNavigationRoutes(db, rootApiRouter, kv)
+			TopNavigationRoutes(db, rootApiRouter, kv, store)
 
 			// Poll feature routes (vote writes DB + broadcast update).
 			PollVoteRoutes(db, rootApiRouter, kv, store)

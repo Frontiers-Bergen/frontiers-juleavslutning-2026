@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -24,6 +25,10 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 	ctx := r.Context()
 
 	allKeys, err := kv.Keys(ctx)
+	if errors.Is(err, jetstream.ErrNoKeysFound) {
+		// Nobody has the deck open (fresh start, or every session expired with the bucket TTL).
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("failed to retrieve keys: %w", err)
 	}
