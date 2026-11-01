@@ -88,7 +88,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] BDD helper (`bdd/bdd.go`, from conorganizer) and first behavior tests (`database_test.go`)
 - [ ] Bring over conorganizer's `testutil/templtest` when the first template test needs it
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
-- [ ] Refactor the CSS
+- [ ] Refactor the CSS: `@layer tokens, base, layout` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, remove dead January classes
+- [ ] Confirm the CSS approach (CSS inside templ files) with Torstein (coldasice)
+- [ ] **Fix: any attendee can change the presenter's slide.** `POST /{inviteKey}/root/api/slides/set` does not check presenter mode, so anyone with the invite link can move the deck (curl or devtools). Start with a test.
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
 
