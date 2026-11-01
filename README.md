@@ -53,7 +53,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
-- [ ] Replace `agent_project.md` / `project_summary.md` with docs for the new purpose
+- [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] First example multiplayer game that shows the pattern end to end
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
@@ -73,8 +73,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [ ] Stop ignoring errors (`NewEmojiBalloonService`, `NewDemoHandler`, `http.Error` after SSE has started)
 - [ ] Read the session secret from env instead of the hardcoded `"session-secret"`
-- [ ] Remove leftover Todo-example code (`models/state.go`, Todo state in `helpers/nats_helpers.go`)
-- [ ] Remove unused slides that are not in the deck
+- [ ] Replace the Todo-example state (`models/state.go`) used as the broadcast payload in `helpers/nats_helpers.go`, and move that code out of the `helpers` package. It is not dead code: `BroadcastUpdate` drives every live update
+- [x] Remove unused slides that are not in the deck, and unreferenced images
 - [ ] Test setup based on conorganizer (`testutil/bdd`, `testutil/templtest`) and a first behavior test in given-when-then form
 - [ ] Refactor the CSS
 - [ ] Generate `schema.sql` from the database when tests run, like conorganizer (`task test` runs `sqlite3 <db> ".schema --indent --nosys" > schema.sql` before `go test ./...`).
