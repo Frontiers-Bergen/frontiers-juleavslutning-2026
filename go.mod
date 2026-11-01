@@ -1,4 +1,4 @@
-module github.com/Regncon/frontiers-meetup-january-2026
+module github.com/frontiers-bergen/frontiers-juleavslutning-2026
 
 go 1.25.4
 

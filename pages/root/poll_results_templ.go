@@ -129,7 +129,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div style=\"display:flex; gap:0.75rem; flex-wrap:wrap; align-items:baseline;\"><div style=\"font-size:2rem; font-weight:900; letter-spacing:-0.02em;\">Total: ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div style=\"display:none; gap:0.75rem; flex-wrap:wrap; align-items:baseline;\"><div style=\"font-size:2rem; font-weight:900; letter-spacing:-0.02em;\">Total: ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -193,7 +193,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 				}
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf(
-					`display:flex; flex-direction:column; gap:0.75rem; padding:1rem; border-radius:18px; border:2px solid rgba(0,0,0,0.12); background:white; box-shadow:0 8px 24px rgba(0,0,0,0.08);`,
+					`display:flex; flex-direction:column; gap:0.75rem; padding:1rem; border-radius:18px; border:2px solid rgba(0,0,0,0.12); color: #1a1b26; background:white; box-shadow:0 8px 24px rgba(0,0,0,0.08);`,
 				))
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/poll_results.templ`, Line: 117, Col: 6}
@@ -267,14 +267,14 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span> <span style=\"opacity:0.8;\">votes</span> <span style=\"opacity:0.75;\">(L ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span> <span style=\"opacity:0.8;\">votes</span> <span style=\"display:none; opacity:0.75;\">(L ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", local))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/poll_results.templ`, Line: 137, Col: 66}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/poll_results.templ`, Line: 137, Col: 80}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -287,7 +287,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", remote))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/poll_results.templ`, Line: 137, Col: 101}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/poll_results.templ`, Line: 137, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -316,7 +316,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div style=\"display:flex; flex-direction:column; gap:0.35rem;\"><div style=\"display:flex; justify-content:space-between; font-weight:800;\"><span style=\"opacity:0.85;\">Strength</span> <span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div style=\"display:flex; flex-direction:column; gap:0.35rem;\"><div style=\"display:flex; justify-content:space-between; font-weight:800;\"><span style=\"opacity:0;\">Strength</span> <span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -361,7 +361,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\"></div></div></div><div style=\"display:flex; justify-content:space-between; gap:0.75rem; font-weight:800; opacity:0.85;\"><span>Local ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\"></div></div></div><div style=\"display:none; justify-content:space-between; gap:0.75rem; font-weight:800; opacity:0.85;\"><span>Local ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -392,7 +392,7 @@ func PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKe
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div style=\"opacity:0.75; font-weight:700;\">Tip: local vs remote is per option (L/R), and “Strength” is relative to the current top option.</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div style=\"display:none; opacity:0.75; font-weight:700;\">Tip: local vs remote is per option (L/R), and “Strength” is relative to the current top option.</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

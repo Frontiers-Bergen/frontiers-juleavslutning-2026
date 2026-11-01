@@ -14,7 +14,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Regncon/frontiers-meetup-january-2026/components"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 )

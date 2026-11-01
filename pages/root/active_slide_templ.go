@@ -12,7 +12,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/Regncon/frontiers-meetup-january-2026/slides"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/slides"
 )
 
 type slideEntry struct {

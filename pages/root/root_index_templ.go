@@ -15,10 +15,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Regncon/frontiers-meetup-january-2026/components"
-	"github.com/Regncon/frontiers-meetup-january-2026/helpers"
-	"github.com/Regncon/frontiers-meetup-january-2026/services"
 	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
