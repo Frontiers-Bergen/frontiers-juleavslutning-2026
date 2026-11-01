@@ -34,10 +34,13 @@ func PresenterRoutes(router chi.Router, store sessions.Store, logger *slog.Logge
 			isPresenter := presenterEnabled(r, store, logger)
 			errorMessage := presenterErrorMessage(r)
 
-			components.BaseLayout(
+			renderErr := components.BaseLayout(
 				"Presenter mode",
 				PresenterPage(isPresenter, errorMessage),
 			).Render(ctx, w)
+			if renderErr != nil {
+				logger.Error("failed to render presenter page", slog.String("error", renderErr.Error()))
+			}
 		})
 
 		presenterRouter.Post("/login", func(w http.ResponseWriter, r *http.Request) {

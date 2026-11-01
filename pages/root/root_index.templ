@@ -51,10 +51,13 @@ func RootLayoutRoute(
 
 		isPresenter := isPresenterFromSession(r, store)
 
-		components.BaseLayout(
+		renderErr := components.BaseLayout(
 			"Frontiers Meetup",
 			rootPageFirstLoad(db, inviteKey, dataInit, isPresenter, sessionID, localKey, remoteKey),
 		).Render(ctx, w)
+		if renderErr != nil {
+			logger.Error("failed to render root page", slog.String("error", renderErr.Error()))
+		}
 	})
 
 	router.Route("/root", func(rootRouter chi.Router) {
@@ -63,12 +66,13 @@ func RootLayoutRoute(
 				logger.Info("Root API SSE connected")
 
 				ctx := r.Context()
+				// NewSSE sends the response headers immediately. From here on, failures can only be
+				// logged and end the stream; http.Error would write a second, ignored header.
 				sse := datastar.NewSSE(w, r)
 
 				sessionID, pageState, err := helpers.LoadOrCreateState(w, r, kv, store)
 				if err != nil {
 					logger.Error("Error loading or creating state:", slog.String("error", err.Error()))
-					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
@@ -76,16 +80,13 @@ func RootLayoutRoute(
 				isPresenter := isPresenterFromSession(r, store)
 
 				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
-					_ = sse.ConsoleError(err)
 					logger.Error("Error sending initial page patch:", slog.String("error", err.Error()))
-					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
 					logger.Error("Error setting up KV watcher:", slog.String("error", err.Error()))
-					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 				defer watcher.Stop()
@@ -103,12 +104,12 @@ func RootLayoutRoute(
 						}
 
 						if err := json.Unmarshal(entry.Value(), pageState); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							logger.Error("Error decoding page state:", slog.String("error", err.Error()))
 							return
 						}
 
 						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
-							_ = sse.ConsoleError(err)
+							logger.Error("Error sending page patch:", slog.String("error", err.Error()))
 							return
 						}
 					}
