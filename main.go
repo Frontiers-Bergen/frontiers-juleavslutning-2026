@@ -11,7 +11,6 @@ import (
 
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/handler"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
@@ -89,13 +88,6 @@ func main() {
 		logger.Error("failed to create emoji balloon service", slog.String("error", err.Error()))
 		return
 	}
-	demoHandler, err := handler.NewDemoHandler(ns, ebs)
-	if err != nil {
-		logger.Error("failed to create demo handler", slog.String("error", err.Error()))
-		return
-	}
-	router.Get("/demo", demoHandler.DemoRoute)
-	router.Get("/demo/sse", demoHandler.DemoSSE)
 
 	nc, err := ns.Client()
 	if err != nil {
