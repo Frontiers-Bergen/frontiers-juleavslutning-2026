@@ -107,6 +107,8 @@ func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
 Tests exist to let agents change the code safely, not to reach a coverage number.
 Prefer tests at feature boundaries with real dependencies (a real SQLite file in `t.TempDir()`, real embedded NATS) over mocks.
 Run them with `go tool task test`. `database_test.go` is a working example.
+HTTP-level tests use the harness in `app_test.go`: `startTestApp` runs the real router from `newApp` with a fresh database,
+and each attendee or presenter is an `http.Client` with its own cookies. `slide_control_test.go` is a working example.
 
 ## Go
 
