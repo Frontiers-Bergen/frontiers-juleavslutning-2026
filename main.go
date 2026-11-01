@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/delaneyj/toolbelt"
+	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/handler"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
-	"github.com/delaneyj/toolbelt"
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
@@ -36,7 +36,11 @@ func main() {
 		logger.Error("failed to open database", slog.String("error", err.Error()))
 		return
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("failed to close database", slog.String("error", err.Error()))
+		}
+	}()
 
 	localKey := readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key")
 	remoteKey := readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key")
@@ -69,7 +73,6 @@ func main() {
 			logger.Error("failed to render NeedKeyPage", slog.String("error", err.Error()))
 		}
 	})
-
 
 	rootCtx := context.Background()
 

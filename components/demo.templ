@@ -4,13 +4,13 @@ import "fmt"
 
 templ DemoNetworkTabHeader() {
 	<div style="width: 100%; display: flex; justify-content: center;">
-		<img src="/static/network-tab.png" />
+		<img src="/static/network-tab.png"/>
 	</div>
 }
 
 templ WebComponentScreenshot() {
 	<div style="">
-		<img src="/static/webcomponent.png" />
+		<img src="/static/webcomponent.png"/>
 	</div>
 }
 
@@ -23,6 +23,6 @@ data: elements <emoji-balloon emoji="%s"></emoji-balloon>`, emoji)
 
 templ DemoEmojBalloon(emoji string) {
 	<div style="width: 100%; background: #16161D; padding: 0px 12px;">
-	<pre><code>{sseEventContent(emoji)}</code></pre>
+		<pre><code>{ sseEventContent(emoji) }</code></pre>
 	</div>
 }

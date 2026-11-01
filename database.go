@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 
 	_ "modernc.org/sqlite"
@@ -26,13 +27,11 @@ func openDatabase(path string) (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, errors.Join(fmt.Errorf("failed to ping database: %w", err), db.Close())
 	}
 
 	if _, err := db.Exec(schemaSQL); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to apply schema.sql: %w", err)
+		return nil, errors.Join(fmt.Errorf("failed to apply schema.sql: %w", err), db.Close())
 	}
 
 	return db, nil
