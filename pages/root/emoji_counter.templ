@@ -1,103 +1,180 @@
 package root
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-
-	"encoding/json"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
+	"github.com/nats-io/nats.go"
 	"github.com/starfederation/datastar-go/datastar"
 )
 
-func IncrementEmojiRoute(router chi.Router, ebs *services.EmojiBalloonService) {
+// Emoji reactions: every button smash deserves to count (see the Why in README.md).
+//
+// Counts live in the SQLite table emoji_counter and are incremented in SQL, so concurrent smashes
+// cannot overwrite each other. Every smash is also published as its own NATS message on
+// emojiSmashedSubject; each connected reaction bar receives every message and shows one balloon
+// per smash. Do not replace this with a KV watcher: watchers deliver the latest value, which
+// merges bursts of smashes into one update.
 
-	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
+const emojiSmashedSubject = "reactions.emoji.smashed"
 
-		sse := datastar.NewSSE(w, r)
-		ctx := r.Context()
+// reactionEmoji is one button in the reaction bar. SignalName is the Datastar signal holding its count.
+type reactionEmoji struct {
+	Emoji      string
+	SignalName string
+}
 
-		watcher, err := ebs.WatchUpdates(ctx)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+var reactionEmojis = []reactionEmoji{
+	{Emoji: "👍", SignalName: "ThumbsUpEmojiCount"},
+	{Emoji: "🎉", SignalName: "ConfettiEmojiCount"},
+	{Emoji: "😂", SignalName: "CryLaughEmojiCount"},
+	{Emoji: "🔥", SignalName: "FireEmojiCount"},
+	{Emoji: "❤️", SignalName: "HeartEmojiCount"},
+}
+
+func isReactionEmoji(emoji string) bool {
+	for _, reaction := range reactionEmojis {
+		if reaction.Emoji == emoji {
+			return true
 		}
+	}
+	return false
+}
 
-		fmt.Println(ebs.Counter)
-		thumbs_up := ebs.Counter.ThumbsUpEmojiCount
-		confetti := ebs.Counter.ConfettiEmojiCount
-		cry_laugh := ebs.Counter.CryLaughEmojiCount
-		fire := ebs.Counter.FireEmojiCount
-		heart := ebs.Counter.HeartEmojiCount
+func incrementEmojiCount(db *sql.DB, emoji string) error {
+	_, err := db.Exec(`
+		INSERT INTO emoji_counter (emoji, click_count) VALUES (?, 1)
+		ON CONFLICT (emoji) DO UPDATE SET click_count = click_count + 1
+	`, emoji)
+	if err != nil {
+		return fmt.Errorf("failed to increment count for %s: %w", emoji, err)
+	}
+	return nil
+}
+
+// emojiCountSignals returns every reaction's count keyed by its signal name, with 0 for emojis nobody has smashed yet.
+func emojiCountSignals(db *sql.DB) (signals map[string]int64, err error) {
+	signalNameByEmoji := map[string]string{}
+	signals = map[string]int64{}
+	for _, reaction := range reactionEmojis {
+		signalNameByEmoji[reaction.Emoji] = reaction.SignalName
+		signals[reaction.SignalName] = 0
+	}
+
+	rows, err := db.Query(`SELECT emoji, click_count FROM emoji_counter`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read emoji counts: %w", err)
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close emoji count rows: %w", closeErr))
+		}
+	}()
+
+	for rows.Next() {
+		var emoji string
+		var count int64
+		if err := rows.Scan(&emoji, &count); err != nil {
+			return nil, fmt.Errorf("failed to scan emoji count: %w", err)
+		}
+		if signalName, known := signalNameByEmoji[emoji]; known {
+			signals[signalName] = count
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read emoji counts: %w", err)
+	}
+	return signals, nil
+}
+
+func patchEmojiCounts(sse *datastar.ServerSentEventGenerator, db *sql.DB) error {
+	signals, err := emojiCountSignals(db)
+	if err != nil {
+		return err
+	}
+	return sse.MarshalAndPatchSignals(signals)
+}
+
+func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *slog.Logger) {
+	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
+		// Subscribe before sending the initial counts, so no smash falls between the two.
+		// The buffer absorbs bursts; if a phone still falls behind, NATS drops its oldest
+		// balloons, but counts stay correct because they are read from the database.
+		smashes := make(chan *nats.Msg, 1024)
+		subscription, err := nc.ChanSubscribe(emojiSmashedSubject, smashes)
+		if err != nil {
+			logger.Error("failed to subscribe to emoji smashes", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer func() {
+			if err := subscription.Unsubscribe(); err != nil {
+				logger.Error("failed to unsubscribe from emoji smashes", slog.String("error", err.Error()))
+			}
+		}()
+
+		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
+		sse := datastar.NewSSE(w, r)
+		if err := patchEmojiCounts(sse, db); err != nil {
+			logger.Error("failed to send initial emoji counts", slog.String("error", err.Error()))
+			return
+		}
 
 		for {
 			select {
-			case <-ctx.Done():
+			case <-r.Context().Done():
 				return
-			case <-watcher.Updates():
-				fmt.Println("emoji_counter.templ")
-				b, err := json.Marshal(ebs.Counter)
-
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			case smash := <-smashes:
+				if err := patchEmojiCounts(sse, db); err != nil {
+					logger.Error("failed to send emoji counts", slog.String("error", err.Error()))
+					return
 				}
-
-				err = sse.PatchSignals(b)
-
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-				}
-
-				emoji := ""
-
-				if thumbs_up != ebs.Counter.ThumbsUpEmojiCount {
-					thumbs_up = ebs.Counter.ThumbsUpEmojiCount
-					emoji = "👍"
-				}
-				if confetti != ebs.Counter.ConfettiEmojiCount {
-					confetti = ebs.Counter.ConfettiEmojiCount
-					emoji = "🎉"
-				}
-				if cry_laugh != ebs.Counter.CryLaughEmojiCount {
-					cry_laugh = ebs.Counter.CryLaughEmojiCount
-					emoji = "😂"
-				}
-				if fire != ebs.Counter.FireEmojiCount {
-					fire = ebs.Counter.FireEmojiCount
-					emoji = "🔥"
-				}
-				if heart != ebs.Counter.HeartEmojiCount {
-					heart = ebs.Counter.HeartEmojiCount
-					emoji = "❤️"
-				}
-
-				err = sse.PatchElements(fmt.Sprintf(`<emoji-balloon emoji="%s"></emoji-balloon>`, emoji), datastar.WithSelector("body"), datastar.WithModeAppend())
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				// The emoji was checked against reactionEmojis before it was published.
+				balloon := fmt.Sprintf(`<emoji-balloon emoji="%s"></emoji-balloon>`, string(smash.Data))
+				if err := sse.PatchElements(balloon, datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
+					logger.Error("failed to send emoji balloon", slog.String("error", err.Error()))
+					return
 				}
 			}
 		}
 	})
 
 	router.Post("/emoji/increment", func(w http.ResponseWriter, r *http.Request) {
-		type Signals struct {
-			Emoji string
+		var signals struct {
+			Emoji string `json:"emoji"`
 		}
-		var signals Signals
-		err := datastar.ReadSignals(r, &signals)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if err := datastar.ReadSignals(r, &signals); err != nil {
+			http.Error(w, "invalid signals", http.StatusBadRequest)
+			return
+		}
+		if !isReactionEmoji(signals.Emoji) {
+			http.Error(w, "unknown emoji", http.StatusBadRequest)
+			return
 		}
 
-		err = ebs.AddBalloon(r.Context(), signals.Emoji)
-		if err != nil {
+		if err := incrementEmojiCount(db, signals.Emoji); err != nil {
+			logger.Error("failed to count emoji smash", slog.String("error", err.Error()))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
 		}
+		if err := nc.Publish(emojiSmashedSubject, []byte(signals.Emoji)); err != nil {
+			logger.Error("failed to publish emoji smash", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
 func emojiIncrementPostURL(inviteKey string) string {
-	return fmt.Sprintf("@post('/%s/root/api/emoji/increment')", inviteKey)
+	// Datastar cancels an element's in-flight request when the next one starts. For a button meant
+	// to be smashed, that drops clicks, so cancellation is disabled.
+	return fmt.Sprintf("@post('/%s/root/api/emoji/increment',{requestCancellation: 'disabled'})", inviteKey)
 }
 
 func emojiVoteSSEGetURL(inviteKey string) string {

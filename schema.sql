@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS poll_votes (
   PRIMARY KEY (invite_key, poll_key, session_id)
 );
 
--- Not used yet: emoji counts currently live in a NATS KV bucket with a 1 hour TTL.
--- See the emoji counting fix in the README checklist.
+-- Emoji reaction counts. Incremented in SQL so concurrent smashes cannot overwrite each other
+-- (pages/root/emoji_counter.templ). A row appears on an emoji's first smash.
 CREATE TABLE IF NOT EXISTS emoji_counter (
   emoji TEXT PRIMARY KEY,
   click_count INTEGER NOT NULL DEFAULT 0
