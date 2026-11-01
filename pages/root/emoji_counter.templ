@@ -107,7 +107,6 @@ func emojiVoteSSEGetURL(inviteKey string) string {
 templ EmojiVoteWidget(inviteKey string) {
 	<div
 		style="display: flex; justify-content: center; flex: 1; gap: 12px; padding: 4px;"
-		class="bottom-0 left-0 w-full flex justify-center flex flex-1 items-center"
 		data-init={ emojiVoteSSEGetURL(inviteKey) }
 		data-on:click__stop={ emojiIncrementPostURL(inviteKey) }
 	>

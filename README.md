@@ -88,7 +88,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
 - [ ] Refactor the CSS
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
-- [ ] Setup styling (carried over — `gotailwind` is a tool dependency but unused?)
+- [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
 
 ### Features (AhaSlides-inspired)
 

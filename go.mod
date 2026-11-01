@@ -7,7 +7,6 @@ tool (
 	github.com/air-verse/air
 	github.com/go-delve/delve/cmd/dlv
 	github.com/go-task/task/v3/cmd/task
-	github.com/hookenz/gotailwind/v4
 )
 
 require (
@@ -120,7 +119,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-getter v1.8.9 // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
-	github.com/hookenz/gotailwind/v4 v4.1.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
