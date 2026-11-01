@@ -71,6 +71,12 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Code health
 
+- [ ] **Fix: emoji smashes can be lost — the very bug this app exists to fix.**
+      `AddBalloon` (`services/emoji_counter_service.go`) increments a shared struct from concurrent requests without locking, so simultaneous smashes overwrite each other.
+      The SSE handlers show one balloon per KV update, not per click, so bursts of smashes are visually debounced.
+      Counts live in a NATS KV bucket with a 1 hour TTL; the `emoji_counter` table in `schema.sql` is unused.
+      Start with a test: N concurrent smashes give a count of N.
+
 - [x] Stop ignoring errors in `main.go`, the demo handler and the root/presenter pages (`http.Error` after SSE has started)
 - [ ] Stop ignoring errors in templates (`{{ x, _ := GetCurrentSlideIndex(db) }}`); needs data loaded before rendering — part of the architecture refactor
 - [ ] Clean up the emoji SSE handlers (`pages/root/emoji_counter.templ`, `handler/handler.go`) together with the emoji counting fix
