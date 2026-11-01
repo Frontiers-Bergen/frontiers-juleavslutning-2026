@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/delaneyj/toolbelt"
+	"github.com/delaneyj/toolbelt/id"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/models"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
@@ -110,15 +110,15 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 		return "", fmt.Errorf("failed to get session: %w", err)
 	}
 
-	id, ok := sess.Values["id"].(string)
-	if !ok || id == "" {
-		id = toolbelt.NextEncodedID()
-		sess.Values["id"] = id
+	sessionID, ok := sess.Values["id"].(string)
+	if !ok || sessionID == "" {
+		sessionID = id.NextEncodedID()
+		sess.Values["id"] = sessionID
 	}
 
 	if err := sess.Save(r, w); err != nil {
 		return "", fmt.Errorf("failed to save session: %w", err)
 	}
 
-	return id, nil
+	return sessionID, nil
 }
