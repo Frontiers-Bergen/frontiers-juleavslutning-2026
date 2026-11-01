@@ -35,11 +35,13 @@ Forked from the January 2026 meetup deck ("Next.js + Firebase vs Go + Datastar")
 
 ## Checklist
 
+Order of work: decide the name, then tidy first (refactoring and cleanup), then new features.
+
 ### Before the workshop (must have by 12 Nov)
 
 - [ ] Decide the project name
 - [x] Create the public GitHub repository: [frontiers-bergen/frontiers-november-2026](https://github.com/frontiers-bergen/frontiers-november-2026)
-- [ ] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
+- [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
 - [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
 - [ ] Rename Go module and titles away from `frontiers-meetup-january-2026`
 - [ ] Remove `presentation.db*` from git and un-comment the ignore rules
@@ -91,6 +93,10 @@ Forked from the January 2026 meetup deck ("Next.js + Firebase vs Go + Datastar")
 - [ ] Button-mash reindeer race
 - [ ] Snowball fight
 - [ ] Hidden easter eggs
+
+### To discuss later
+
+- [ ] Reconnecting without a password. Links, especially on Android, often open in a temporary in-app browser session instead of the full browser, so the session cookie is lost. Maybe store a token in local storage?
 
 ### To investigate (spike before committing)
 
