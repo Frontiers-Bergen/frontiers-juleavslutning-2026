@@ -75,20 +75,23 @@ A test should keep passing when implementation details change and the behavior s
 Write tests in given-when-then form so they read from intent to verification:
 
 - Start each test with three lines of BDD metadata describing the test in plain words: Given some initial context, When an event occurs, Then the expected outcome.
-  Use the project's BDD helper when it has one; otherwise use three comment lines.
+  Use the project's BDD helper, `bdd.Behavior` in `bdd/bdd.go`. The metadata is written in English.
 - Split the body into three visible sections: `// Given`, `// When`, `// Then`.
 - Start the Given section with the expected result, so the test's purpose is clear before the setup details.
 - Keep each test to one behavior and give it a specific name. Split creation, idempotency, validation, and error cases into separate tests.
 - Move noisy setup and repeated assertions into local test helpers when that makes the test read like behavior.
 
 ```go
-// Given a poll nobody has voted on.
-// When the results are counted.
-// Then every option has zero votes.
 func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a poll nobody has voted on.",
+		When:  "When the results are counted.",
+		Then:  "Then every option has zero votes.",
+	})
+
 	// Given
 	expected := map[string]int{"yes": 0, "no": 0}
-	db := createTestDatabase(t)
+	db := openTestDatabase(t, filepath.Join(t.TempDir(), "presentation.db"))
 	poll := createPoll(t, db, "yes", "no")
 
 	// When
@@ -98,6 +101,10 @@ func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
 	assertVoteCounts(t, expected, actual)
 }
 ```
+
+Tests exist to let agents change the code safely, not to reach a coverage number.
+Prefer tests at feature boundaries with real dependencies (a real SQLite file in `t.TempDir()`, real embedded NATS) over mocks.
+Run them with `go tool task test`. `database_test.go` is a working example.
 
 ## Go
 
