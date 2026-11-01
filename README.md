@@ -20,6 +20,7 @@ Every button smash deserves to count.
 - Showing off the stack or any specific technology.
 - Multi-tenancy, accounts or logins.
 - Scaling beyond one room plus remote viewers.
+- Exporting ideas or feedback. It happens once; we read it straight from the database after the event.
 
 ## Workshop
 
@@ -37,7 +38,9 @@ Forked from the January 2026 meetup deck ("Next.js + Firebase vs Go + Datastar")
 ### Before the workshop (must have by 12 Nov)
 
 - [ ] Decide the project name
-- [ ] Create the public GitHub repository under Frontiers and push (done by someone with access; we work locally until then)
+- [x] Create the public GitHub repository: [frontiers-bergen/frontiers-november-2026](https://github.com/frontiers-bergen/frontiers-november-2026)
+- [ ] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
+- [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
 - [ ] Rename Go module and titles away from `frontiers-meetup-january-2026`
 - [ ] Remove `presentation.db*` from git and un-comment the ignore rules
 - [ ] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file
@@ -52,6 +55,11 @@ Forked from the January 2026 meetup deck ("Next.js + Firebase vs Go + Datastar")
 - [ ] First example multiplayer game that shows the pattern end to end
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard
+
+### At and after the juleavslutning
+
+- [ ] Sound: Gerhard has a portable system (venue not confirmed yet)
+- [ ] Back up the production database afterwards; ideas and feedback are analysed from it
 - [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen
 - [ ] Slides written in markdown, rendered as part of the existing build (see `MdToHTML` in conorganizer)
 
