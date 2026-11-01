@@ -118,7 +118,11 @@ func openTestDatabase(t *testing.T, path string) *sql.DB {
 	if err != nil {
 		t.Fatalf("openDatabase(%q) failed: %v", path, err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("failed to close database: %v", err)
+		}
+	})
 	return db
 }
 
@@ -142,7 +146,11 @@ func tableNames(t *testing.T, db *sql.DB) []string {
 	if err != nil {
 		t.Fatalf("failed to list tables: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			t.Errorf("failed to close rows: %v", err)
+		}
+	}()
 
 	names := []string{}
 	for rows.Next() {

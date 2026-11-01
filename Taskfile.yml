@@ -45,6 +45,30 @@ tasks:
     cmds:
       - go test ./...
 
+  fmt:
+    cmds:
+      - gofmt -w .
+      - go tool templ fmt -log-level error .
+
+  # Everything a pull request must pass. CI runs the same task.
+  # golangci-lint is not a go tool dependency (upstream advises against it); install it separately.
+  check:
+    deps:
+      - build:templ
+    cmds:
+      - |
+        unformatted="$(gofmt -l .)"
+        if [ -n "$unformatted" ]; then
+          echo "gofmt needed, run: go tool task fmt" >&2
+          echo "$unformatted" >&2
+          exit 1
+        fi
+      - go tool templ fmt -fail -log-level error .
+      - go vet ./...
+      - go fix -diff ./...
+      - golangci-lint run ./...
+      - go test ./...
+
   default:
     cmds:
       - task: start

@@ -7,14 +7,14 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
-	"github.com/delaneyj/toolbelt/embeddednats"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 )
 
 const presenterSessionName = "presenter-auth"

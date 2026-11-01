@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"encoding/json"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/starfederation/datastar-go/datastar"
-	"encoding/json"
 )
 
 func IncrementEmojiRoute(router chi.Router, ebs *services.EmojiBalloonService) {
-	
+
 	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
 
 		sse := datastar.NewSSE(w, r)
@@ -32,7 +32,7 @@ func IncrementEmojiRoute(router chi.Router, ebs *services.EmojiBalloonService) {
 
 		for {
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				return
 			case <-watcher.Updates():
 				fmt.Println("emoji_counter.templ")
@@ -50,23 +50,23 @@ func IncrementEmojiRoute(router chi.Router, ebs *services.EmojiBalloonService) {
 
 				emoji := ""
 
-				if thumbs_up != ebs.Counter.ThumbsUpEmojiCount { 
+				if thumbs_up != ebs.Counter.ThumbsUpEmojiCount {
 					thumbs_up = ebs.Counter.ThumbsUpEmojiCount
 					emoji = "👍"
 				}
-				if confetti != ebs.Counter.ConfettiEmojiCount { 
+				if confetti != ebs.Counter.ConfettiEmojiCount {
 					confetti = ebs.Counter.ConfettiEmojiCount
 					emoji = "🎉"
 				}
-				if cry_laugh != ebs.Counter.CryLaughEmojiCount { 
+				if cry_laugh != ebs.Counter.CryLaughEmojiCount {
 					cry_laugh = ebs.Counter.CryLaughEmojiCount
 					emoji = "😂"
 				}
-				if fire != ebs.Counter.FireEmojiCount { 
+				if fire != ebs.Counter.FireEmojiCount {
 					fire = ebs.Counter.FireEmojiCount
 					emoji = "🔥"
 				}
-				if heart != ebs.Counter.HeartEmojiCount { 
+				if heart != ebs.Counter.HeartEmojiCount {
 					heart = ebs.Counter.HeartEmojiCount
 					emoji = "❤️"
 				}
@@ -105,9 +105,11 @@ func emojiVoteSSEGetURL(inviteKey string) string {
 }
 
 templ EmojiVoteWidget(inviteKey string) {
-	<div style="display: flex; justify-content: center; flex: 1; gap: 12px; padding: 4px;" class="bottom-0 left-0 w-full flex justify-center flex flex-1 items-center"
+	<div
+		style="display: flex; justify-content: center; flex: 1; gap: 12px; padding: 4px;"
+		class="bottom-0 left-0 w-full flex justify-center flex flex-1 items-center"
 		data-init={ emojiVoteSSEGetURL(inviteKey) }
-		data-on:click__stop={ emojiIncrementPostURL(inviteKey)}
+		data-on:click__stop={ emojiIncrementPostURL(inviteKey) }
 	>
 		<button class="emoji-balloon-button" data-on:click="$emoji='👍';">
 			<span data-text="$ThumbsUpEmojiCount"></span>
@@ -129,5 +131,5 @@ templ EmojiVoteWidget(inviteKey string) {
 			<span data-text="$HeartEmojiCount"></span>
 			❤️
 		</button>
-	</div>	
+	</div>
 }
