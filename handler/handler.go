@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Regncon/frontiers-meetup-january-2026/components"
-	"github.com/Regncon/frontiers-meetup-january-2026/pages"
-	"github.com/Regncon/frontiers-meetup-january-2026/services"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/starfederation/datastar-go/datastar"
 )

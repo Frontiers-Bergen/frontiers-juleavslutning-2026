@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"encoding/json"
-	"github.com/Regncon/frontiers-meetup-january-2026/services"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/services"
 	"github.com/starfederation/datastar-go/datastar"
 )
 

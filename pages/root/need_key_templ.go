@@ -8,7 +8,7 @@ package root
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/Regncon/frontiers-meetup-january-2026/components"
+import "github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
 
 func NeedKeyPage() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

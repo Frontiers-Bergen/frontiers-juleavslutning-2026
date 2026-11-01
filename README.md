@@ -43,7 +43,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Rename the repo to `frontiers-juleavslutning-2026` (explicit for developers; the fun app name is decided separately)
 - [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
 - [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
-- [ ] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026` and titles away from `frontiers-meetup-january-2026`
+- [x] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026`
 - [ ] Remove `presentation.db*` from git and un-comment the ignore rules
 - [ ] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file
 - [ ] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`

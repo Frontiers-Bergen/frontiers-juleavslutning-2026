@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Regncon/frontiers-meetup-january-2026/models"
 	"github.com/delaneyj/toolbelt"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/models"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 )
