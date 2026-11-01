@@ -11,7 +11,7 @@ The goal while coding is to create a maintainable, high-quality solution that is
 - Aim for low coupling, high cohesion and separation of concerns. Code that changes together should stay together.
 - Avoid adding new dependencies without a clear benefit.
 - Prefer clear names, straightforward control flow, and familiar project conventions.
-- Do not add accidental complexity without discussing it with the user first. Complexity is our enemy.
+- Complexity is our enemy. Avoid accidental complexity.
 - Be pragmatic. If the rules conflict, use your judgment to decide which is more important for the current change.
 
 ### Abstraction and duplication
@@ -19,10 +19,39 @@ The goal while coding is to create a maintainable, high-quality solution that is
 Do not prematurely abstract. Only share code when it represents the same underlying concept or business rule.
 Never duplicate a business rule; duplicate incidental code freely until the third copy (Martin Fowler's rule of three).
 
+### Avoid primitive obsession
+
+Give domain concepts their own types instead of passing raw strings and ints around.
+A named type (`type InviteKey string`, `type PollKey string`, `type SessionID string`) lets the compiler catch mixed-up arguments,
+gives the concept a home for its rules, and makes function signatures read like the domain.
+Parse and validate at the boundary (HTTP request, database row) and pass the typed value inward.
+Use a named type when a value has rules or is easily confused with another value of the same primitive type; do not wrap values that are just data.
+
 ### Small changes
 
 Strive for small, cohesive changes. Solve one problem completely and keep unrelated cleanup separate.
 Small changes are easier to review, understand, and roll back. Work towards the smallest coherent change.
+
+## Working with the user
+
+- First inspect the relevant code and tests, then discuss.
+- Ask clarifying questions, or interview the user, when the request is unclear.
+- Always share your thoughts and recommendations.
+- Challenge the user's assumptions when you see a better approach.
+- Do not over-engineer. Discuss with the user before adding accidental complexity.
+
+## Pull request workflow
+
+Every feature follows three steps:
+
+1. **Tidy first.** Before adding the feature, look at the code it will touch. If a refactor or improvement makes the feature easier to add, do that first, without changing behavior.
+2. **Add the feature.** The behavior change, with tests.
+3. **Refactor before finalizing.** Clean up what adding the feature revealed, again without changing behavior.
+
+Keep structural changes (tidying, refactoring) and behavior changes apart so each can be reviewed on its own terms.
+For small tidyings, separate commits in one pull request are enough.
+When a step is big enough to deserve its own review, use stacked pull requests (GitHub stacked PRs, `gh stack` CLI extension): each step is one PR based on the previous, merged bottom-up.
+Skip steps that are not needed; an empty tidy or refactor step is fine.
 
 ## Comments and documentation
 
@@ -85,8 +114,8 @@ func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
 - Schema changes belong in `schema.sql`; never edit the runtime database file.
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
-- The event is called **juleavslutning** in code and docs. Do not use "julebord".
-- Events are run in English, so user-facing text and code are in English.
+- Domain terms are listed in `domain_dictionary.md` and are used unchanged everywhere: code, database, UI and docs.
+  Everything else is in English. Frontiers runs its events in English, so the app is English only (no bilingual frontend).
 
 ## Generated files
 

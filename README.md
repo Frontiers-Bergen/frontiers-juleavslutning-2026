@@ -52,6 +52,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Update Go (go.mod says 1.25.4) and dependencies (templ, datastar-go, nats)
 - [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
+- [x] Add `domain_dictionary.md` with the project's domain terms
 - [ ] Replace `agent_project.md` / `project_summary.md` with docs for the new purpose
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] First example multiplayer game that shows the pattern end to end
@@ -76,6 +77,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Remove unused slides that are not in the deck
 - [ ] Test setup based on conorganizer (`testutil/bdd`, `testutil/templtest`) and a first behavior test in given-when-then form
 - [ ] Refactor the CSS
+- [ ] Generate `schema.sql` from the database when tests run, like conorganizer (`task test` runs `sqlite3 <db> ".schema --indent --nosys" > schema.sql` before `go test ./...`).
+      Keeps `schema.sql` from drifting (today it lacks `poll_votes`). Conflicts with "apply `schema.sql` at startup" — decide together in the database topic.
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
 - [ ] Setup styling (carried over — `gotailwind` is a tool dependency but unused?)
 
@@ -96,6 +99,13 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Button-mash reindeer race
 - [ ] Snowball fight
 - [ ] Hidden easter eggs
+
+### Later: architecture and design
+
+- [ ] Refactor the architecture and design once a few more features exist and the shape of the project shows.
+      Use a Reverse Conway's Law approach: design the code structure to match how we want people to work.
+      Example: many workshop attendees build mini-games in parallel and PRs are merged live, so each game should be a self-contained feature folder,
+      and shared hotspots like the slide list in `pages/root/active_slide.templ` should not force everyone to edit the same lines.
 
 ### To discuss later
 
