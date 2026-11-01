@@ -49,8 +49,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
 - [ ] One-command setup for attendees (`task start`), documented in this README
 - [ ] Verify a fresh clone works on Linux, macOS and Windows
-- [ ] Update Go (go.mod says 1.25.4) and dependencies (templ, datastar-go, nats)
-- [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go
+- [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
+- [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go v1.2.2 — needs a manual check in the browser
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
