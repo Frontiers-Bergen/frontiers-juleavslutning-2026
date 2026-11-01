@@ -1,4 +1,4 @@
-# Frontiers Bergen — Christmas Meetup App
+# Frontiers Juleavslutning 2026
 
 Live, multiplayer audience app for Frontiers Bergen.
 
@@ -35,15 +35,15 @@ Forked from the January 2026 meetup deck ("Next.js + Firebase vs Go + Datastar")
 
 ## Checklist
 
-Order of work: decide the name, then tidy first (refactoring and cleanup), then new features.
+Order of work: decide the repo name, then tidy first (refactoring and cleanup), then new features.
 
 ### Before the workshop (must have by 12 Nov)
 
-- [ ] Decide the project name
-- [x] Create the public GitHub repository: [frontiers-bergen/frontiers-november-2026](https://github.com/frontiers-bergen/frontiers-november-2026)
+- [x] Create the public GitHub repository: [frontiers-bergen/frontiers-juleavslutning-2026](https://github.com/frontiers-bergen/frontiers-juleavslutning-2026)
+- [x] Rename the repo to `frontiers-juleavslutning-2026` (explicit for developers; the fun app name is decided separately)
 - [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
 - [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
-- [ ] Rename Go module and titles away from `frontiers-meetup-january-2026`
+- [ ] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026` and titles away from `frontiers-meetup-january-2026`
 - [ ] Remove `presentation.db*` from git and un-comment the ignore rules
 - [ ] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file
 - [ ] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
@@ -57,6 +57,9 @@ Order of work: decide the name, then tidy first (refactoring and cleanup), then 
 - [ ] First example multiplayer game that shows the pattern end to end
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard
+- [ ] App name vote at the workshop: a poll with 3–4 candidates, the winner becomes the app name shown on the big screen and phones.
+      Candidates so far: Rage Against the Debounce, Last Christmas I Gave You My Clicks, It's Tiiime, Smash the Halls.
+      The name must make people laugh out loud, not just chuckle.
 
 ### At and after the juleavslutning
 
