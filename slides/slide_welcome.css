@@ -1,0 +1,7 @@
+/* Welcome slide (slide_welcome.templ). Loaded into @layer features via /feature-styles.css. */
+.welcome {
+	.welcome-logo {
+		height: 4rem;
+		width: auto;
+	}
+}

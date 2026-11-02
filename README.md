@@ -88,7 +88,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
 - [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
 - [ ] Mobile first pass: on phones the poll options break words mid-word ("Christ mas") and the badge column wastes space
-- [ ] Confirm the CSS approach (CSS inside templ files) with Torstein (coldasice)
+- [ ] Confirm the CSS approach with Torstein (coldasice): feature CSS in `.css` files next to the `.templ` files, served by `feature_styles.go` (prototype PR)
 - [x] **Fix: any attendee can change the presenter's slide.** `POST /{inviteKey}/root/api/slides/set` does not check presenter mode, so anyone with the invite link can move the deck (curl or devtools). Start with a test.
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS

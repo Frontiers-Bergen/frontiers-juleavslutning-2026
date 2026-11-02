@@ -97,6 +97,9 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 	}
 
 	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	if err := featureStylesRoutes(router); err != nil {
+		return nil, nil, err
+	}
 	router.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/favicon.ico")
 	})

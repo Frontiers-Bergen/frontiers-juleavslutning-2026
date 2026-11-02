@@ -1,0 +1,163 @@
+/* Presenter navigation and slide list (top_navigation.templ). Loaded into @layer features via /feature-styles.css. */
+.presenter-nav {
+	display: flex;
+	gap: var(--space-2);
+	align-items: center;
+	flex-wrap: wrap;
+	justify-content: center;
+	max-width: none;
+	margin: 0;
+}
+
+.presenter-nav-button {
+	padding: 0.5rem 0.75rem;
+	border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.presenter-nav-home-icon {
+	width: 1.25rem;
+	height: 1.25rem;
+	display: block;
+}
+
+.presenter-nav-preview {
+	display: grid;
+	grid-template-columns: 13rem 14rem;
+	grid-template-areas: "meta preview";
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.5rem;
+	border-radius: var(--radius);
+	cursor: pointer;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+
+	&[data-disabled="true"] {
+		opacity: 0.55;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
+
+	.slide-preview-frame {
+		--preview-scale: 0.28;
+		grid-area: preview;
+	}
+}
+
+.presenter-nav-preview-next {
+	grid-template-areas: "preview meta";
+	grid-template-columns: 14rem 13rem;
+}
+
+.presenter-nav-preview-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+	grid-area: meta;
+}
+
+.presenter-nav-preview-label {
+	font-size: 0.95rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.75;
+}
+
+.presenter-nav-preview-title {
+	font-weight: 650;
+	line-height: 1.2;
+	max-width: 13rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.presenter-nav-count {
+	font-weight: 650;
+	opacity: 0.8;
+	font-size: 2rem;
+}
+
+/* A slide rendered at full stage size, then scaled down with --preview-scale. */
+.slide-preview-frame {
+	--preview-width: var(--stage-max-width);
+	--preview-height: 35rem;
+	position: relative;
+	width: 100%;
+	height: calc(var(--preview-height) * var(--preview-scale));
+	border-radius: var(--radius);
+	overflow: hidden;
+	background: var(--surface-backstage);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.slide-preview-inner {
+	width: var(--preview-width);
+	height: var(--preview-height);
+	transform: scale(var(--preview-scale));
+	transform-origin: top left;
+	pointer-events: none;
+}
+
+.slide-preview-placeholder {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	opacity: 0.6;
+}
+
+.presenter-slide-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.presenter-slide-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem;
+	border-radius: var(--radius);
+	border: 1px solid transparent;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&[data-active="true"] {
+		border-color: rgba(255, 255, 255, 0.35);
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.slide-preview-frame {
+		--preview-scale: 0.2;
+	}
+}
+
+.presenter-slide-meta {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	min-width: 0;
+}
+
+.presenter-slide-index {
+	font-weight: 700;
+	opacity: 0.65;
+}
+
+.presenter-slide-title {
+	font-weight: 650;
+	line-height: 1.2;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
