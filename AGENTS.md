@@ -54,6 +54,7 @@ When a step is big enough to deserve its own review, use stacked pull requests (
 Skip steps that are not needed; an empty tidy or refactor step is fine.
 
 Run `go tool task check` before opening a pull request: formatting, vet, `go fix`, golangci-lint and tests. Fix with `go tool task fmt` where it applies.
+For UI changes, run `go tool task screenshots` before and after the change and look at the result; for a pure refactor, the screenshots should be pixel-identical.
 
 ## Comments and documentation
 
