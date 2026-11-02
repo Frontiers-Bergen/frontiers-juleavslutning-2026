@@ -69,6 +69,11 @@ tasks:
       - golangci-lint run ./...
       - go test ./...
 
+  # Screenshots of every screen for visual checks; see screenshots.sh. Needs chromium or google-chrome.
+  screenshots:
+    cmds:
+      - ./screenshots.sh {{.CLI_ARGS}}
+
   default:
     cmds:
       - task: start

@@ -135,6 +135,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - `task build` — production binary in `bin/main`
 - `task test` — run all tests
 - `task check` — everything a PR must pass (formatting, vet, `go fix`, lint, tests); `task fmt` fixes formatting
+- `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs chromium or google-chrome. See `screenshots.sh` for comparing two runs
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
@@ -144,3 +145,4 @@ Environment variables (put them in `.env`, which is not in git). All except `PRE
 - `ATTENDEE_LOCAL_KEY`, `ATTENDEE_REMOTE_KEY` — the URL keys that give access to the deck
 - `PRESENTER_KEY` — unlocks presenter mode at `/presenter`
 - `SESSION_SECRET` — signs the session cookies
+- `PORT` — HTTP port, default 8080

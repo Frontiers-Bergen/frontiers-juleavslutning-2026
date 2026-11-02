@@ -44,7 +44,7 @@ func main() {
 	}
 	defer closeApp()
 
-	address := ":8080"
+	address := ":" + readEnvOrDefault(logger, "PORT", "8080")
 	logger.Info("starting HTTP server", slog.String("address", address))
 
 	httpServerError := http.ListenAndServe(address, app)
