@@ -25,7 +25,7 @@ tasks:
         go tool air \
           -build.cmd "go build -tags=dev -o tmp/bin/main{{exeExt}} ./" \
           -build.bin "tmp/bin/main{{exeExt}}" \
-          -build.include_ext "go,templ,css" \
+          -build.include_ext "go,templ,css,md" \
           -misc.clean_on_exit "true"
 
   start:
