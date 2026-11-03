@@ -22,8 +22,7 @@ import (
 // its own cookie jar, like a separate phone.
 
 const (
-	testLocalKey     = "test-local-key"
-	testRemoteKey    = "test-remote-key"
+	testInviteKey    = "test-invite-key"
 	testPresenterKey = "test-presenter-key"
 )
 
@@ -45,8 +44,7 @@ func startTestApp(t *testing.T) *testApp {
 	app, closeApp, err := newApp(ctx, silentLogger, appConfig{
 		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
 		NATSStoreDir:  t.TempDir(),
-		LocalKey:      testLocalKey,
-		RemoteKey:     testRemoteKey,
+		InviteKey:     testInviteKey,
 		SessionSecret: "test-session-secret",
 	})
 	if err != nil {
@@ -83,16 +81,10 @@ func (app *testApp) newPresenter() *http.Client {
 	return presenter
 }
 
-// post sends a request to a route under the local invite key and returns the status code.
+// post sends a request to a route under the invite key and returns the status code.
 func (app *testApp) post(client *http.Client, path string) int {
 	app.t.Helper()
-	return app.postAs(client, testLocalKey, path)
-}
-
-// postAs sends a request to a route under inviteKey (local or remote audience) and returns the status code.
-func (app *testApp) postAs(client *http.Client, inviteKey string, path string) int {
-	app.t.Helper()
-	response, err := client.Post(app.server.URL+"/"+inviteKey+path, "", nil)
+	response, err := client.Post(app.server.URL+"/"+testInviteKey+path, "", nil)
 	if err != nil {
 		app.t.Fatalf("POST %s failed: %v", path, err)
 	}
@@ -103,7 +95,7 @@ func (app *testApp) postAs(client *http.Client, inviteKey string, path string) i
 // deckPage returns the HTML of the deck as this person sees it.
 func (app *testApp) deckPage(client *http.Client) string {
 	app.t.Helper()
-	response, err := client.Get(app.server.URL + "/" + testLocalKey + "/")
+	response, err := client.Get(app.server.URL + "/" + testInviteKey + "/")
 	if err != nil {
 		app.t.Fatalf("GET deck failed: %v", err)
 	}
@@ -157,8 +149,7 @@ func TestNewApp_WithoutNATSStoreDir_RefusesToStart(t *testing.T) {
 	expectedErrorText := "NATSStoreDir is required"
 	config := appConfig{
 		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
-		LocalKey:      testLocalKey,
-		RemoteKey:     testRemoteKey,
+		InviteKey:     testInviteKey,
 		SessionSecret: "test-session-secret",
 	}
 

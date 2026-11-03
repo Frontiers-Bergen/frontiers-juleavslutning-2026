@@ -5,18 +5,13 @@ import (
 	"fmt"
 )
 
-type pollInviteCounts struct {
-	InviteKey string
-	Counts    map[string]int64
-}
-
-func getPollOptionCountsForInviteKey(db *sql.DB, pollKey string, inviteKey string) (map[string]int64, error) {
+func getPollOptionCounts(db *sql.DB, pollKey string) (map[string]int64, error) {
 	rows, err := db.Query(`
 		SELECT option_key, COUNT(*) as c
 		FROM poll_votes
-		WHERE poll_key = ? AND invite_key = ?
+		WHERE poll_key = ?
 		GROUP BY option_key
-	`, pollKey, inviteKey)
+	`, pollKey)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +33,10 @@ func getPollOptionCountsForInviteKey(db *sql.DB, pollKey string, inviteKey strin
 	return counts, nil
 }
 
-func maxOptionTotal(poll PollDefinition, localCounts, remoteCounts map[string]int64) int64 {
+func maxOptionTotal(poll PollDefinition, counts map[string]int64) int64 {
 	var max int64
 	for _, opt := range poll.Options {
-		t := localCounts[opt.Key] + remoteCounts[opt.Key]
+		t := counts[opt.Key]
 		if t > max {
 			max = t
 		}
@@ -49,16 +44,15 @@ func maxOptionTotal(poll PollDefinition, localCounts, remoteCounts map[string]in
 	return max
 }
 
-templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteKey string) {
-	{{ localCounts, localErr := getPollOptionCountsForInviteKey(db, poll.Key, localKey) }}
-	{{ remoteCounts, remoteErr := getPollOptionCountsForInviteKey(db, poll.Key, remoteKey) }}
-	if localErr != nil || remoteErr != nil {
+templ PollResultsSlide(db *sql.DB, poll PollDefinition) {
+	{{ counts, countErr := getPollOptionCounts(db, poll.Key) }}
+	if countErr != nil {
 		<div class="slide poll-results">
 			<h1>Poll results</h1>
 			<p class="poll-results-error">Unable to load poll results.</p>
 		</div>
 	} else {
-		{{ maxTotal := maxOptionTotal(poll, localCounts, remoteCounts) }}
+		{{ maxTotal := maxOptionTotal(poll, counts) }}
 		<div class="slide poll-results" data-poll-results={ poll.Key }>
 			if poll.QuestionText != "" {
 				<h1>{ poll.QuestionText }</h1>
@@ -68,23 +62,18 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteK
 			<div class="poll-results-options">
 				for i, opt := range poll.Options {
 					{{ optionColor, badge := kahootThemeForIndex(i) }}
-					{{ remote := remoteCounts[opt.Key] }}
-					{{ total := localCounts[opt.Key] + remote }}
+					{{ total := counts[opt.Key] }}
 					{{ share := 0.0 }}
-					{{ remoteShare := 0.0 }}
 					{{
 						if maxTotal > 0 {
 							share = float64(total) / float64(maxTotal) * 100
-						}
-						if total > 0 {
-							remoteShare = float64(remote) / float64(total) * 100
 						}
 					}}
 					<div
 						class="poll-result"
 						data-option-key={ opt.Key }
 						data-vote-count={ fmt.Sprintf("%d", total) }
-						style={ fmt.Sprintf("--option-color: %s; --share: %.2f%%; --remote-share: %.2f%%;", optionColor, share, remoteShare) }
+						style={ fmt.Sprintf("--option-color: %s; --share: %.2f%%;", optionColor, share) }
 					>
 						<div class="poll-result-header">
 							<div class="poll-result-badge">{ badge }</div>
@@ -104,9 +93,7 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition, localKey string, remoteK
 						<div class="poll-result-share">
 							<span class="poll-result-percent">{ fmt.Sprintf("%.0f%%", share) }</span>
 							<div class="poll-result-bar">
-								<div class="poll-result-bar-fill">
-									<div class="poll-result-bar-remote"></div>
-								</div>
+								<div class="poll-result-bar-fill"></div>
 							</div>
 						</div>
 					</div>

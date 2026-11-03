@@ -114,7 +114,7 @@ func (app *testApp) postEmoji(client *http.Client, emoji string) int {
 	if err != nil {
 		app.t.Fatalf("failed to marshal emoji signals: %v", err)
 	}
-	response, err := client.Post(app.server.URL+"/"+testLocalKey+"/root/api/emoji/increment", "application/json", strings.NewReader(string(body)))
+	response, err := client.Post(app.server.URL+"/"+testInviteKey+"/root/api/emoji/increment", "application/json", strings.NewReader(string(body)))
 	if err != nil {
 		app.t.Errorf("emoji POST failed: %v", err)
 		return 0
@@ -147,7 +147,7 @@ func (app *testApp) openEmojiStream(client *http.Client) *emojiStream {
 	ctx, cancel := context.WithCancel(context.Background())
 	app.t.Cleanup(cancel)
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, app.server.URL+"/"+testLocalKey+"/root/api/emoji/sse", nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, app.server.URL+"/"+testInviteKey+"/root/api/emoji/sse", nil)
 	if err != nil {
 		app.t.Fatalf("failed to create stream request: %v", err)
 	}

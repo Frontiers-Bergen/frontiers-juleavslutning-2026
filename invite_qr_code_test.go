@@ -16,18 +16,18 @@ import (
 
 func TestInviteQRCode_Scanning_OpensTheDeck(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given the big screen shows the invite QR code for the local audience.",
+		Given: "Given the big screen shows the invite QR code.",
 		When:  "When someone scans it with their phone.",
-		Then:  "Then it opens the deck with the local invite link on the same host.",
+		Then:  "Then it opens the deck with the invite link on the same host.",
 	})
 
 	// Given
 	app := startTestApp(t)
-	expectedLink := app.server.URL + "/" + testLocalKey + "/"
+	expectedLink := app.server.URL + "/" + testInviteKey + "/"
 	bigScreen := app.newAttendee()
 
 	// When
-	status, contentType, svg := app.get(bigScreen, "/"+testLocalKey+"/qr.svg")
+	status, contentType, svg := app.get(bigScreen, "/"+testInviteKey+"/qr.svg")
 	actualLink := scanQRCodeSVG(t, svg)
 
 	// Then
@@ -48,13 +48,13 @@ func TestInviteQRCode_BehindHTTPSProxy_LinksToHTTPS(t *testing.T) {
 
 	// Given
 	app := startTestApp(t)
-	request, err := http.NewRequest(http.MethodGet, app.server.URL+"/"+testRemoteKey+"/qr.svg", nil)
+	request, err := http.NewRequest(http.MethodGet, app.server.URL+"/"+testInviteKey+"/qr.svg", nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
 	request.Host = "juleavslutning.example"
 	request.Header.Set("X-Forwarded-Proto", "https")
-	expectedLink := "https://juleavslutning.example/" + testRemoteKey + "/"
+	expectedLink := "https://juleavslutning.example/" + testInviteKey + "/"
 
 	// When
 	response, err := app.newAttendee().Do(request)

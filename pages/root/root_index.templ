@@ -20,8 +20,6 @@ func RootLayoutRoute(
 	db *sql.DB,
 	store sessions.Store,
 	logger *slog.Logger,
-	localKey string,
-	remoteKey string,
 	nc *nats.Conn,
 ) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +44,7 @@ func RootLayoutRoute(
 
 		renderErr := components.BaseLayout(
 			"Frontiers Meetup",
-			rootPageFirstLoad(db, inviteKey, dataInit, isPresenter, sessionID, localKey, remoteKey),
+			rootPageFirstLoad(db, inviteKey, dataInit, isPresenter, sessionID),
 		).Render(ctx, w)
 		if renderErr != nil {
 			logger.Error("failed to render root page", slog.String("error", renderErr.Error()))
@@ -85,7 +83,7 @@ func RootLayoutRoute(
 				// NewSSE sends the response headers immediately. From here on, failures can only be
 				// logged and end the stream; http.Error would write a second, ignored header.
 				sse := datastar.NewSSE(w, r)
-				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
+				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
 					logger.Error("failed to send initial page patch", slog.String("error", err.Error()))
 					return
 				}
@@ -95,7 +93,7 @@ func RootLayoutRoute(
 					case <-r.Context().Done():
 						return
 					case <-deckChanges:
-						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
+						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
 							logger.Error("failed to send page patch", slog.String("error", err.Error()))
 							return
 						}
@@ -127,11 +125,9 @@ templ rootPageFirstLoad(
 	dataInit string,
 	isPresenter bool,
 	sessionID string,
-	localKey string,
-	remoteKey string,
 ) {
 	<div id="root-page-wrapper" data-init={ dataInit }>
-		@rootPageContent(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)
+		@rootPageContent(db, inviteKey, isPresenter, sessionID)
 	</div>
 }
 
@@ -140,11 +136,9 @@ templ rootPage(
 	inviteKey string,
 	isPresenter bool,
 	sessionID string,
-	localKey string,
-	remoteKey string,
 ) {
 	<div id="root-page-wrapper">
-		@rootPageContent(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)
+		@rootPageContent(db, inviteKey, isPresenter, sessionID)
 	</div>
 }
 
@@ -153,21 +147,19 @@ templ rootPageContent(
 	inviteKey string,
 	isPresenter bool,
 	sessionID string,
-	localKey string,
-	remoteKey string,
 ) {
 	<div class="app">
 		if isPresenter {
 			<div class="presenter-layout">
 				<aside class="presenter-sidebar" aria-label="Slide list">
-					@PresenterSlideList(db, inviteKey, sessionID, localKey, remoteKey)
+					@PresenterSlideList(db, inviteKey, sessionID)
 				</aside>
 				<div class="presenter-main">
 					<header class="presenter-bar" aria-label="Presenter controls">
-						@TopNavigation(db, inviteKey, sessionID, localKey, remoteKey)
+						@TopNavigation(db, inviteKey, sessionID)
 					</header>
 					<main class="stage" aria-label="Presentation">
-						@ActiveSlide(db, inviteKey, sessionID, isPresenter, localKey, remoteKey)
+						@ActiveSlide(db, inviteKey, sessionID, isPresenter)
 					</main>
 					<footer class="reactions" aria-label="Reactions">
 						@EmojiVoteWidget(inviteKey)
@@ -176,7 +168,7 @@ templ rootPageContent(
 			</div>
 		} else {
 			<main class="stage" aria-label="Presentation">
-				@ActiveSlide(db, inviteKey, sessionID, isPresenter, localKey, remoteKey)
+				@ActiveSlide(db, inviteKey, sessionID, isPresenter)
 			</main>
 			<footer class="reactions" aria-label="Reactions">
 				@EmojiVoteWidget(inviteKey)

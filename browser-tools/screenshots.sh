@@ -39,18 +39,18 @@ for _ in $(seq 1 40); do curl -s -o /dev/null "$base/" && break; sleep 0.25; don
 curl -s -c presenter.jar -o /dev/null -d key=screenshot-key "$base/presenter/login"
 
 # A few votes on the app name poll, so results slides are not empty. Harmless if the poll is gone.
-vote() { # person invite-key option
-	curl -s -c "$1.jar" -b "$1.jar" -o /dev/null "$base/$2/"
-	curl -s -b "$1.jar" -o /dev/null -X POST "$base/$2/root/api/poll/vote?poll=app-name&option=$3"
+vote() { # person option
+	curl -s -c "$1.jar" -b "$1.jar" -o /dev/null "$base/dev-key/"
+	curl -s -b "$1.jar" -o /dev/null -X POST "$base/dev-key/root/api/poll/vote?poll=app-name&option=$2"
 }
-vote a local-dev-key its-tiiime
-vote b local-dev-key its-tiiime
-vote c remote-dev-key its-tiiime
-vote d local-dev-key smash-the-halls
-vote e remote-dev-key rage-against-the-debounce
+vote a its-tiiime
+vote b its-tiiime
+vote c its-tiiime
+vote d smash-the-halls
+vote e rage-against-the-debounce
 
-move_to_slide() { curl -s -b presenter.jar -o /dev/null -X POST "$base/local-dev-key/root/api/slides/set?index=$1"; }
-shown_slide() { curl -s -b presenter.jar "$base/local-dev-key/" | grep -oE 'slideIndex: [0-9]+' | head -1 | grep -oE '[0-9]+'; }
+move_to_slide() { curl -s -b presenter.jar -o /dev/null -X POST "$base/dev-key/root/api/slides/set?index=$1"; }
+shown_slide() { curl -s -b presenter.jar "$base/dev-key/" | grep -oE 'slideIndex: [0-9]+' | head -1 | grep -oE '[0-9]+'; }
 
 shot() { # name url width height
 	"$browser" --headless=new --disable-gpu --hide-scrollbars --user-data-dir="$work/profile" \
@@ -65,8 +65,8 @@ slide=0
 while :; do
 	move_to_slide "$slide"
 	[ "$(shown_slide)" = "$slide" ] || break
-	shot "slide$slide-phone" "$base/local-dev-key/" 390 844
-	shot "slide$slide-desktop" "$base/local-dev-key/" 1440 900
+	shot "slide$slide-phone" "$base/dev-key/" 390 844
+	shot "slide$slide-desktop" "$base/dev-key/" 1440 900
 	slide=$((slide + 1))
 done
 
@@ -75,8 +75,8 @@ printf '<form method="post" action="%s/presenter/login"><input name="key" value=
 shot login-step "file://$work/login.html" 800 600
 rm -f "$out/login-step.png"
 move_to_slide 0
-shot presenter-slide0-desktop "$base/local-dev-key/" 1440 900
+shot presenter-slide0-desktop "$base/dev-key/" 1440 900
 move_to_slide $((slide - 1))
-shot presenter-last-slide-desktop "$base/local-dev-key/" 1440 900
+shot presenter-last-slide-desktop "$base/dev-key/" 1440 900
 
 echo "screenshots: $(ls "$out" | wc -l) files in $out"

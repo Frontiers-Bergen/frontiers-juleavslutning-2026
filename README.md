@@ -19,7 +19,7 @@ Every button smash deserves to count.
 - Replacing AhaSlides in general. A feature is built because it makes the juleavslutning more fun, not because another tool has it.
 - Showing off the stack or any specific technology.
 - Multi-tenancy, accounts or logins.
-- Scaling beyond one room plus remote viewers.
+- Scaling beyond one room. Everyone is at the venue; there is no remote participation or live stream.
 - Exporting ideas or feedback. It happens once; we read it straight from the database after the event.
 
 ## Workshop
@@ -42,7 +42,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Create the public GitHub repository: [frontiers-bergen/frontiers-juleavslutning-2026](https://github.com/frontiers-bergen/frontiers-juleavslutning-2026)
 - [x] Rename the repo to `frontiers-juleavslutning-2026` (explicit for developers; the fun app name is decided separately)
 - [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
-- [ ] Draft a programme proposal for the juleavslutning — first draft in `planning/juleavslutning_programme.md`, waiting for the organisers
+- [ ] Draft a programme proposal for the juleavslutning — first draft in `planning/juleavslutning_programme.md`; details to be settled in a meeting after the workshop
+- [x] Remove remote participation: in person only, no live stream (one invite key, polls not split by audience)
 - [x] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026`
 - [x] Remove `presentation.db*` from git and un-comment the ignore rules
 - [x] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file (no migrations; decided against goose)
@@ -84,8 +85,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Replace the January deck with a placeholder deck: a welcome slide and the app name poll with its results
 - [x] Remove the January `/demo` page (`handler/`, `services/demo_service.go`, `pages/demo.templ`, `components/demo.templ`)
 - [x] BDD helper (`bdd/bdd.go`, from conorganizer) and first behavior tests (`database_test.go`)
-- [x] Access tests (`access_test.go`): wrong invite keys are redirected, local and remote keys open the deck, a wrong or missing presenter key gives no control
-- [x] Safety net for polls before the CSS refactor (`poll_voting_test.go`): changing a vote replaces it, local + remote votes add up, unknown options are rejected
+- [x] Access tests (`access_test.go`): wrong invite keys are redirected, the invite key opens the deck, a wrong or missing presenter key gives no control
+- [x] Safety net for polls before the CSS refactor (`poll_voting_test.go`): changing a vote replaces it, every person counts once, unknown options are rejected
 - [ ] Bring over conorganizer's `testutil/templtest` when a test needs to render a component on its own (not needed yet: HTTP tests read semantic `data-` attributes)
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
 - [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
@@ -110,7 +111,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Mini-game ideas
 
-- [ ] Tug of war: local vs remote audience (reuses the existing invite-key split)
+- [ ] Tug of war: two halves of the room (teams assigned per phone)
 - [ ] Collaborative pixel canvas (r/place, Christmas edition)
 - [ ] Button-mash reindeer race
 - [ ] Snowball fight
@@ -144,10 +145,10 @@ cd frontiers-juleavslutning-2026
 go tool task start
 ```
 
-Then open http://localhost:8080/local-dev-key/ and edit any `.templ`, `.css` or `.go` file; the page reloads after a save.
+Then open http://localhost:8080/dev-key/ and edit any `.templ`, `.css` or `.go` file; the page reloads after a save.
 
 - Presenter mode: create a `.env` file with `PRESENTER_KEY=something`, restart, open http://localhost:8080/presenter/ and enter it.
-- Try it on your phone: open `http://<your computer's LAN address>:8080/local-dev-key/` on the same wifi.
+- Try it on your phone: open `http://<your computer's LAN address>:8080/dev-key/` on the same wifi.
 - Older Go? `go.mod` asks for Go 1.27; with Go 1.21 or newer, the right version is downloaded automatically on first run.
 - Before opening a pull request: `go tool task check` (needs golangci-lint, see below). Read `AGENTS.md` first; it holds the rules for people and AI agents alike.
 - Optional tools: [golangci-lint](https://golangci-lint.run) for `task check`; Chrome/Chromium (and Node for `task browser-check`, bash for `task screenshots`) for the browser tools.
@@ -164,12 +165,12 @@ The commands below are `go tool task <name>`; with Task installed globally, plai
 - `task browser-check` — clicks real buttons in headless Chromium on a simulated slow network: fast smashing, a live slide change, voting; needs Node and Chrome/Chromium
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
-- Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
+- Open `/dev-key/` to see the deck; `/` only shows "you need a key"
 - Runtime data lives next to the app: `presentation.db` (SQLite) and `nats-data/` (embedded NATS JetStream). Both are ignored by git; delete both to start fresh
 
 Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
 
-- `ATTENDEE_LOCAL_KEY`, `ATTENDEE_REMOTE_KEY` — the URL keys that give access to the deck
+- `INVITE_KEY` — the secret in the invite link (`/<INVITE_KEY>/`) that gives access to the deck
 - `PRESENTER_KEY` — unlocks presenter mode at `/presenter`
 - `SESSION_SECRET` — signs the session cookies
 - `PORT` — HTTP port, default 8080

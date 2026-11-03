@@ -14,8 +14,7 @@ import (
 // Invite QR code: people at the venue join by scanning the big screen instead of typing a URL.
 //
 // GET /{inviteKey}/qr.svg returns the invite link as a QR code. A slide shows it with a relative URL
-// (`<img src="qr.svg">`), so the big screen shows its own audience's link: the local key gives the
-// local link, the remote key the remote link.
+// (`<img src="qr.svg">`), so markdown slides need no templating.
 //
 // The link uses the host the page was opened with. On a LAN that is the machine's IP; in production it is
 // the public domain, with https detected from the reverse proxy's X-Forwarded-Proto header. Opening the big

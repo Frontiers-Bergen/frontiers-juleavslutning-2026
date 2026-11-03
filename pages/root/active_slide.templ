@@ -17,8 +17,6 @@ func deck(
 	inviteKey string,
 	sessionID string,
 	isPresenter bool,
-	localKey string,
-	remoteKey string,
 ) []slideEntry {
 	appNamePoll := MustPoll("app-name")
 	markdown := func(name string) slideEntry {
@@ -34,7 +32,7 @@ func deck(
 		markdown("stack"),
 		markdown("name_the_app"),
 		{Title: "Poll: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
-		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll, localKey, remoteKey) }},
+		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll) }},
 		markdown("codebase"),
 		markdown("live_updates"),
 		markdown("add_a_game"),
@@ -46,7 +44,7 @@ func deck(
 
 func deckSize() int {
 	// Only used for clamping; closures won't be executed.
-	return len(deck(nil, "", "", true, "", ""))
+	return len(deck(nil, "", "", true))
 }
 
 func clampSlideIndex(index int) int {
@@ -82,11 +80,9 @@ templ ActiveSlide(
 	inviteKey string,
 	sessionID string,
 	isPresenter bool,
-	localKey string,
-	remoteKey string,
 ) {
 	{{ index, _ := GetCurrentSlideIndex(db) }}
-	{{ deckLocal := deck(db, inviteKey, sessionID, isPresenter, localKey, remoteKey) }}
+	{{ deckLocal := deck(db, inviteKey, sessionID, isPresenter) }}
 	{{ index = clampSlideIndex(index) }}
 	{{ slideComponent := slideEntryAt(deckLocal, index) }}
 	<div data-signals={ fmt.Sprintf("{ slideIndex: %d }", index) }>

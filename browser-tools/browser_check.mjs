@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const appPort = 8097;
 const devtoolsPort = 9334;
-const deckURL = `http://localhost:${appPort}/local-dev-key/`;
+const deckURL = `http://localhost:${appPort}/dev-key/`;
 const api = `${deckURL}root/api`;
 const presenterKey = "browser-check-key";
 const appBinary = process.platform === "win32" ? "app.exe" : "app";

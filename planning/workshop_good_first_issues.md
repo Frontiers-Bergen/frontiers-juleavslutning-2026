@@ -45,10 +45,10 @@ Start: the tokens layer in `static/index.css`.
 Done: a slide with the top five smashers by session (no names needed: an emoji avatar per phone is fine).
 Start: count smashes per attendee session (`attendeeSessionID` in `pages/root/live_updates.go`); needs a schema change in `schema.sql`.
 
-## 9. Tug of war: room against remote 🪢
-*As the audience, we want the people in the room to compete against the remote viewers, so both feel part of it.*
-Done: a slide where each side smashes to pull the rope; the invite key decides the side.
-Start: the poll already splits local and remote by invite key (`pages/root/poll.templ`).
+## 9. Tug of war: one half of the room against the other 🪢
+*As the room, we want to split into two teams and smash against each other, so the evening gets a friendly rivalry.*
+Done: a slide where each team smashes to pull the rope; each phone is put on a team when it joins.
+Start: the attendee session (`attendeeSessionID` in `pages/root/live_updates.go`) can carry the team; counting works like the emoji reactions.
 
 ## 10. Result reveal drumroll 🥁
 *As the presenter, I want poll results to build up slowly, so the reveal is exciting.*

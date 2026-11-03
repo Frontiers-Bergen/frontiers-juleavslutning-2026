@@ -31,21 +31,21 @@ func TestPollVoting_ChangingYourVote_ReplacesThePreviousVote(t *testing.T) {
 	}
 	app := startTestApp(t)
 	attendee := app.newAttendee()
-	app.vote(attendee, testLocalKey, "smash-the-halls")
+	app.vote(attendee, "smash-the-halls")
 
 	// When
-	app.vote(attendee, testLocalKey, "rage-against-the-debounce")
+	app.vote(attendee, "rage-against-the-debounce")
 
 	// Then
 	actualCounts := voteCounts(t, app.showPollResults(app.newPresenter(), testPollKey))
 	assertVoteCounts(t, expectedCounts, actualCounts)
 }
 
-func TestPollResults_LocalAndRemoteVotes_AreAddedTogether(t *testing.T) {
+func TestPollResults_EveryPersonCountsOnce(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given attendees in the room (local link) and watching remotely (remote link).",
-		When:  "When two local and one remote attendee vote for It's Tiiime, and one local for Smash the Halls.",
-		Then:  "Then the results count every person once, adding local and remote votes together.",
+		Given: "Given four attendees, each on their own phone.",
+		When:  "When three vote for It's Tiiime and one for Smash the Halls.",
+		Then:  "Then the results show three and one votes: every person counts once.",
 	})
 
 	// Given
@@ -58,10 +58,10 @@ func TestPollResults_LocalAndRemoteVotes_AreAddedTogether(t *testing.T) {
 	app := startTestApp(t)
 
 	// When
-	app.vote(app.newAttendee(), testLocalKey, "its-tiiime")
-	app.vote(app.newAttendee(), testLocalKey, "its-tiiime")
-	app.vote(app.newAttendee(), testRemoteKey, "its-tiiime")
-	app.vote(app.newAttendee(), testLocalKey, "smash-the-halls")
+	app.vote(app.newAttendee(), "its-tiiime")
+	app.vote(app.newAttendee(), "its-tiiime")
+	app.vote(app.newAttendee(), "its-tiiime")
+	app.vote(app.newAttendee(), "smash-the-halls")
 
 	// Then
 	actualCounts := voteCounts(t, app.showPollResults(app.newPresenter(), testPollKey))
@@ -86,7 +86,7 @@ func TestPollVoting_UnknownOption_IsRejected(t *testing.T) {
 	app := startTestApp(t)
 
 	// When
-	actualStatus := app.postAs(app.newAttendee(), testLocalKey, "/root/api/poll/vote?poll="+testPollKey+"&option=jingle-bugs")
+	actualStatus := app.post(app.newAttendee(), "/root/api/poll/vote?poll="+testPollKey+"&option=jingle-bugs")
 
 	// Then
 	if actualStatus != expectedStatus {
@@ -98,10 +98,10 @@ func TestPollVoting_UnknownOption_IsRejected(t *testing.T) {
 
 // --- Local helpers for the poll tests ---
 
-func (app *testApp) vote(client *http.Client, inviteKey string, optionKey string) {
+func (app *testApp) vote(client *http.Client, optionKey string) {
 	app.t.Helper()
 	path := fmt.Sprintf("/root/api/poll/vote?poll=%s&option=%s", testPollKey, optionKey)
-	if status := app.postAs(client, inviteKey, path); status >= 300 {
+	if status := app.post(client, path); status >= 300 {
 		app.t.Fatalf("voting for %s returned status %d", optionKey, status)
 	}
 }

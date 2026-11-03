@@ -11,14 +11,13 @@ CREATE TABLE IF NOT EXISTS slide_state (
 
 INSERT OR IGNORE INTO slide_state (id, current_index) VALUES (1, 0);
 
--- One vote per session per poll. invite_key separates the local and remote audiences.
+-- One vote per person (attendee session) per poll; voting again replaces the vote.
 CREATE TABLE IF NOT EXISTS poll_votes (
-  invite_key TEXT NOT NULL,
   poll_key TEXT NOT NULL,
   session_id TEXT NOT NULL,
   option_key TEXT NOT NULL,
   voted_at_unix INTEGER NOT NULL,
-  PRIMARY KEY (invite_key, poll_key, session_id)
+  PRIMARY KEY (poll_key, session_id)
 );
 
 -- Emoji reaction counts. Incremented in SQL so concurrent smashes cannot overwrite each other
