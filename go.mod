@@ -13,6 +13,7 @@ require (
 	github.com/a-h/templ v0.3.1100
 	github.com/delaneyj/toolbelt v0.9.1
 	github.com/go-chi/chi/v5 v5.5.0
+	github.com/gomarkdown/markdown v0.0.0-20261102130400-ab7f242c96ec
 	github.com/gorilla/sessions v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats-server/v2 v2.15.2

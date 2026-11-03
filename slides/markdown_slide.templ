@@ -1,0 +1,13 @@
+package slides
+
+// Markdown renders a content slide written in markdown (see markdown_slides.go for the file format).
+templ Markdown(slide MarkdownSlide, isPresenter bool) {
+	<div class={ "slide", "markdown-slide", "slide-" + slide.Name }>
+		@templ.Raw(slide.ContentHTML)
+	</div>
+	if isPresenter && slide.NotesHTML != "" {
+		<div class="presenter-notes">
+			@templ.Raw(slide.NotesHTML)
+		</div>
+	}
+}
