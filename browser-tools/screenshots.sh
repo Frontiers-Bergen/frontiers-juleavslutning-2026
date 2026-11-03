@@ -8,11 +8,11 @@
 # Compare two runs, e.g. before and after a CSS change, with ImageMagick:
 #   compare -metric AE -fuzz 2% before/slide0-phone.png after/slide0-phone.png diff.png
 #
-# Usage: ./screenshots.sh [output-dir]   (default: tmp/screenshots)
+# Usage: browser-tools/screenshots.sh [output-dir]   (default: tmp/screenshots)
 # Requires: chromium or google-chrome, curl.
 set -euo pipefail
 
-repo="$(cd "$(dirname "$0")" && pwd)"
+repo="$(cd "$(dirname "$0")/.." && pwd)"
 out="$(realpath -m "${1:-$repo/tmp/screenshots}")"
 port="${PORT:-8099}"
 base="http://localhost:$port"

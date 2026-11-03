@@ -55,6 +55,8 @@ Skip steps that are not needed; an empty tidy or refactor step is fine.
 
 Run `go tool task check` before opening a pull request: formatting, vet, `go fix`, golangci-lint and tests. Fix with `go tool task fmt` where it applies.
 For UI changes, run `go tool task screenshots` before and after the change and look at the result; for a pure refactor, the screenshots should be pixel-identical.
+For changes to interactions (Datastar attributes, SSE, buttons), run `go tool task browser-check`: it clicks real buttons in headless Chromium.
+Extend `browser-tools/browser_check.mjs` when you add an interaction that matters on the evening.
 
 ## Comments and documentation
 

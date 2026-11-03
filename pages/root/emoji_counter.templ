@@ -172,8 +172,9 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *s
 }
 
 func emojiIncrementPostURL(inviteKey string) string {
-	// Datastar cancels an element's in-flight request when the next one starts. For a button meant
-	// to be smashed, that drops clicks, so cancellation is disabled.
+	// Defensive: Datastar's default cancellation aborts an in-flight request with the same method and URL
+	// when the next one starts. There is no reason to cancel a smash, so it is disabled. The browser check
+	// (200 ms latency, 20 taps per second) counted every smash even with the default, so this is not a known bug.
 	return fmt.Sprintf("@post('/%s/root/api/emoji/increment',{requestCancellation: 'disabled'})", inviteKey)
 }
 
