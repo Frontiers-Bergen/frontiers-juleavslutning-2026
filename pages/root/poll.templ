@@ -56,11 +56,11 @@ func pollHasOption(poll PollDefinition, optionKey string) bool {
 	return false
 }
 
-func getMyPollVote(db *sql.DB, inviteKey, pollKey, sessionID string) (string, error) {
+func getMyPollVote(db *sql.DB, pollKey, sessionID string) (string, error) {
 	var optionKey string
 	err := db.QueryRow(
-		`SELECT option_key FROM poll_votes WHERE invite_key = ? AND poll_key = ? AND session_id = ?`,
-		inviteKey, pollKey, sessionID,
+		`SELECT option_key FROM poll_votes WHERE poll_key = ? AND session_id = ?`,
+		pollKey, sessionID,
 	).Scan(&optionKey)
 
 	if err == sql.ErrNoRows {
@@ -73,27 +73,22 @@ func getMyPollVote(db *sql.DB, inviteKey, pollKey, sessionID string) (string, er
 	return optionKey, nil
 }
 
-func upsertPollVote(db *sql.DB, inviteKey, pollKey, sessionID, optionKey string) error {
+func upsertPollVote(db *sql.DB, pollKey, sessionID, optionKey string) error {
 	nowUnix := time.Now().Unix()
 	_, err := db.Exec(`
-		INSERT INTO poll_votes (invite_key, poll_key, session_id, option_key, voted_at_unix)
-		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(invite_key, poll_key, session_id)
+		INSERT INTO poll_votes (poll_key, session_id, option_key, voted_at_unix)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(poll_key, session_id)
 		DO UPDATE SET option_key = excluded.option_key, voted_at_unix = excluded.voted_at_unix
-	`, inviteKey, pollKey, sessionID, optionKey, nowUnix)
+	`, pollKey, sessionID, optionKey, nowUnix)
 	return err
 }
 
 func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
 	router.Post("/poll/vote", func(w http.ResponseWriter, r *http.Request) {
-		inviteKey := chi.URLParam(r, "inviteKey")
 		pollKey := r.URL.Query().Get("poll")
 		optionKey := r.URL.Query().Get("option")
 
-		if inviteKey == "" {
-			http.Error(w, "missing inviteKey", http.StatusBadRequest)
-			return
-		}
 		if pollKey == "" {
 			http.Error(w, "missing poll", http.StatusBadRequest)
 			return
@@ -119,7 +114,7 @@ func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions
 			return
 		}
 
-		if err := upsertPollVote(db, inviteKey, pollKey, sessionID, optionKey); err != nil {
+		if err := upsertPollVote(db, pollKey, sessionID, optionKey); err != nil {
 			http.Error(w, "failed to save vote: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -154,7 +149,7 @@ func kahootThemeForIndex(index int) (bg string, badge string) {
 }
 
 templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinition) {
-	{{ selectedOptionKey, _ := getMyPollVote(db, inviteKey, poll.Key, sessionID) }}
+	{{ selectedOptionKey, _ := getMyPollVote(db, poll.Key, sessionID) }}
 	<div class="slide poll">
 		<div class="poll-question">
 			if poll.QuestionText != "" {

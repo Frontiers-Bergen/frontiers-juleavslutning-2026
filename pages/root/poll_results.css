@@ -24,8 +24,7 @@
 		}
 	}
 
-	/* Set per option: --option-color (kahootThemeForIndex), --share (width relative to the
-	   top option) and --remote-share (the remote audience's part of this option's bar). */
+	/* Set per option: --option-color (kahootThemeForIndex) and --share (width relative to the top option). */
 	.poll-result {
 		display: flex;
 		flex-direction: column;
@@ -118,16 +117,10 @@
 	}
 
 	.poll-result-bar-fill {
-		position: relative;
 		height: 100%;
 		width: var(--share);
 		border-radius: 999px;
 		background: var(--option-color);
 	}
 
-	.poll-result-bar-remote {
-		height: 100%;
-		width: var(--remote-share);
-		background: rgba(255, 255, 255, 0.35);
-	}
 }

@@ -71,9 +71,9 @@ func slideSetPostURL(inviteKey string, index int) string {
 	return fmt.Sprintf("@post('/%s/root/api/slides/set?index=%d')", inviteKey, index)
 }
 
-templ TopNavigation(db *sql.DB, inviteKey string, sessionID string, localKey string, remoteKey string) {
+templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
 	{{ current, _ := GetCurrentSlideIndex(db) }}
-	{{ deckEntries := deck(db, inviteKey, sessionID, false, localKey, remoteKey) }}
+	{{ deckEntries := deck(db, inviteKey, sessionID, false) }}
 	<nav class="presenter-nav">
 		<button
 			class="presenter-nav-button"
@@ -130,9 +130,9 @@ templ presenterNavEdge(label string, message string, isNext bool) {
 	</div>
 }
 
-templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string, localKey string, remoteKey string) {
+templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string) {
 	{{ current, _ := GetCurrentSlideIndex(db) }}
-	{{ deckEntries := deck(db, inviteKey, sessionID, false, localKey, remoteKey) }}
+	{{ deckEntries := deck(db, inviteKey, sessionID, false) }}
 	<div class="presenter-slide-list">
 		for i, entry := range deckEntries {
 			<div

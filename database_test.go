@@ -51,7 +51,7 @@ func TestOpenDatabase_AfterRestart_KeepsExistingData(t *testing.T) {
 	firstRun := openTestDatabase(t, path)
 	execOrFail(t, firstRun, `UPDATE slide_state SET current_index = ? WHERE id = 1`, expectedSlideIndex)
 	execOrFail(t, firstRun,
-		`INSERT INTO poll_votes (invite_key, poll_key, session_id, option_key, voted_at_unix) VALUES ('local', 'poll', 'session', 'option', 0)`)
+		`INSERT INTO poll_votes (poll_key, session_id, option_key, voted_at_unix) VALUES ('poll', 'session', 'option', 0)`)
 	closeOrFail(t, firstRun)
 
 	// When
@@ -88,7 +88,7 @@ func TestOpenDatabase_ConcurrentWrites_AllSucceed(t *testing.T) {
 	for i := range expectedVoteCount {
 		writers.Go(func() {
 			_, err := db.Exec(
-				`INSERT INTO poll_votes (invite_key, poll_key, session_id, option_key, voted_at_unix) VALUES ('local', 'poll', ?, 'option', 0)`,
+				`INSERT INTO poll_votes (poll_key, session_id, option_key, voted_at_unix) VALUES ('poll', ?, 'option', 0)`,
 				fmt.Sprintf("session-%d", i),
 			)
 			errs <- err

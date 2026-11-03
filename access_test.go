@@ -29,27 +29,23 @@ func TestAccess_WrongInviteKey_IsSentToTheNeedAKeyPage(t *testing.T) {
 	}
 }
 
-func TestAccess_LocalAndRemoteInviteKeys_OpenTheDeck(t *testing.T) {
+func TestAccess_InviteKey_OpensTheDeck(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given an attendee in the room and one watching remotely, each with their own link.",
-		When:  "When they open the deck.",
-		Then:  "Then both see the deck.",
+		Given: "Given an attendee with the invite link.",
+		When:  "When they open it.",
+		Then:  "Then they see the deck.",
 	})
 
-	for _, inviteKey := range []string{testLocalKey, testRemoteKey} {
-		t.Run(inviteKey, func(t *testing.T) {
-			// Given
-			expectedPath := "/" + inviteKey + "/"
-			app := startTestApp(t)
+	// Given
+	expectedPath := "/" + testInviteKey + "/"
+	app := startTestApp(t)
 
-			// When
-			actualPath := app.finalPathAfterGet(app.newAttendee(), "/"+inviteKey+"/")
+	// When
+	actualPath := app.finalPathAfterGet(app.newAttendee(), "/"+testInviteKey+"/")
 
-			// Then
-			if actualPath != expectedPath {
-				t.Fatalf("expected to stay on %q, got %q", expectedPath, actualPath)
-			}
-		})
+	// Then
+	if actualPath != expectedPath {
+		t.Fatalf("expected to stay on %q, got %q", expectedPath, actualPath)
 	}
 }
 

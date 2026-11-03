@@ -20,7 +20,8 @@ Success is the people at the juleavslutning having fun (see the Why in README.md
 2. How long should the evening be, and when is dinner served?
 3. Who presents the look back at the year, and who facilitates the ideas session and the retro?
 4. Which optional parts do we want: awards, quiz?
-5. Will anyone join remotely, or is it in person only? (Remote viewers need the remote invite link.)
+
+Answered: in person only, no remote participation or live stream.
 
 ## What the app must have for this programme
 

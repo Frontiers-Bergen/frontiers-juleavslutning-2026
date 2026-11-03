@@ -21,8 +21,6 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-const inviteSessionName = "invite"
-
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -33,8 +31,7 @@ func main() {
 	config := appConfig{
 		DatabasePath:  "presentation.db",
 		NATSStoreDir:  "nats-data",
-		LocalKey:      readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key"),
-		RemoteKey:     readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key"),
+		InviteKey:     readEnvOrDefault(logger, "INVITE_KEY", "dev-key"),
 		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
 	}
 
@@ -59,9 +56,10 @@ type appConfig struct {
 	// NATSStoreDir is where JetStream keeps its data. Required: the NATS default is one shared temp dir,
 	// and two app instances on the same machine (dev server, tests, task screenshots) corrupted each other's
 	// JetStream data, which showed up as "context deadline exceeded" when loading the deck.
-	NATSStoreDir  string
-	LocalKey      string
-	RemoteKey     string
+	NATSStoreDir string
+	// InviteKey is the secret first path segment of every deck URL (/<InviteKey>/). Everyone at the venue
+	// uses the same link; there is no remote audience.
+	InviteKey     string
 	SessionSecret string
 }
 
@@ -136,8 +134,8 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {
-		inviteRouter.Use(inviteKeyMiddleware(sessionStore, config.LocalKey, config.RemoteKey, logger))
-		root.RootLayoutRoute(inviteRouter, db, sessionStore, logger, config.LocalKey, config.RemoteKey, nc)
+		inviteRouter.Use(inviteKeyMiddleware(config.InviteKey))
+		root.RootLayoutRoute(inviteRouter, db, sessionStore, logger, nc)
 	})
 
 	return router, closeDatabase, nil
@@ -152,39 +150,15 @@ func readEnvOrDefault(logger *slog.Logger, name, fallback string) string {
 	return v
 }
 
-func inviteKeyMiddleware(store sessions.Store, localKey, remoteKey string, logger *slog.Logger) func(http.Handler) http.Handler {
+// inviteKeyMiddleware lets only requests with the invite key through; anything else goes to the
+// "you need an invite link" page.
+func inviteKeyMiddleware(inviteKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			inviteKey := chi.URLParam(r, "inviteKey")
-
-			var audience string
-			switch inviteKey {
-			case localKey:
-				audience = "local"
-			case remoteKey:
-				audience = "remote"
-			default:
+			if chi.URLParam(r, "inviteKey") != inviteKey {
 				http.Redirect(w, r, "/", http.StatusFound)
 				return
 			}
-
-			// Persist which audience this key represents (useful later in handlers/templates).
-			sess, err := store.Get(r, inviteSessionName)
-			if err != nil {
-				logger.Error("failed to get invite session", slog.String("error", err.Error()))
-				http.Redirect(w, r, "/", http.StatusFound)
-				return
-			}
-
-			if sess.Values["audience"] != audience {
-				sess.Values["audience"] = audience
-				if err := sess.Save(r, w); err != nil {
-					logger.Error("failed to save invite session", slog.String("error", err.Error()))
-					http.Redirect(w, r, "/", http.StatusFound)
-					return
-				}
-			}
-
 			next.ServeHTTP(w, r)
 		})
 	}
