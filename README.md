@@ -42,7 +42,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Create the public GitHub repository: [frontiers-bergen/frontiers-juleavslutning-2026](https://github.com/frontiers-bergen/frontiers-juleavslutning-2026)
 - [x] Rename the repo to `frontiers-juleavslutning-2026` (explicit for developers; the fun app name is decided separately)
 - [x] Get write access to the new repo and move the `christmas-app` branch there from `Regncon/frontiers-meetup-january-2026`
-- [ ] Draft a programme proposal for the juleavslutning (no programme exists yet)
+- [ ] Draft a programme proposal for the juleavslutning — first draft in `planning/juleavslutning_programme.md`, waiting for the organisers
 - [x] Rename Go module to `github.com/frontiers-bergen/frontiers-juleavslutning-2026`
 - [x] Remove `presentation.db*` from git and un-comment the ignore rules
 - [x] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file (no migrations; decided against goose)
@@ -57,7 +57,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] Two example mini-games that show the pattern end to end: one with only Go + SQLite + Datastar, one with a web component built with Rocket (web components only when needed)
-- [ ] Prepare "good first tasks" for attendees (GitHub issues)
+- [ ] Prepare "good first tasks" for attendees (GitHub issues) — draft list in `planning/workshop_good_first_issues.md`, to review before creating issues
 - [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen (needed to merge PRs live at the workshop; Gerhard, weekend of 7–8 Nov)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (13 slides incl. the app name vote); refine once the mini-games and CI/CD exist
 - [x] QR code with the invite link on the welcome slide (server-rendered SVG at `/{inviteKey}/qr.svg`, big screen only)
