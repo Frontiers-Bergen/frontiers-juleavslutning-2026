@@ -100,7 +100,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Presenter view: the presenter notes box overlapped the top of the reaction bar (stale `--reactions-min-height` after the thumb-sized buttons)
 
 - [x] Look like Frontiers: palette, font and heading style from frontiersbergen.dev
-- [ ] Replace with the official style guide from Alvilde when it arrives (only the tokens in `static/index.css`)
+- [x] Our own style guide, `STYLE_GUIDE.md` (no official one will arrive before the juleavslutning)
+- [ ] Accessibility: white text on the yellow poll option is only 2.4:1 contrast (needs 4.5:1)
+- [ ] Accessibility: respect `prefers-reduced-motion` for balloons and other animations
 
 ### Features (AhaSlides-inspired)
 
