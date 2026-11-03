@@ -142,6 +142,12 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
   When every single event matters (one balloon per emoji smash), publish each event as a core NATS message instead.
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
+  Content slides are markdown files, one per slide (`slides/welcome.md`), added to the deck with `slides.MustMarkdownSlide("welcome")`.
+  The first `# heading` is the slide title (also in the presenter's slide list); text after a line containing only `Notes:` is presenter notes;
+  optional per-slide CSS goes in `slides/welcome.css`, nested under `.slide-welcome`. The format is documented in `slides/markdown_slides.go`.
+  Interactive slides (polls, games) are templ components.
+- Use the Go + SQLite + Datastar stack first; it handles most interactive features. Add a web component only when a feature needs
+  client-side state or rendering the server cannot do well. Rocket (Datastar's web component API, `datastar-rocket.js`) is the choice then.
 - Domain terms are listed in `domain_dictionary.md` and are used unchanged everywhere: code, database, UI and docs.
   Everything else is in English. Frontiers runs its events in English, so the app is English only (no bilingual frontend).
 

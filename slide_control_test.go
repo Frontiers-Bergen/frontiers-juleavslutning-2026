@@ -157,3 +157,29 @@ func (app *testApp) moveToLastSlide(presenter *http.Client) int {
 		}
 	}
 }
+
+func TestPresenterNotes_OnlyThePresenterSeesThem(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a slide with presenter notes, an attendee and a presenter.",
+		When:  "When both look at the slide.",
+		Then:  "Then only the presenter sees the notes.",
+	})
+
+	// Given
+	notesMarker := `class="presenter-notes"`
+	app := startTestApp(t)
+	attendee := app.newAttendee()
+	presenter := app.newPresenter()
+
+	// When
+	attendeePage := app.deckPage(attendee)
+	presenterPage := app.deckPage(presenter)
+
+	// Then
+	if strings.Contains(attendeePage, notesMarker) {
+		t.Fatalf("the attendee sees presenter notes")
+	}
+	if !strings.Contains(presenterPage, notesMarker) {
+		t.Fatalf("the presenter does not see the presenter notes")
+	}
+}

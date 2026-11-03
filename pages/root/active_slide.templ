@@ -20,10 +20,11 @@ func deck(
 	localKey string,
 	remoteKey string,
 ) []slideEntry {
+	welcome := slides.MustMarkdownSlide("welcome")
 	appNamePoll := MustPoll("app-name")
 
 	return []slideEntry{
-		{Title: "Welcome", Render: func() templ.Component { return slides.Welcome(isPresenter) }},
+		{Title: welcome.Title, Render: func() templ.Component { return slides.Markdown(welcome, isPresenter) }},
 		{Title: "Poll: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
 		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll, localKey, remoteKey) }},
 	}

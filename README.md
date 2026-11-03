@@ -55,7 +55,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
-- [ ] First example multiplayer game that shows the pattern end to end
+- [ ] Two example mini-games that show the pattern end to end: one with only Go + SQLite + Datastar, one with a web component built with Rocket (web components only when needed)
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
 - [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen (needed to merge PRs live at the workshop; Gerhard, weekend of 7–8 Nov)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard
@@ -67,7 +67,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [ ] Sound: Gerhard has a portable system (venue not confirmed yet)
 - [ ] Back up the production database afterwards; ideas and feedback are analysed from it
-- [ ] Slides written in markdown, rendered as part of the existing build (see `MdToHTML` in conorganizer)
+- [x] Slides written in markdown: one `.md` file per content slide in `slides/`, embedded and rendered at startup with gomarkdown (as in conorganizer)
 
 ### Code health
 
@@ -129,7 +129,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### To investigate (spike before committing)
 
-- [ ] Rocket (Datastar web components) — free since Datastar v1.0.4 (no longer Pro, separate `datastar-rocket.js` bundle); still beta, check whether it earns its place
+- [x] Rocket (Datastar web components): free since Datastar v1.0.4. Decision: no migration of `<emoji-balloon>` (fire-and-forget animation, nothing for Rocket to improve, double bundle size); try Rocket in the web component mini-game demo
 - [ ] Load test: how many button smashers can one server take?
 
 ## Development
