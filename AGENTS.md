@@ -124,6 +124,7 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Group code by feature, not by technical role. A simple feature can be a single file; a feature with several related files gets its own folder.
 - Develop mobile first. Attendees use their phones as controllers, so every feature must work well on a small touch screen, one-handed.
   The big screen is the shared stage; design for both, starting with the phone.
+  In CSS, the base rules are for the phone and `@media (width >= 40rem)` adds the big-screen layout. Tap targets are at least 3rem (48px) tall.
 - Styling is plain CSS. No Tailwind or other CSS frameworks; the project started from the northstar example and its Tailwind leftovers were removed on purpose.
 - Shared CSS (design tokens, element defaults, app layout) lives in `static/index.css`, which declares the layers `tokens, base, layout, features`.
   A feature's CSS lives in a `.css` file next to its `.templ` file (`pages/root/poll.css` next to `poll.templ`), nested under the feature's
