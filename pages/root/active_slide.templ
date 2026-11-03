@@ -20,13 +20,27 @@ func deck(
 	localKey string,
 	remoteKey string,
 ) []slideEntry {
-	welcome := slides.MustMarkdownSlide("welcome")
 	appNamePoll := MustPoll("app-name")
+	markdown := func(name string) slideEntry {
+		slide := slides.MustMarkdownSlide(name)
+		return slideEntry{Title: slide.Title, Render: func() templ.Component { return slides.Markdown(slide, isPresenter) }}
+	}
 
+	// The workshop opening deck (draft), 12 November 2026.
 	return []slideEntry{
-		{Title: welcome.Title, Render: func() templ.Component { return slides.Markdown(welcome, isPresenter) }},
+		markdown("welcome"),
+		markdown("origin_story"),
+		markdown("why"),
+		markdown("stack"),
+		markdown("name_the_app"),
 		{Title: "Poll: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
 		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll, localKey, remoteKey) }},
+		markdown("codebase"),
+		markdown("live_updates"),
+		markdown("add_a_game"),
+		markdown("tonight"),
+		markdown("house_rules"),
+		markdown("lets_build"),
 	}
 }
 

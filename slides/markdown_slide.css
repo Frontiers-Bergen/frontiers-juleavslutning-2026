@@ -1,0 +1,48 @@
+/* Every markdown slide (markdown_slide.templ). Loaded into @layer features via /feature-styles.css. */
+.markdown-slide {
+	& p {
+		margin: 0 0 var(--space-2) 0;
+		font-size: var(--font-body);
+		line-height: 1.45;
+	}
+
+	& ul {
+		margin-bottom: var(--space-2);
+	}
+
+	& ol {
+		margin: 0 0 var(--space-2) 0;
+		padding-left: 1.4em;
+		font-size: var(--font-body);
+		line-height: 1.45;
+
+		& li {
+			margin-bottom: var(--space-1);
+		}
+	}
+
+	& strong {
+		color: var(--color-text-strong);
+	}
+
+	& code {
+		font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		font-size: 0.85em;
+	}
+
+	/* Code blocks scroll sideways on a phone instead of breaking lines. */
+	& pre {
+		margin: 0 0 var(--space-2) 0;
+		padding: var(--space-2);
+		overflow-x: auto;
+		border: var(--border-subtle);
+		border-radius: var(--radius);
+		background: var(--surface-backstage);
+		font-size: var(--font-small);
+		line-height: 1.5;
+
+		& code {
+			font-size: inherit;
+		}
+	}
+}
