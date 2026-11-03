@@ -50,7 +50,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
 - [x] One-command setup for attendees (`go tool task start`), documented under Getting started
 - [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
-- [ ] Someone tries a fresh clone on macOS and on Windows before the workshop
+- [ ] Someone tries a fresh clone on macOS and on Windows before the workshop (Gerhard, weekend of 7–8 Nov); update `SETUP.md` with the findings
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
 - [x] Update vendored `static/datastar.js` to v1.0.4 (with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
@@ -151,6 +151,7 @@ Then open http://localhost:8080/dev-key/ and edit any `.templ`, `.css` or `.go` 
 - Try it on your phone: open `http://<your computer's LAN address>:8080/dev-key/` on the same wifi.
 - Older Go? `go.mod` asks for Go 1.27; with Go 1.21 or newer, the right version is downloaded automatically on first run.
 - Before opening a pull request: `go tool task check` (needs golangci-lint, see below). Read `AGENTS.md` first; it holds the rules for people and AI agents alike.
+- Stuck? `SETUP.md` covers installing Go per OS, busy ports, the phone on the LAN and other common problems; it is written so an AI agent can walk you through it.
 - Optional tools: [golangci-lint](https://golangci-lint.run) for `task check`; Chrome/Chromium (and Node for `task browser-check`, bash for `task screenshots`) for the browser tools.
 
 ## Development

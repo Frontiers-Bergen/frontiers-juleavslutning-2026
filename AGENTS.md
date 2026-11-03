@@ -3,6 +3,8 @@
 Read the **Why** section in `README.md` first. Every change should serve it: the people at the Frontiers juleavslutning having fun.
 The README also holds the checklist of planned work and the non-goals.
 
+When you help someone install or run the app, follow `SETUP.md`.
+
 ## Engineering principles
 
 The goal while coding is to create a maintainable, high-quality solution that is easy to understand, change, and verify.
