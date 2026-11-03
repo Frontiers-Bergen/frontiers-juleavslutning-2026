@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	natsserver "github.com/nats-io/nats-server/v2/server"
-	"github.com/nats-io/nats.go/jetstream"
 )
 
 const inviteSessionName = "invite"
@@ -58,8 +57,8 @@ func main() {
 type appConfig struct {
 	DatabasePath string
 	// NATSStoreDir is where JetStream keeps its data. Required: the NATS default is one shared temp dir,
-	// and two app instances on the same machine (dev server, tests, task screenshots) would corrupt each other's
-	// KV buckets, which shows up as "context deadline exceeded" when loading the deck.
+	// and two app instances on the same machine (dev server, tests, task screenshots) corrupted each other's
+	// JetStream data, which showed up as "context deadline exceeded" when loading the deck.
 	NATSStoreDir  string
 	LocalKey      string
 	RemoteKey     string
@@ -133,28 +132,12 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 		return nil, nil, fmt.Errorf("failed to create nats client: %w", err)
 	}
 
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create jetstream context: %w", err)
-	}
-
-	kv, err := js.CreateOrUpdateKeyValue(ctx, jetstream.KeyValueConfig{
-		Bucket:      "presentation",
-		Description: "Frontiers Meetup Presentation Bucket",
-		Compression: true,
-		TTL:         time.Hour,
-		MaxBytes:    16 * 1024 * 1024,
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create or update key value store: %w", err)
-	}
-
 	pages.PresenterRoutes(router, sessionStore, logger)
 
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {
 		inviteRouter.Use(inviteKeyMiddleware(sessionStore, config.LocalKey, config.RemoteKey, logger))
-		root.RootLayoutRoute(inviteRouter, db, sessionStore, kv, logger, config.LocalKey, config.RemoteKey, nc)
+		root.RootLayoutRoute(inviteRouter, db, sessionStore, logger, config.LocalKey, config.RemoteKey, nc)
 	})
 
 	return router, closeDatabase, nil

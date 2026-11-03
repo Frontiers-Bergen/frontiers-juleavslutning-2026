@@ -78,7 +78,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Stop ignoring errors in templates (`{{ x, _ := GetCurrentSlideIndex(db) }}`); needs data loaded before rendering — part of the architecture refactor
 - [x] Clean up the emoji SSE handlers together with the emoji counting fix (the `services` package is gone)
 - [x] Read the session secret from `SESSION_SECRET` instead of the hardcoded `"session-secret"`
-- [ ] Replace the Todo-example state (`models/state.go`) used as the broadcast payload in `helpers/nats_helpers.go`, and move that code out of the `helpers` package. It is not dead code: `BroadcastUpdate` drives every live update
+- [x] Replace the Todo-example state and the `helpers` package that drove live updates: one `deck.changed` NATS message now re-renders every open page (`pages/root/live_updates.go`); the KV bucket is gone
 - [x] Remove unused slides that are not in the deck, and unreferenced images
 - [x] Replace the January deck with a placeholder deck: a welcome slide and the app name poll with its results
 - [x] Remove the January `/demo` page (`handler/`, `services/demo_service.go`, `pages/demo.templ`, `components/demo.templ`)
@@ -144,7 +144,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
-- Runtime data lives next to the app: `presentation.db` (SQLite) and `nats-data/` (live-update KV). Both are ignored by git; delete both to start fresh
+- Runtime data lives next to the app: `presentation.db` (SQLite) and `nats-data/` (embedded NATS JetStream). Both are ignored by git; delete both to start fresh
 
 Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
 

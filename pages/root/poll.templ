@@ -7,10 +7,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"github.com/nats-io/nats.go/jetstream"
+	"github.com/nats-io/nats.go"
 )
 
 type PollOption struct {
@@ -85,7 +84,7 @@ func upsertPollVote(db *sql.DB, inviteKey, pollKey, sessionID, optionKey string)
 	return err
 }
 
-func PollVoteRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, store sessions.Store) {
+func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
 	router.Post("/poll/vote", func(w http.ResponseWriter, r *http.Request) {
 		inviteKey := chi.URLParam(r, "inviteKey")
 		pollKey := r.URL.Query().Get("poll")
@@ -114,9 +113,9 @@ func PollVoteRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, store 
 			return
 		}
 
-		sessionID, _, err := helpers.LoadOrCreateState(w, r, kv, store)
+		sessionID, err := attendeeSessionID(store, w, r)
 		if err != nil {
-			http.Error(w, "failed to load or create session: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "failed to get attendee session: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -125,7 +124,7 @@ func PollVoteRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, store 
 			return
 		}
 
-		if err := helpers.BroadcastUpdate(kv, r); err != nil {
+		if err := publishDeckChanged(nc); err != nil {
 			http.Error(w, "unable to broadcast update", http.StatusInternalServerError)
 			return
 		}
