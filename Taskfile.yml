@@ -69,10 +69,16 @@ tasks:
       - golangci-lint run ./...
       - go test ./...
 
-  # Screenshots of every screen for visual checks; see screenshots.sh. Needs chromium or google-chrome.
+  # Screenshots of every screen for visual checks; see browser-tools/screenshots.sh. Needs chromium or google-chrome.
   screenshots:
     cmds:
-      - ./screenshots.sh {{.CLI_ARGS}}
+      - browser-tools/screenshots.sh {{.CLI_ARGS}}
+
+  # Clicks real buttons in headless Chromium (smash, vote, live slide change); see browser-tools/browser_check.mjs.
+  # Needs Node and chromium or google-chrome.
+  browser-check:
+    cmds:
+      - node browser-tools/browser_check.mjs
 
   default:
     cmds:

@@ -71,7 +71,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Code health
 
-- [x] **Fix: emoji smashes could be lost — the very bug this app exists to fix.** Counts moved to SQLite (atomic increment), one NATS message per smash gives one balloon per smash, Datastar no longer cancels in-flight smashes, unknown emojis are rejected. Tests in `emoji_reactions_test.go`.
+- [x] **Fix: emoji smashes could be lost — the very bug this app exists to fix.** Counts moved to SQLite (atomic increment), one NATS message per smash gives one balloon per smash, unknown emojis are rejected. (Datastar request cancellation was suspected too; `task browser-check` showed smashes are counted either way, so disabling it is only defensive.) Tests in `emoji_reactions_test.go`.
 
 - [x] Stop ignoring errors in `main.go`, the demo handler and the root/presenter pages (`http.Error` after SSE has started)
 - [ ] Stop ignoring errors in templates (`{{ x, _ := GetCurrentSlideIndex(db) }}`); needs data loaded before rendering — part of the architecture refactor
@@ -135,7 +135,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - `task build` — production binary in `bin/main`
 - `task test` — run all tests
 - `task check` — everything a PR must pass (formatting, vet, `go fix`, lint, tests); `task fmt` fixes formatting
-- `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs chromium or google-chrome. See `screenshots.sh` for comparing two runs
+- `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs chromium or google-chrome. See `browser-tools/screenshots.sh` for comparing two runs
+- `task browser-check` — clicks real buttons in headless Chromium on a simulated slow network: fast smashing, a live slide change, voting; needs Node and chromium or google-chrome
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
