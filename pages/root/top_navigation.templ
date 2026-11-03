@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"github.com/nats-io/nats.go/jetstream"
+	"github.com/nats-io/nats.go"
 )
 
 // --- DB helpers (owned by TopNavigation) ---
@@ -35,7 +34,7 @@ func SetCurrentSlideIndex(db *sql.DB, index int) error {
 
 // --- Routing (owned by TopNavigation) ---
 
-func TopNavigationRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, store sessions.Store) {
+func TopNavigationRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
 	router.Post("/slides/set", func(w http.ResponseWriter, r *http.Request) {
 		// Attendees share the same invite URL as the presenter, so the URL alone proves nothing.
 		if !isPresenterFromSession(r, store) {
@@ -57,7 +56,7 @@ func TopNavigationRoutes(db *sql.DB, router chi.Router, kv jetstream.KeyValue, s
 			return
 		}
 
-		if err := helpers.BroadcastUpdate(kv, r); err != nil {
+		if err := publishDeckChanged(nc); err != nil {
 			http.Error(w, "unable to broadcast update", http.StatusInternalServerError)
 			return
 		}

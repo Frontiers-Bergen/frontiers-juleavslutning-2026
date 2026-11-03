@@ -137,9 +137,10 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
 - `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
   There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
-- Data that must survive the evening (ideas, votes, feedback, emoji counts) lives in SQLite, not in NATS KV; KV is for live updates and has a TTL.
-- Live updates go through embedded NATS. A KV watcher delivers the latest value, so bursts merge into one update: fine for state like "current slide".
-  When every single event matters (one balloon per emoji smash), publish each event as a core NATS message instead.
+- State lives in SQLite (slides, votes, emoji counts, and later ideas and feedback). NATS only says that something changed.
+- Live updates go through embedded NATS core messages. A change to anything on the deck page publishes `deck.changed`
+  (`pages/root/live_updates.go`), and every open page renders itself again from SQLite. When every single event matters
+  (one balloon per emoji smash), the event gets its own subject and carries what the receiver needs (`emoji_counter.templ`).
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
   Content slides are markdown files, one per slide (`slides/welcome.md`), added to the deck with `slides.MustMarkdownSlide("welcome")`.

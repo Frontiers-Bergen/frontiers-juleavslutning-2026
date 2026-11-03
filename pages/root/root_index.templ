@@ -2,17 +2,14 @@ package root
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/helpers"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -22,7 +19,6 @@ func RootLayoutRoute(
 	router chi.Router,
 	db *sql.DB,
 	store sessions.Store,
-	kv jetstream.KeyValue,
 	logger *slog.Logger,
 	localKey string,
 	remoteKey string,
@@ -31,11 +27,10 @@ func RootLayoutRoute(
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Path A: ensure we have a session ID on the *initial* HTML render.
-		sessionID, _, err := helpers.LoadOrCreateState(w, r, kv, store)
+		sessionID, err := attendeeSessionID(store, w, r)
 		if err != nil {
-			logger.Error("Error loading or creating state:", slog.String("error", err.Error()))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
@@ -63,53 +58,45 @@ func RootLayoutRoute(
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
 			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				logger.Info("Root API SSE connected")
-
-				ctx := r.Context()
-				// NewSSE sends the response headers immediately. From here on, failures can only be
-				// logged and end the stream; http.Error would write a second, ignored header.
-				sse := datastar.NewSSE(w, r)
-
-				sessionID, pageState, err := helpers.LoadOrCreateState(w, r, kv, store)
+				sessionID, err := attendeeSessionID(store, w, r)
 				if err != nil {
-					logger.Error("Error loading or creating state:", slog.String("error", err.Error()))
+					logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 					return
 				}
+
+				// Subscribe before the first patch, so no change falls between the two.
+				deckChanges := make(chan *nats.Msg, 64)
+				subscription, err := nc.ChanSubscribe(deckChangedSubject, deckChanges)
+				if err != nil {
+					logger.Error("failed to subscribe to deck changes", slog.String("error", err.Error()))
+					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+					return
+				}
+				defer func() {
+					if err := subscription.Unsubscribe(); err != nil {
+						logger.Error("failed to unsubscribe from deck changes", slog.String("error", err.Error()))
+					}
+				}()
 
 				inviteKey := chi.URLParam(r, "inviteKey")
 				isPresenter := isPresenterFromSession(r, store)
 
+				// NewSSE sends the response headers immediately. From here on, failures can only be
+				// logged and end the stream; http.Error would write a second, ignored header.
+				sse := datastar.NewSSE(w, r)
 				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
-					logger.Error("Error sending initial page patch:", slog.String("error", err.Error()))
+					logger.Error("failed to send initial page patch", slog.String("error", err.Error()))
 					return
 				}
-
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					logger.Error("Error setting up KV watcher:", slog.String("error", err.Error()))
-					return
-				}
-				defer watcher.Stop()
-
-				logger.Info("Root API SSE watcher started", slog.String("sessionID", sessionID))
 
 				for {
 					select {
-					case <-ctx.Done():
+					case <-r.Context().Done():
 						return
-
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
-						}
-
-						if err := json.Unmarshal(entry.Value(), pageState); err != nil {
-							logger.Error("Error decoding page state:", slog.String("error", err.Error()))
-							return
-						}
-
+					case <-deckChanges:
 						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID, localKey, remoteKey)); err != nil {
-							logger.Error("Error sending page patch:", slog.String("error", err.Error()))
+							logger.Error("failed to send page patch", slog.String("error", err.Error()))
 							return
 						}
 					}
@@ -117,10 +104,9 @@ func RootLayoutRoute(
 			})
 
 			IncrementEmojiRoute(rootApiRouter, db, nc, logger)
-			TopNavigationRoutes(db, rootApiRouter, kv, store)
+			TopNavigationRoutes(db, rootApiRouter, nc, store)
 
-			// Poll feature routes (vote writes DB + broadcast update).
-			PollVoteRoutes(db, rootApiRouter, kv, store)
+			PollVoteRoutes(db, rootApiRouter, nc, store)
 		})
 	})
 }
