@@ -58,6 +58,8 @@ func RootLayoutRoute(
 		}
 	})
 
+	InviteQRCodeRoute(router, logger)
+
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
 			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {

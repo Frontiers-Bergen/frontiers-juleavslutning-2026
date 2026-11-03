@@ -6,10 +6,14 @@
 
 Frontiers Bergen workshop · 12 November 2026
 
-Grab some food, find a seat, and open the link on your phone.
+Grab some food, find a seat, and scan the code to join on your phone.
+
+<img class="invite-qr" src="qr.svg" alt="QR code with the invite link">
 
 Notes:
 
 - Leave this on screen while people arrive and eat.
-- Make sure the invite link is on the screen or in the meetup chat.
+- The QR code holds the invite link for the host this screen was opened with. Open the big screen with the
+  machine's LAN address or the public domain, not "localhost", or phones cannot follow the link.
+- Also post the invite link in the meetup chat for people who cannot scan.
 - Wifi details on a sticky note by the door.
