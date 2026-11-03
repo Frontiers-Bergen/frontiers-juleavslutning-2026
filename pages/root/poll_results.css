@@ -24,7 +24,7 @@
 		}
 	}
 
-	/* Set per option: --option-color (kahootThemeForIndex) and --share (width relative to the top option). */
+	/* Set per option: --option-color and --option-text (kahootThemeForIndex) and --share (width relative to the top option). */
 	.poll-result {
 		display: flex;
 		flex-direction: column;
@@ -56,7 +56,7 @@
 		height: 3rem;
 		border-radius: 14px;
 		background: var(--option-color);
-		color: white;
+		color: var(--option-text);
 		font-size: 1.75rem;
 		font-weight: 900;
 	}

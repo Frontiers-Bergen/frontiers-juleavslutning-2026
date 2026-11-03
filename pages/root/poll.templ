@@ -134,18 +134,33 @@ func pollVotePostURL(inviteKey, pollKey, optionKey string) string {
 	return fmt.Sprintf("@post('/%s/root/api/poll/vote?poll=%s&option=%s')", inviteKey, escapedPoll, escapedOption)
 }
 
-func kahootThemeForIndex(index int) (bg string, badge string) {
-	// Kahoot-ish: red, blue, yellow, green
+// pollOptionTheme is how an option looks, Kahoot style: a colour, the text colour that is readable on it,
+// and a shape, so colour is never the only cue (STYLE_GUIDE.md).
+type pollOptionTheme struct {
+	Color     string
+	TextColor string
+	Badge     string
+}
+
+// kahootThemeForIndex gives options red ▲, blue ◆, yellow ●, green ■ in order. White text is only 2.4:1 on
+// the yellow, so yellow gets the palette's near-black text (6.7:1); white passes on the other three.
+func kahootThemeForIndex(index int) pollOptionTheme {
+	const lightText, darkText = "var(--color-text-strong)", "var(--color-bg-base)"
 	switch index % 4 {
 	case 0:
-		return "#e21b3c", "▲"
+		return pollOptionTheme{Color: "#e21b3c", TextColor: lightText, Badge: "▲"}
 	case 1:
-		return "#1368ce", "◆"
+		return pollOptionTheme{Color: "#1368ce", TextColor: lightText, Badge: "◆"}
 	case 2:
-		return "#d89e00", "●"
+		return pollOptionTheme{Color: "#d89e00", TextColor: darkText, Badge: "●"}
 	default:
-		return "#26890c", "■"
+		return pollOptionTheme{Color: "#26890c", TextColor: lightText, Badge: "■"}
 	}
+}
+
+// style passes the theme to CSS as custom properties.
+func (theme pollOptionTheme) style() string {
+	return fmt.Sprintf("--option-color: %s; --option-text: %s;", theme.Color, theme.TextColor)
 }
 
 templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinition) {
@@ -162,15 +177,15 @@ templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinit
 		</div>
 		<div class="poll-options">
 			for i, opt := range poll.Options {
-				{{ optionColor, badge := kahootThemeForIndex(i) }}
+				{{ theme := kahootThemeForIndex(i) }}
 				<button
 					type="button"
 					class="poll-option"
-					style={ "--option-color: " + optionColor }
+					style={ theme.style() }
 					data-on:click={ templ.URL(pollVotePostURL(inviteKey, poll.Key, opt.Key)) }
 					aria-pressed={ fmt.Sprintf("%t", opt.Key == selectedOptionKey) }
 				>
-					<div class="poll-option-badge">{ badge }</div>
+					<div class="poll-option-badge">{ theme.Badge }</div>
 					<div class="poll-option-body">
 						if opt.ImageURL != "" {
 							<img class="poll-option-image" src={ opt.ImageURL } alt=""/>

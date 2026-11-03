@@ -102,8 +102,8 @@ async function presenterSession() {
 	return { moveToSlideWith };
 }
 
-// One browser tab, like one attendee's phone.
-async function openTab(url) {
+// One browser tab, like one attendee's phone. reducedMotion emulates the "reduce motion" accessibility setting.
+async function openTab(url, { reducedMotion = false } = {}) {
 	const target = await (await fetch(`http://127.0.0.1:${devtoolsPort}/json/new?${url}`, { method: "PUT" })).json();
 	const socket = new WebSocket(target.webSocketDebuggerUrl);
 	await new Promise((resolve) => socket.addEventListener("open", resolve));
@@ -134,6 +134,10 @@ async function openTab(url) {
 	// so rapid taps never overlap and request-cancellation bugs stay invisible.
 	await send("Network.enable");
 	await send("Network.emulateNetworkConditions", { offline: false, latency: 200, downloadThroughput: -1, uploadThroughput: -1 });
+	if (reducedMotion) {
+		await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+		await send("Page.reload");
+	}
 	await sleep(2000); // let Datastar connect its SSE streams
 	return {
 		problems,
@@ -180,6 +184,27 @@ try {
 	check(`${smashes} fast 👍 clicks are all shown`, afterSmashing.shown === smashes, afterSmashing);
 	check(`${smashes} fast 👍 clicks each give a balloon`, afterSmashing.balloons === smashes, afterSmashing);
 
+	// Balloons fly, except for people who turned on "reduce motion": then a balloon appears at its button,
+	// stays still, and disappears, so every smash is still seen.
+	const balloonMotion = `(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const appeared = new Promise((resolve) => new MutationObserver((changes, observer) => {
+			for (const change of changes) for (const node of change.addedNodes) {
+				if (node.nodeName === "EMOJI-BALLOON") { observer.disconnect(); resolve(node); }
+			}
+		}).observe(document.body, { childList: true }));
+		document.querySelector(".emoji-balloon-button").click();
+		const balloon = await appeared;
+		await sleep(100);
+		const firstTop = balloon.getBoundingClientRect().top;
+		await sleep(400);
+		const laterTop = balloon.getBoundingClientRect().top;
+		await sleep(900);
+		return { moved: Math.abs(laterTop - firstTop) > 1, stillThereAfterTwoSeconds: balloon.isConnected };
+	})()`;
+	const normalMotion = await phone.run(balloonMotion);
+	check("balloons fly up", normalMotion.moved === true, normalMotion);
+
 	// Live update: the presenter moves the deck and the open phone follows without a reload.
 	await presenter.moveToSlideWith(/class="slide poll"/);
 	await sleep(1500);
@@ -200,6 +225,13 @@ try {
 
 	check("no console errors or exceptions in the phone tab", phone.problems.length === 0, phone.problems);
 	phone.close();
+
+	// Last, because a second tab hides the first one, and Datastar closes the live stream of a hidden page.
+	const calmPhone = await openTab(deckURL, { reducedMotion: true });
+	const reducedMotion = await calmPhone.run(balloonMotion);
+	check("with reduce motion, a balloon stays still and disappears", reducedMotion.moved === false && reducedMotion.stillThereAfterTwoSeconds === false, reducedMotion);
+	check("no console errors or exceptions in the reduce-motion tab", calmPhone.problems.length === 0, calmPhone.problems);
+	calmPhone.close();
 } catch (error) {
 	console.error(`browser check could not run: ${error.message}`);
 	failures++;

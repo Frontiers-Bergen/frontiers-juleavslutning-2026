@@ -61,7 +61,7 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition) {
 			}
 			<div class="poll-results-options">
 				for i, opt := range poll.Options {
-					{{ optionColor, badge := kahootThemeForIndex(i) }}
+					{{ theme := kahootThemeForIndex(i) }}
 					{{ total := counts[opt.Key] }}
 					{{ share := 0.0 }}
 					{{
@@ -73,10 +73,10 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition) {
 						class="poll-result"
 						data-option-key={ opt.Key }
 						data-vote-count={ fmt.Sprintf("%d", total) }
-						style={ fmt.Sprintf("--option-color: %s; --share: %.2f%%;", optionColor, share) }
+						style={ fmt.Sprintf("%s --share: %.2f%%;", theme.style(), share) }
 					>
 						<div class="poll-result-header">
-							<div class="poll-result-badge">{ badge }</div>
+							<div class="poll-result-badge">{ theme.Badge }</div>
 							<div class="poll-result-title">
 								if opt.Text != "" {
 									<div class="poll-result-text">{ opt.Text }</div>

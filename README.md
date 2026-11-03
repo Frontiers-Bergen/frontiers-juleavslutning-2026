@@ -101,8 +101,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [x] Look like Frontiers: palette, font and heading style from frontiersbergen.dev
 - [x] Our own style guide, `STYLE_GUIDE.md` (no official one will arrive before the juleavslutning)
-- [ ] Accessibility: white text on the yellow poll option is only 2.4:1 contrast (needs 4.5:1)
-- [ ] Accessibility: respect `prefers-reduced-motion` for balloons and other animations
+- [x] Accessibility: near-black text on the yellow poll option (6.7:1; white was 2.4:1)
+- [x] Accessibility: emoji balloons respect `prefers-reduced-motion` (checked by `task browser-check`)
 
 ### Features (AhaSlides-inspired)
 
