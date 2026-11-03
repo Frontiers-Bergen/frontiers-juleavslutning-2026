@@ -25,11 +25,18 @@
 		opacity: 0.85;
 	}
 
+	/* Mobile first: one option per row on a phone, so option texts are not squeezed;
+	   the 2 x 2 grid from 40rem up (big screen, laptops). */
 	.poll-options {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.75rem;
 		flex: 1;
+
+		@media (width >= 40rem) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 1rem;
+		}
 	}
 
 	/* --option-color is set per option from kahootThemeForIndex. */
@@ -39,7 +46,7 @@
 		justify-content: stretch;
 		gap: 0.75rem;
 		width: 100%;
-		min-height: 6.5rem;
+		min-height: 4rem;
 		padding: 1rem;
 		border-radius: 18px;
 		border: 2px solid rgba(255, 255, 255, 0.25);
@@ -47,6 +54,10 @@
 		color: white;
 		text-align: left;
 		cursor: pointer;
+
+		@media (width >= 40rem) {
+			min-height: 6.5rem;
+		}
 
 		&[aria-pressed="true"] {
 			border: 4px solid rgba(255, 255, 255, 0.95);
@@ -86,7 +97,9 @@
 		font-size: 1.25rem;
 		font-weight: 800;
 		line-height: 1.15;
-		word-break: break-word;
+		/* Break inside a word only when the word alone does not fit (word-break: break-word split any word). */
+		overflow-wrap: break-word;
+		hyphens: auto;
 	}
 
 	.poll-option-selected {

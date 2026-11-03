@@ -1,14 +1,27 @@
 /* Reaction bar and emoji balloons (emoji_counter.templ). Loaded into @layer features via /feature-styles.css. */
+/* The reaction buttons are made to be smashed with a thumb: at least 3rem (48px) tall, spread across
+   the whole width on a phone, and centred at their natural width from 40rem up. */
 .reaction-bar {
 	display: flex;
 	justify-content: center;
 	flex: 1;
-	gap: 12px;
+	gap: var(--space-1);
 	padding: 4px;
 
 	.emoji-balloon-button {
-		padding: 6px;
-		font-size: 18px;
+		flex: 1;
+		min-height: 3rem;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius);
+		font-size: 1.25rem;
+		/* Fast repeated taps must not zoom the page or select the count text. */
+		touch-action: manipulation;
+		user-select: none;
+
+		@media (width >= 40rem) {
+			flex: 0 0 auto;
+			min-width: 4.5rem;
+		}
 	}
 }
 
