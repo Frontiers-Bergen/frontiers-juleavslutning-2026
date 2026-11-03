@@ -75,27 +75,7 @@ func slideSetPostURL(inviteKey string, index int) string {
 templ TopNavigation(db *sql.DB, inviteKey string, sessionID string, localKey string, remoteKey string) {
 	{{ current, _ := GetCurrentSlideIndex(db) }}
 	{{ deckEntries := deck(db, inviteKey, sessionID, false, localKey, remoteKey) }}
-	{{ maxSlides := len(deckEntries) }}
-	{{ prevIndex := current - 1 }}
-	{{ nextIndex := current + 1 }}
-	{{ prevDisabled := prevIndex < 0 }}
-	{{ nextDisabled := nextIndex >= maxSlides }}
-	{{ prevEntry := slideEntryAt(deckEntries, prevIndex) }}
-	{{ nextEntry := slideEntryAt(deckEntries, nextIndex) }}
-	{{ prevTitle := prevEntry.Title }}
-	{{ nextTitle := nextEntry.Title }}
-	{{
-		if prevDisabled {
-			prevTitle = "Start"
-		}
-		if nextDisabled {
-			nextTitle = "End"
-		}
-	}}
-	<nav
-		data-signals={ fmt.Sprintf("{ slideIndex: %d, maxSlides: %d }", current, maxSlides) }
-		class="presenter-nav"
-	>
+	<nav class="presenter-nav">
 		<button
 			class="presenter-nav-button"
 			data-on:click={ templ.URL(slideSetPostURL(inviteKey, 0)) }
@@ -103,52 +83,52 @@ templ TopNavigation(db *sql.DB, inviteKey string, sessionID string, localKey str
 		>
 			<img src="/static/house-regular-full.svg" alt="" class="presenter-nav-home-icon"/>
 		</button>
-		<div
-			class="presenter-nav-preview"
-			role="button"
-			tabindex="0"
-			data-attr="{ 'data-disabled': $slideIndex == 0, 'aria-disabled': $slideIndex == 0 }"
-			data-on:click={ templ.URL(slideSetPostURL(inviteKey, current-1)) }
-		>
-			<div class="presenter-nav-preview-meta">
-				<span class="presenter-nav-preview-label">Previous</span>
-				<span class="presenter-nav-preview-title">{ prevTitle }</span>
-			</div>
-			<div class="slide-preview-frame">
-				<div class="slide-preview-inner">
-					if !prevDisabled {
-						@prevEntry.Render()
-					} else {
-						<div class="slide-preview-placeholder">Start</div>
-					}
-				</div>
-			</div>
-		</div>
-		<div
-			class="presenter-nav-preview presenter-nav-preview-next"
-			role="button"
-			tabindex="0"
-			data-attr="{ 'data-disabled': $slideIndex >= ($maxSlides - 1), 'aria-disabled': $slideIndex >= ($maxSlides - 1) }"
-			data-on:click={ templ.URL(slideSetPostURL(inviteKey, current+1)) }
-		>
-			<div class="presenter-nav-preview-meta">
-				<span class="presenter-nav-preview-label">Next</span>
-				<span class="presenter-nav-preview-title">{ nextTitle }</span>
-			</div>
-			<div class="slide-preview-frame">
-				<div class="slide-preview-inner">
-					if !nextDisabled {
-						@nextEntry.Render()
-					} else {
-						<div class="slide-preview-placeholder">End</div>
-					}
-				</div>
-			</div>
-		</div>
+		if current > 0 {
+			@presenterNavPreview("Previous", inviteKey, current-1, deckEntries[current-1], false)
+		} else {
+			@presenterNavEdge("Previous", "This is the first slide", false)
+		}
+		if current+1 < len(deckEntries) {
+			@presenterNavPreview("Next", inviteKey, current+1, deckEntries[current+1], true)
+		} else {
+			@presenterNavEdge("Next", "This is the last slide", true)
+		}
 		<div class="presenter-nav-count">
-			Slide { fmt.Sprintf("%d / %d", current+1, maxSlides) }
+			Slide { fmt.Sprintf("%d / %d", current+1, len(deckEntries)) }
 		</div>
 	</nav>
+}
+
+// presenterNavPreview is a clickable preview of the slide the presenter moves to.
+templ presenterNavPreview(label string, inviteKey string, targetIndex int, target slideEntry, isNext bool) {
+	<div
+		class={ "presenter-nav-preview", templ.KV("presenter-nav-preview-next", isNext) }
+		role="button"
+		tabindex="0"
+		data-on:click={ templ.URL(slideSetPostURL(inviteKey, targetIndex)) }
+	>
+		<div class="presenter-nav-preview-meta">
+			<span class="presenter-nav-preview-label">{ label }</span>
+			<span class="presenter-nav-preview-title">{ target.Title }</span>
+		</div>
+		<div class="slide-preview-frame">
+			<div class="slide-preview-inner">
+				@target.Render()
+			</div>
+		</div>
+	</div>
+}
+
+// presenterNavEdge takes the place of a preview on the first or last slide. It keeps the same size so the
+// controls do not jump, but it is visibly empty and has no action: there is no slide to move to.
+templ presenterNavEdge(label string, message string, isNext bool) {
+	<div class={ "presenter-nav-preview", "presenter-nav-edge", templ.KV("presenter-nav-preview-next", isNext) }>
+		<div class="presenter-nav-preview-meta">
+			<span class="presenter-nav-preview-label">{ label }</span>
+			<span class="presenter-nav-preview-title">{ message }</span>
+		</div>
+		<div class="slide-preview-frame"></div>
+	</div>
 }
 
 templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string, localKey string, remoteKey string) {
