@@ -31,7 +31,8 @@ Rules:
 - Do not add brand colours. Festive colour comes from emoji, illustrations and motion, not from new tokens.
 - The exception is the poll options, which keep their Kahoot colours and shapes so people find their answer at a glance:
   red ▲, blue ◆, yellow ●, green ■ (`kahootThemeForIndex` in `pages/root/poll.templ`). Colour is never the only cue;
-  the shape always comes with it.
+  the shape always comes with it. Text is white on red, blue and green, and near-black (`--color-bg-base`) on yellow,
+  where white would be unreadable.
 
 ## Typography
 
@@ -71,7 +72,7 @@ Rules:
 
 The juleavslutning may look like Christmas, on top of the Frontiers look:
 - Emoji are welcome everywhere (🎄 ❄️ 🎁), in slides, buttons and balloons.
-- Motion is fun (balloons, confetti, snow) as long as it never hides content or slows a phone down.
+- Motion is fun (balloons, confetti, snow) as long as it never hides content, slows a phone down, or ignores "reduce motion".
 - Keep the purple background and the palette; do not switch to red and green.
 
 ## Voice and tone
@@ -84,6 +85,7 @@ The juleavslutning may look like Christmas, on top of the Frontiers look:
 
 - Text needs a contrast of at least 4.5:1 against its background. All text tokens pass on both the background and
   surfaces (lowest: muted text on a surface, 5.3:1).
-- Known gaps, on the README checklist:
-  - White text on the yellow poll option is only 2.4:1.
-  - Animations ignore the "reduce motion" setting (`prefers-reduced-motion`).
+- Poll options: white text on red, blue and green passes; yellow gets near-black text (6.7:1 instead of 2.4:1 for white).
+- Motion respects the "reduce motion" setting (`prefers-reduced-motion`): emoji balloons appear at their button and
+  disappear without flying (`static/emoji-balloon.js`). New animations must do the same; `go tool task browser-check`
+  checks the balloons.

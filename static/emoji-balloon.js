@@ -1,5 +1,7 @@
 const EmojiBalloon = (() => {
 
+const REDUCED_MOTION_VISIBLE_MS = 800;
+
 const GLOBAL = {
 	balloons: []
 }
@@ -92,6 +94,12 @@ class _EmojiBalloon extends HTMLElement {
 	}
 
 	connectedCallback() {
+		// With "reduce motion" on, a smash still shows its balloon at the button, but it does not fly:
+		// it stays for a moment and disappears. Every smash stays visible without the movement.
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			setTimeout(() => this.remove(), REDUCED_MOTION_VISIBLE_MS);
+			return;
+		}
 		GLOBAL.balloons.push(this)
 	}
 

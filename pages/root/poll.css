@@ -39,7 +39,7 @@
 		}
 	}
 
-	/* --option-color is set per option from kahootThemeForIndex. */
+	/* --option-color and --option-text are set per option from kahootThemeForIndex. */
 	.poll-option {
 		display: flex;
 		align-items: stretch;
@@ -51,7 +51,7 @@
 		border-radius: 18px;
 		border: 2px solid rgba(255, 255, 255, 0.25);
 		background: var(--option-color);
-		color: white;
+		color: var(--option-text);
 		text-align: left;
 		cursor: pointer;
 
