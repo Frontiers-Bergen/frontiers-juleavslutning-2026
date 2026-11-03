@@ -9,21 +9,25 @@
 #   compare -metric AE -fuzz 2% before/slide0-phone.png after/slide0-phone.png diff.png
 #
 # Usage: browser-tools/screenshots.sh [output-dir]   (default: tmp/screenshots)
-# Requires: chromium or google-chrome, curl.
+# Requires: bash, curl, and Chromium or Google Chrome (Linux and macOS; on Windows use Git Bash or WSL).
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-out="$(realpath -m "${1:-$repo/tmp/screenshots}")"
+mkdir -p "${1:-$repo/tmp/screenshots}"
+out="$(cd "${1:-$repo/tmp/screenshots}" && pwd)" # absolute path; realpath -m is GNU-only
 port="${PORT:-8099}"
 base="http://localhost:$port"
 browser="$(command -v chromium || command -v google-chrome-stable || command -v google-chrome || true)"
+mac_chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ -z "$browser" ] && [ -x "$mac_chrome" ]; then
+	browser="$mac_chrome"
+fi
 if [ -z "$browser" ]; then
-	echo "screenshots: chromium or google-chrome is required" >&2
+	echo "screenshots: Chromium or Google Chrome is required" >&2
 	exit 1
 fi
 
 work="$(mktemp -d)"
-mkdir -p "$out"
 (cd "$repo" && go tool templ generate -log-level error && go build -o "$work/app" .)
 cp -r "$repo/static" "$work/"
 cd "$work"

@@ -47,8 +47,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Remove `presentation.db*` from git and un-comment the ignore rules
 - [x] Apply `schema.sql` automatically at startup so a fresh clone runs without a DB file (no migrations; decided against goose)
 - [x] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
-- [ ] One-command setup for attendees (`task start`), documented in this README
-- [ ] Verify a fresh clone works on Linux, macOS and Windows
+- [x] One-command setup for attendees (`go tool task start`), documented under Getting started
+- [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
+- [ ] Someone tries a fresh clone on macOS and on Windows before the workshop
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
 - [x] Update vendored `static/datastar.js` to v1.0.4 (with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
@@ -133,14 +134,34 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Rocket (Datastar web components): free since Datastar v1.0.4. Decision: no migration of `<emoji-balloon>` (fire-and-forget animation, nothing for Rocket to improve, double bundle size); try Rocket in the web component mini-game demo
 - [ ] Load test: how many button smashers can one server take?
 
+## Getting started
+
+You need [Go](https://go.dev/dl/) and git. Linux, macOS and Windows all work. Everything else (templ, Task, air) comes in as a Go tool, so there is nothing more to install to run the app.
+
+```sh
+git clone https://github.com/frontiers-bergen/frontiers-juleavslutning-2026.git
+cd frontiers-juleavslutning-2026
+go tool task start
+```
+
+Then open http://localhost:8080/local-dev-key/ and edit any `.templ`, `.css` or `.go` file; the page reloads after a save.
+
+- Presenter mode: create a `.env` file with `PRESENTER_KEY=something`, restart, open http://localhost:8080/presenter/ and enter it.
+- Try it on your phone: open `http://<your computer's LAN address>:8080/local-dev-key/` on the same wifi.
+- Older Go? `go.mod` asks for Go 1.27; with Go 1.21 or newer, the right version is downloaded automatically on first run.
+- Before opening a pull request: `go tool task check` (needs golangci-lint, see below). Read `AGENTS.md` first; it holds the rules for people and AI agents alike.
+- Optional tools: [golangci-lint](https://golangci-lint.run) for `task check`; Chrome/Chromium (and Node for `task browser-check`, bash for `task screenshots`) for the browser tools.
+
 ## Development
 
+The commands below are `go tool task <name>`; with Task installed globally, plain `task <name>` works too.
+
 - `task start` — templ watch + hot reload on http://localhost:8080
-- `task build` — production binary in `bin/main`
+- `task build` — production binary in `bin/main` (`bin/main.exe` on Windows)
 - `task test` — run all tests
 - `task check` — everything a PR must pass (formatting, vet, `go fix`, lint, tests); `task fmt` fixes formatting
-- `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs chromium or google-chrome. See `browser-tools/screenshots.sh` for comparing two runs
-- `task browser-check` — clicks real buttons in headless Chromium on a simulated slow network: fast smashing, a live slide change, voting; needs Node and chromium or google-chrome
+- `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs bash and Chrome/Chromium. See `browser-tools/screenshots.sh` for comparing two runs
+- `task browser-check` — clicks real buttons in headless Chromium on a simulated slow network: fast smashing, a live slide change, voting; needs Node and Chrome/Chromium
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
