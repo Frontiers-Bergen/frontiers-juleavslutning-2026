@@ -140,6 +140,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/local-dev-key/` (or `/remote-dev-key/`) to see the deck; `/` only shows "you need a key"
+- Runtime data lives next to the app: `presentation.db` (SQLite) and `nats-data/` (live-update KV). Both are ignored by git; delete both to start fresh
 
 Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
 
