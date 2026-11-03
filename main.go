@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -32,6 +33,7 @@ func main() {
 
 	config := appConfig{
 		DatabasePath:  "presentation.db",
+		NATSStoreDir:  "nats-data",
 		LocalKey:      readEnvOrDefault(logger, "ATTENDEE_LOCAL_KEY", "local-dev-key"),
 		RemoteKey:     readEnvOrDefault(logger, "ATTENDEE_REMOTE_KEY", "remote-dev-key"),
 		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
@@ -55,7 +57,9 @@ func main() {
 
 type appConfig struct {
 	DatabasePath string
-	// NATSStoreDir is where JetStream keeps its data. Empty means the NATS default (a temp dir).
+	// NATSStoreDir is where JetStream keeps its data. Required: the NATS default is one shared temp dir,
+	// and two app instances on the same machine (dev server, tests, task screenshots) would corrupt each other's
+	// KV buckets, which shows up as "context deadline exceeded" when loading the deck.
 	NATSStoreDir  string
 	LocalKey      string
 	RemoteKey     string
@@ -66,6 +70,10 @@ type appConfig struct {
 // main and the HTTP tests both use it, so tests exercise the real router.
 // The embedded NATS server shuts down when ctx is cancelled; closeApp closes the database.
 func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app http.Handler, closeApp func(), err error) {
+	if config.NATSStoreDir == "" {
+		return nil, nil, errors.New("appConfig.NATSStoreDir is required; the NATS default store dir is shared by every instance on the machine")
+	}
+
 	db, err := openDatabase(config.DatabasePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)

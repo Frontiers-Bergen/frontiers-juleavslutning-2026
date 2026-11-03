@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
 // Test harness for HTTP-level tests: the real router from newApp, with a fresh SQLite file
@@ -142,4 +144,29 @@ func truncate(text string, maxLength int) string {
 		return text
 	}
 	return strings.TrimSpace(text[:maxLength]) + "…"
+}
+
+func TestNewApp_WithoutNATSStoreDir_RefusesToStart(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an app configuration without a NATS store directory.",
+		When:  "When the app is started.",
+		Then:  "Then it refuses to start instead of sharing the machine-wide NATS default with other instances.",
+	})
+
+	// Given
+	expectedErrorText := "NATSStoreDir is required"
+	config := appConfig{
+		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
+		LocalKey:      testLocalKey,
+		RemoteKey:     testRemoteKey,
+		SessionSecret: "test-session-secret",
+	}
+
+	// When
+	_, _, err := newApp(t.Context(), slog.New(slog.NewTextHandler(io.Discard, nil)), config)
+
+	// Then
+	if err == nil || !strings.Contains(err.Error(), expectedErrorText) {
+		t.Fatalf("expected an error containing %q, got %v", expectedErrorText, err)
+	}
 }
