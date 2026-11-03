@@ -71,10 +71,22 @@ async function presenterSession() {
 		redirect: "manual",
 	});
 	const cookie = login.headers.getSetCookie().map((header) => header.split(";")[0]).join("; ");
-	return {
-		moveToSlide: (index) => fetch(`${api}/slides/set?index=${index}`, { method: "POST", headers: { cookie } }),
-		deckHTML: async () => (await fetch(deckURL, { headers: { cookie } })).text(),
+	const moveToSlide = (index) => fetch(`${api}/slides/set?index=${index}`, { method: "POST", headers: { cookie } });
+	// What an attendee sees: only the active slide. (The presenter's page also previews every slide.)
+	const attendeeHTML = async () => (await fetch(deckURL)).text();
+	// Steps through the deck until a slide matching the pattern is shown, like a presenter clicking "next",
+	// so the check does not depend on slide order.
+	const moveToSlideWith = async (pattern) => {
+		for (let index = 0; index < 100; index++) {
+			await moveToSlide(index);
+			const html = await attendeeHTML();
+			if (pattern.test(html)) return html;
+			const shown = Number(/slideIndex:\s*(\d+)/.exec(html)?.[1]);
+			if (shown < index) break;
+		}
+		throw new Error(`no slide matches ${pattern}`);
 	};
+	return { moveToSlideWith };
 }
 
 // One browser tab, like one attendee's phone.
@@ -156,7 +168,7 @@ try {
 	check(`${smashes} fast 👍 clicks each give a balloon`, afterSmashing.balloons === smashes, afterSmashing);
 
 	// Live update: the presenter moves the deck and the open phone follows without a reload.
-	await presenter.moveToSlide(1);
+	await presenter.moveToSlideWith(/class="slide poll"/);
 	await sleep(1500);
 	const showsPoll = await phone.run(`document.querySelector(".poll-option") !== null`);
 	check("an open phone follows the presenter to the poll slide", showsPoll === true);
@@ -169,8 +181,7 @@ try {
 		return { pressed: option().getAttribute("aria-pressed") };
 	})()`);
 	check("a tapped poll option shows as selected", afterVoting.pressed === "true", afterVoting);
-	await presenter.moveToSlide(2);
-	const resultsHTML = await presenter.deckHTML();
+	const resultsHTML = await presenter.moveToSlideWith(/data-poll-results="app-name"/);
 	const counted = /data-option-key="smash-the-halls"\s+data-vote-count="1"/.test(resultsHTML);
 	check("the tapped vote is counted in the results", counted);
 

@@ -58,7 +58,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Two example mini-games that show the pattern end to end: one with only Go + SQLite + Datastar, one with a web component built with Rocket (web components only when needed)
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
 - [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen (needed to merge PRs live at the workshop; Gerhard, weekend of 7–8 Nov)
-- [ ] Opening demo + codebase walkthrough slides for Gerhard
+- [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (13 slides incl. the app name vote); refine once the mini-games and CI/CD exist
+- [ ] QR code with the invite link on the welcome slide, so people can join from their phone without typing
 - [ ] App name vote at the workshop: a poll with 3–4 candidates, the winner becomes the app name shown on the big screen and phones.
       Candidates so far: Rage Against the Debounce, Last Christmas I Gave You My Clicks, It's Tiiime, Smash the Halls.
       The name must make people laugh out loud, not just chuckle.

@@ -1,12 +1,15 @@
-<!-- Placeholder: replace with the real juleavslutning welcome slide. Shown on the big screen while people arrive and get food. -->
+<!-- Draft: the first slide on the big screen while people arrive for the workshop. -->
 
 ![Frontiers](/static/frontiers-logo.svg)
 
-# Frontiers Juleavslutning 2026
+# Let's Build Our Christmas Meetup App!
 
-Starting soon. Grab some food and something to drink.
+Frontiers Bergen workshop · 12 November 2026
+
+Grab some food, find a seat, and open the link on your phone.
 
 Notes:
 
-- Leave this slide on screen while people arrive.
-- Presenter notes are only visible in presenter mode.
+- Leave this on screen while people arrive and eat.
+- Make sure the invite link is on the screen or in the meetup chat.
+- Wifi details on a sticky note by the door.

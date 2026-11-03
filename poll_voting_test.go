@@ -107,15 +107,18 @@ func (app *testApp) vote(client *http.Client, inviteKey string, optionKey string
 }
 
 // showPollResults steps the presenter through the deck until the results slide for pollKey is shown,
-// like a presenter clicking "next", so the tests do not depend on slide order. Returns that page.
+// like a presenter clicking "next", so the tests do not depend on slide order. Returns the page an
+// attendee sees then. It checks an attendee's page on purpose: the presenter's page also holds previews
+// of every slide in its sidebar, so it contains the results slide even when another slide is active.
 func (app *testApp) showPollResults(presenter *http.Client, pollKey string) string {
 	app.t.Helper()
 	resultsMarker := fmt.Sprintf(`data-poll-results="%s"`, pollKey)
+	viewer := app.newAttendee()
 	for index := 0; ; index++ {
 		if status := app.post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index)); status != http.StatusNoContent {
 			app.t.Fatalf("presenter could not move to slide %d: status %d", index, status)
 		}
-		page := app.deckPage(presenter)
+		page := app.deckPage(viewer)
 		if strings.Contains(page, resultsMarker) {
 			return page
 		}
