@@ -1,0 +1,22 @@
+/* "You need an invite link" page (need_key.templ). Loaded into @layer features via /feature-styles.css. */
+.need-key {
+	max-width: 48rem;
+	margin: 5rem auto;
+	padding: 0 1rem;
+	text-align: center;
+
+	& h1 {
+		font-size: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	.need-key-explanation {
+		font-size: 1.1rem;
+		line-height: 1.6;
+		margin-bottom: 1rem;
+	}
+
+	.need-key-hint {
+		opacity: 0.8;
+	}
+}

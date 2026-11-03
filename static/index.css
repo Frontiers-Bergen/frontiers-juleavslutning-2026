@@ -1,9 +1,10 @@
 /*
 Shared CSS: design tokens, element defaults and the app layout (stage, slide, presenter shell, reactions bar).
 
-A feature's own CSS lives in its .templ file, in a <style> block inside `@layer features`, nested under
-the feature's root class (see AGENTS.md). The layer order below makes feature styles win over the shared
-layout without specificity fights. Write mobile first: phones are the controllers, the big screen is the stage.
+A feature's own CSS lives in a .css file next to its .templ file, nested under the feature's root class,
+and is loaded into `@layer features` by /feature-styles.css (see feature_styles.go and AGENTS.md).
+The layer order below makes feature styles win over the shared layout without specificity fights.
+Write mobile first: phones are the controllers, the big screen is the stage.
 */
 @layer tokens, base, layout, features;
 

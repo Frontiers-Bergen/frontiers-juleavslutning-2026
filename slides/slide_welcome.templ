@@ -8,22 +8,7 @@ Also the example of a plain content slide: one `.slide` element, plus presenter 
 the presenter sees (isPresenter).
 */
 
-// The welcome slide also renders in the presenter's slide previews; the once handle keeps one copy of its CSS per page.
-var welcomeStylesOnce = templ.NewOnceHandle()
-
 templ Welcome(isPresenter bool) {
-	@welcomeStylesOnce.Once() {
-		<style>
-			@layer features {
-				.welcome {
-					.welcome-logo {
-						height: 4rem;
-						width: auto;
-					}
-				}
-			}
-		</style>
-	}
 	<div class="slide welcome">
 		<img class="welcome-logo" src="/static/frontiers-logo.svg" alt="Frontiers"/>
 		<h1>Frontiers Juleavslutning 2026</h1>

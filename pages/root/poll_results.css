@@ -1,0 +1,121 @@
+/* Poll results slide (PollResultsSlide in poll_results.templ). Loaded into @layer features via /feature-styles.css. */
+.poll-results {
+	gap: 1.25rem;
+	height: 100%;
+
+	& h1 {
+		margin: 0;
+	}
+
+	.poll-results-error {
+		margin: 0;
+	}
+
+	.poll-results-options {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+		flex: 1;
+	}
+
+	/* Set per option: --option-color (kahootThemeForIndex), --share (width relative to the
+	   top option) and --remote-share (the remote audience's part of this option's bar). */
+	.poll-result {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		border-radius: 18px;
+		border: 2px solid rgba(0, 0, 0, 0.12);
+		color: var(--color-bg-base);
+		background: white;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+	}
+
+	.poll-result-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.poll-result-badge {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 3rem;
+		min-width: 3rem;
+		height: 3rem;
+		border-radius: 14px;
+		background: var(--option-color);
+		color: white;
+		font-size: 1.75rem;
+		font-weight: 900;
+	}
+
+	.poll-result-title {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		min-width: 0;
+	}
+
+	.poll-result-text {
+		font-size: 1.15rem;
+		font-weight: 900;
+		line-height: 1.1;
+		word-break: break-word;
+	}
+
+	.poll-result-votes {
+		opacity: 0.85;
+		font-weight: 800;
+	}
+
+	.poll-result-vote-count {
+		font-size: 1.4rem;
+	}
+
+	.poll-result-votes-label {
+		opacity: 0.8;
+	}
+
+	.poll-result-image {
+		max-width: 100%;
+		max-height: 16vh;
+		border-radius: 14px;
+		object-fit: cover;
+		background: rgba(0, 0, 0, 0.04);
+	}
+
+	.poll-result-share {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+
+	.poll-result-percent {
+		align-self: flex-end;
+		font-weight: 800;
+	}
+
+	.poll-result-bar {
+		height: 16px;
+		border-radius: 999px;
+		background: rgba(0, 0, 0, 0.08);
+		overflow: hidden;
+	}
+
+	.poll-result-bar-fill {
+		position: relative;
+		height: 100%;
+		width: var(--share);
+		border-radius: 999px;
+		background: var(--option-color);
+	}
+
+	.poll-result-bar-remote {
+		height: 100%;
+		width: var(--remote-share);
+		background: rgba(255, 255, 255, 0.35);
+	}
+}
