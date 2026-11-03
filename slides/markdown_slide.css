@@ -26,8 +26,8 @@
 	}
 
 	& code {
-		font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-		font-size: 0.85em;
+		font-size: 0.9em;
+		color: var(--color-link);
 	}
 
 	/* Code blocks scroll sideways on a phone instead of breaking lines. */
@@ -43,6 +43,7 @@
 
 		& code {
 			font-size: inherit;
+			color: var(--color-text-soft);
 		}
 	}
 }
