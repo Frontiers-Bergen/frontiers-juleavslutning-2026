@@ -72,5 +72,7 @@ shot login-step "file://$work/login.html" 800 600
 rm -f "$out/login-step.png"
 move_to_slide 0
 shot presenter-slide0-desktop "$base/local-dev-key/" 1440 900
+move_to_slide $((slide - 1))
+shot presenter-last-slide-desktop "$base/local-dev-key/" 1440 900
 
 echo "screenshots: $(ls "$out" | wc -l) files in $out"

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
@@ -86,5 +88,72 @@ func TestSlideControl_NobodyHasOpenedTheDeck_PresenterCanStillChangeTheSlide(t *
 	actualSlideIndex := shownSlideIndex(t, app.deckPage(presenter))
 	if actualSlideIndex != expectedSlideIndex {
 		t.Fatalf("expected slide %d, got %d", expectedSlideIndex, actualSlideIndex)
+	}
+}
+
+func TestPresenterNavigation_FirstSlide_OffersNoPreviousSlide(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the presenter is on the first slide.",
+		When:  "When the presenter controls are shown.",
+		Then:  "Then there is no action to go to a previous slide, only to the next one.",
+	})
+
+	// Given
+	expectedNextAction := slideSetAction(1)
+	missingPreviousAction := slideSetAction(-1)
+	app := startTestApp(t)
+	presenter := app.newPresenter()
+
+	// When
+	page := app.deckPage(presenter)
+
+	// Then
+	if strings.Contains(page, missingPreviousAction) {
+		t.Fatalf("first slide offers a previous-slide action %q", missingPreviousAction)
+	}
+	if !strings.Contains(page, expectedNextAction) {
+		t.Fatalf("first slide is missing the next-slide action %q", expectedNextAction)
+	}
+}
+
+func TestPresenterNavigation_LastSlide_OffersNoNextSlide(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the presenter has moved to the last slide.",
+		When:  "When the presenter controls are shown.",
+		Then:  "Then there is no action to go to a next slide, only back to the previous one.",
+	})
+
+	// Given
+	app := startTestApp(t)
+	presenter := app.newPresenter()
+	lastIndex := app.moveToLastSlide(presenter)
+	expectedPreviousAction := slideSetAction(lastIndex - 1)
+	missingNextAction := slideSetAction(lastIndex + 1)
+
+	// When
+	page := app.deckPage(presenter)
+
+	// Then
+	if strings.Contains(page, missingNextAction) {
+		t.Fatalf("last slide offers a next-slide action %q", missingNextAction)
+	}
+	if !strings.Contains(page, expectedPreviousAction) {
+		t.Fatalf("last slide is missing the previous-slide action %q", expectedPreviousAction)
+	}
+}
+
+// slideSetAction is the Datastar action a presenter control uses to move the deck to index.
+func slideSetAction(index int) string {
+	return fmt.Sprintf("/root/api/slides/set?index=%d", index)
+}
+
+// moveToLastSlide steps the presenter forward until the deck stops advancing and returns the last index.
+func (app *testApp) moveToLastSlide(presenter *http.Client) int {
+	app.t.Helper()
+	for index := 1; ; index++ {
+		app.post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index))
+		if shown := shownSlideIndex(app.t, app.deckPage(presenter)); shown < index {
+			return shown
+		}
 	}
 }

@@ -93,6 +93,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Add secret keys to prevent the internet from accessing the services (carried over)
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
 
+- [x] Presenter controls: on the first and last slide the previous/next box is visibly empty and not clickable (it looked like a clickable "End" slide)
+- [ ] Presenter view: the presenter notes box overlaps the top of the reaction bar
+
 ### Features (AhaSlides-inspired)
 
 - [x] Multiple choice poll (Kahoot style)
