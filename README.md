@@ -99,7 +99,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Presenter controls: on the first and last slide the previous/next box is visibly empty and not clickable (it looked like a clickable "End" slide)
 - [x] Presenter view: the presenter notes box overlapped the top of the reaction bar (stale `--reactions-min-height` after the thumb-sized buttons)
 
-- [ ] Look like Frontiers: palette, font and heading style from frontiersbergen.dev (PR open for review); replace with the official style guide from Alvilde when it arrives
+- [x] Look like Frontiers: palette, font and heading style from frontiersbergen.dev
+- [ ] Replace with the official style guide from Alvilde when it arrives (only the tokens in `static/index.css`)
 
 ### Features (AhaSlides-inspired)
 
