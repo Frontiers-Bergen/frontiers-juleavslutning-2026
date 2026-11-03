@@ -50,13 +50,14 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] One-command setup for attendees (`task start`), documented in this README
 - [ ] Verify a fresh clone works on Linux, macOS and Windows
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
-- [ ] Update vendored `static/datastar.js` (currently v1.0.0-RC.7) to match datastar-go v1.2.2 — needs a manual check in the browser
+- [x] Update vendored `static/datastar.js` to v1.0.4 (with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] First example multiplayer game that shows the pattern end to end
 - [ ] Prepare "good first tasks" for attendees (GitHub issues)
+- [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen (needed to merge PRs live at the workshop; Gerhard, weekend of 7–8 Nov)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard
 - [ ] App name vote at the workshop: a poll with 3–4 candidates, the winner becomes the app name shown on the big screen and phones.
       Candidates so far: Rage Against the Debounce, Last Christmas I Gave You My Clicks, It's Tiiime, Smash the Halls.
@@ -66,7 +67,6 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [ ] Sound: Gerhard has a portable system (venue not confirmed yet)
 - [ ] Back up the production database afterwards; ideas and feedback are analysed from it
-- [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen
 - [ ] Slides written in markdown, rendered as part of the existing build (see `MdToHTML` in conorganizer)
 
 ### Code health
@@ -97,7 +97,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [x] Multiple choice poll (Kahoot style)
 - [x] Emoji reactions without debouncing
-- [ ] Retro board with sticky notes (the Julebord retrospective use case)
+- [ ] Retro board with sticky notes (the juleavslutning retrospective use case)
 - [ ] Word cloud
 - [ ] Audience Q&A with upvotes
 - [ ] Quiz with scores and leaderboard
@@ -126,7 +126,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### To investigate (spike before committing)
 
-- [ ] Rocket (Datastar web components) — beta, check licensing (Pro?) and whether it earns its place
+- [ ] Rocket (Datastar web components) — free since Datastar v1.0.4 (no longer Pro, separate `datastar-rocket.js` bundle); still beta, check whether it earns its place
 - [ ] Load test: how many button smashers can one server take?
 
 ## Development
