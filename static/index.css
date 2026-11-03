@@ -45,8 +45,10 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 
 		--radius: 12px;
 
-		/* Reserve space so the sticky reactions bar never overlaps stage content */
-		--reactions-min-height: 3.75rem;
+		/* The reactions bar's height, reserved so it never overlaps stage content or presenter notes.
+		   Keep it in sync with the bar: 1rem padding top and bottom, plus the reaction buttons
+		   (3rem tap targets with 4px around them, pages/root/emoji_counter.css). */
+		--reactions-min-height: 5.5rem;
 	}
 }
 

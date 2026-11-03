@@ -95,7 +95,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
 
 - [x] Presenter controls: on the first and last slide the previous/next box is visibly empty and not clickable (it looked like a clickable "End" slide)
-- [ ] Presenter view: the presenter notes box overlaps the top of the reaction bar
+- [x] Presenter view: the presenter notes box overlapped the top of the reaction bar (stale `--reactions-min-height` after the thumb-sized buttons)
 
 ### Features (AhaSlides-inspired)
 
