@@ -8,19 +8,45 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 */
 @layer tokens, base, layout, features;
 
+/* JetBrains Mono, the Frontiers Bergen website font. Self-hosted (static/fonts, SIL Open Font License in
+   static/fonts/OFL.txt) so the app does not depend on Google Fonts over the venue wifi. */
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("/static/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("/static/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
 @view-transition {
 	navigation: auto;
 }
 
 @layer tokens {
 	:root {
-		/* Colors */
-		--color-text-strong: #f1f3f9;
-		--color-text-soft: #ccd1e9;
-		--color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
+		/* Colors: the Frontiers Bergen website palette (frontiersbergen.dev, "Shades of Purple").
+		   There is no official style guide yet; update here when one arrives. */
+		--color-text-strong: #fff;
+		--color-text-soft: #c5c0e8;
+		--color-text-muted: #a599e9;
 
 		--color-primary-text: var(--color-text-soft);
-		--color-bg-base: #1a1b26;
+		--color-bg-base: #1e1e3f;
+		--color-surface: #2d2b55;
+		--color-border: #3a3779;
+
+		/* Accents: orange for the markdown-style "#" before headings, cyan for links, yellow on hover. */
+		--color-accent: #ff9d00;
+		--color-link: #80ffea;
+		--color-link-hover: #fad000;
 
 		/* Layout */
 		--stage-max-width: 68rem;
@@ -38,10 +64,10 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		--font-small: clamp(1.05rem, 0.4vw + 1rem, 1.35rem);
 
 		/* Surfaces */
-		--surface-presenter: hsl(from var(--color-bg-base) h s calc(l + 6%) / 85%);
+		--surface-presenter: var(--color-surface);
 		--surface-glass: hsl(from var(--color-bg-base) h s l / 90%);
-		--surface-backstage: #0f111a;
-		--border-subtle: 1px solid var(--color-text-soft-50);
+		--surface-backstage: var(--color-surface);
+		--border-subtle: 1px solid var(--color-border);
 
 		--radius: 12px;
 
@@ -62,7 +88,16 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 	html {
 		color-scheme: dark;
 		height: 100%;
-		font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+		font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	/* Browsers give form controls their own font; make buttons and inputs use the page font. */
+	button,
+	input,
+	select,
+	textarea {
+		font: inherit;
 	}
 
 	body {
@@ -172,6 +207,20 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 			line-height: 1.12;
 			letter-spacing: -0.02em;
 			color: var(--color-text-strong);
+
+			/* Markdown-style heading marker, like frontiersbergen.dev. Hidden from screen readers. */
+			&::before {
+				content: "# " / "";
+				color: var(--color-accent);
+			}
+		}
+
+		& a {
+			color: var(--color-link);
+
+			&:hover {
+				color: var(--color-link-hover);
+			}
 		}
 
 		& ul {
@@ -190,7 +239,7 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 			}
 
 			&::marker {
-				color: var(--color-text-soft-50);
+				color: var(--color-text-muted);
 			}
 		}
 	}
@@ -228,7 +277,7 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 			font-size: 0.85em;
 			letter-spacing: 0.08em;
 			text-transform: uppercase;
-			color: var(--color-text-soft-50);
+			color: var(--color-text-muted);
 		}
 	}
 

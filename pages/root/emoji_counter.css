@@ -14,9 +14,17 @@
 		padding: 0.25rem 0.5rem;
 		border-radius: var(--radius);
 		font-size: 1.25rem;
+		color: var(--color-text-strong);
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		cursor: pointer;
 		/* Fast repeated taps must not zoom the page or select the count text. */
 		touch-action: manipulation;
 		user-select: none;
+
+		&:active {
+			background: var(--color-border);
+		}
 
 		@media (width >= 40rem) {
 			flex: 0 0 auto;
