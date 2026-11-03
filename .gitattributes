@@ -1,0 +1,3 @@
+# Check out text files with LF on every OS. With Windows' usual core.autocrlf=true, CRLF files would make
+# gofmt and templ fmt report every file and fail `go tool task check`.
+* text=auto eol=lf

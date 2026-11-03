@@ -8,9 +8,9 @@
 // Needs: Node 22+, Go, chromium or google-chrome. Exits non-zero when a check fails.
 
 import { execFileSync, spawn } from "node:child_process";
-import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -19,6 +19,7 @@ const devtoolsPort = 9334;
 const deckURL = `http://localhost:${appPort}/local-dev-key/`;
 const api = `${deckURL}root/api`;
 const presenterKey = "browser-check-key";
+const appBinary = process.platform === "win32" ? "app.exe" : "app";
 
 const work = mkdtempSync(join(tmpdir(), "browser-check-"));
 const processes = [];
@@ -52,15 +53,27 @@ async function waitFor(url) {
 	throw new Error(`${url} did not come up`);
 }
 
+// Finds Chrome or Chromium on Linux, macOS and Windows without a shell (Windows has no `command -v`).
 function findBrowser() {
-	for (const name of ["chromium", "google-chrome-stable", "google-chrome"]) {
-		try {
-			return execFileSync("sh", ["-c", `command -v ${name}`]).toString().trim();
-		} catch {
-			// try the next name
+	const names = ["chromium", "chromium-browser", "google-chrome-stable", "google-chrome"];
+	const extensions = process.platform === "win32" ? [".exe", ""] : [""];
+	for (const directory of (process.env.PATH ?? "").split(delimiter)) {
+		for (const name of names) {
+			for (const extension of extensions) {
+				const candidate = join(directory, name + extension);
+				if (existsSync(candidate)) return candidate;
+			}
 		}
 	}
-	throw new Error("chromium or google-chrome is required");
+	const knownInstallPaths = [
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+		"/Applications/Chromium.app/Contents/MacOS/Chromium",
+		"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+		"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+	];
+	const installed = knownInstallPaths.find((path) => existsSync(path));
+	if (installed) return installed;
+	throw new Error("Chrome or Chromium is required");
 }
 
 // The presenter is a plain HTTP client: log in, keep the session cookie, move the deck.
@@ -135,10 +148,10 @@ async function openTab(url) {
 
 try {
 	execFileSync("go", ["tool", "templ", "generate", "-log-level", "error"], { cwd: repo, stdio: "inherit" });
-	execFileSync("go", ["build", "-o", join(work, "app"), "."], { cwd: repo, stdio: "inherit" });
+	execFileSync("go", ["build", "-o", join(work, appBinary), "."], { cwd: repo, stdio: "inherit" });
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
-	processes.push(spawn(join(work, "app"), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
+	processes.push(spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
 	processes.push(
 		spawn(findBrowser(), ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`, "about:blank"], { stdio: "ignore" }),
 	);
