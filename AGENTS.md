@@ -141,7 +141,8 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
 - `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
   There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
-- State lives in SQLite (slides, votes, emoji counts, and later ideas and feedback). NATS only says that something changed.
+- State lives in SQLite (slides, votes, emoji counts, and later ideas and feedback). NATS only says that something changed,
+  and keeps nothing between restarts (its store is a temp or `/run` directory): anything that must survive a restart goes in SQLite.
 - Live updates go through embedded NATS core messages. A change to anything on the deck page publishes `deck.changed`
   (`pages/root/live_updates.go`), and every open page renders itself again from SQLite. When every single event matters
   (one balloon per emoji smash), the event gets its own subject and carries what the receiver needs (`emoji_counter.templ`).

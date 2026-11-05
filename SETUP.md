@@ -52,7 +52,7 @@ go tool task start
 - PowerShell: `$env:PORT=8081; go tool task start`
 
 **Votes fail or the page errors after pulling new code.** The database schema changed (there are no migrations).
-Stop the app, delete `presentation.db` and the `nats-data/` folder, start again.
+Stop the app, delete `presentation.db`, start again.
 
 **`go tool task check` reports every file as unformatted (Windows).** The files were checked out with CRLF line endings.
 `.gitattributes` prevents this for new clones; for an older clone: `git add --renormalize .` or clone again.
