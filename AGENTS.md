@@ -53,6 +53,7 @@ Every feature follows three steps:
 Keep structural changes (tidying, refactoring) and behavior changes apart so each can be reviewed on its own terms.
 For small tidyings, separate commits in one pull request are enough.
 When a step is big enough to deserve its own review, use stacked pull requests (GitHub stacked PRs, `gh stack` CLI extension): each step is one PR based on the previous, merged bottom-up.
+Before merging the bottom PR of a stack with "delete branch", point the next PR at `main`: deleting the branch under an open PR closes that PR instead of retargeting it.
 Skip steps that are not needed; an empty tidy or refactor step is fine.
 
 Run `go tool task check` before opening a pull request: formatting, vet, `go fix`, golangci-lint and tests. Fix with `go tool task fmt` where it applies.
