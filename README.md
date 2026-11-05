@@ -181,4 +181,5 @@ Environment variables (put them in `.env`, which is not in git). All except `PRE
 - `PRESENTER_KEY` — unlocks presenter mode at `/presenter`
 - `SESSION_SECRET` — signs the session cookies
 - `PORT` — HTTP port, default 8080
+- `HOST` — address to listen on; default empty (all interfaces, so phones on the LAN can connect). The server uses `127.0.0.1` behind Caddy
 - `NATS_STORE_DIR` — where embedded NATS keeps its data while running; default a temp directory removed on exit (the server uses a systemd runtime directory)

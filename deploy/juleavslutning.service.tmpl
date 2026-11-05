@@ -12,6 +12,8 @@ RuntimeDirectory=juleavslutning-%SAFE_NAME%
 
 EnvironmentFile=/etc/juleavslutning/env
 Environment=PORT=%PORT%
+# Only Caddy (on the same machine) may connect; without this the app is reachable on <server IP>:<port> over plain HTTP.
+Environment=HOST=127.0.0.1
 Environment=NATS_STORE_DIR=/run/juleavslutning-%SAFE_NAME%/nats
 
 ExecStart=/opt/juleavslutning/%SAFE_NAME%/juleavslutning
