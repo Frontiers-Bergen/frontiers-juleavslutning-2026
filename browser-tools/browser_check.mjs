@@ -156,11 +156,19 @@ try {
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
 	processes.push(spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
-	processes.push(
-		spawn(findBrowser(), ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`, "about:blank"], { stdio: "ignore" }),
-	);
+	const browserArguments = ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`];
+	// GitHub's Ubuntu runners block Chrome's sandbox (AppArmor), and Chrome exits at once. Only on CI.
+	if (process.env.CI) browserArguments.push("--no-sandbox");
+	const browser = spawn(findBrowser(), [...browserArguments, "about:blank"], { stdio: ["ignore", "ignore", "pipe"] });
+	let browserErrors = "";
+	browser.stderr.on("data", (chunk) => (browserErrors += chunk));
+	processes.push(browser);
 	await waitFor(deckURL);
-	await waitFor(`http://127.0.0.1:${devtoolsPort}/json/version`);
+	try {
+		await waitFor(`http://127.0.0.1:${devtoolsPort}/json/version`);
+	} catch (error) {
+		throw new Error(`${error.message}; the browser said:\n${browserErrors.slice(-2000)}`);
+	}
 
 	const presenter = await presenterSession();
 	const phone = await openTab(deckURL);
