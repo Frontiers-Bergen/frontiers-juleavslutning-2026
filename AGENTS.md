@@ -136,7 +136,7 @@ bytes (measured: ~38 bytes for an attendee, ~170 for the presenter). So the page
 
 For perspective: responses under about 100 ms feel instant to people (Jakob Nielsen's classic thresholds: 0.1 s
 instant, 1 s keeps the flow, 10 s loses attention). conorganizer, on the same stack and server, answered with a P50 of
-4 ms and a P99 of 113 ms over the whole Regncon festival weekend, network included. We are far below the point where
+4 ms and a P99 of 113 ms over the whole Regncon festival weekend. We are far below the point where
 anyone could notice; optimising page updates further buys nothing and costs simplicity.
 
 ### The life cycle
