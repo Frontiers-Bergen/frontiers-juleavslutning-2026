@@ -5,8 +5,8 @@
 #   - each pull request gets a preview at https://juleavslutning-<PR>.lekeplassen.regncon.no (port 23000 + PR)
 #   - main is the big screen at https://juleavslutning.lekeplassen.regncon.no (port 23000)
 #   - a preview is removed when its pull request closes
-# Deploys only run when the repository variable DEPLOY_ENABLED is "true"; deploy/README.md lists the one-time
-# server setup and the secrets.
+# Deploys only run when the repository variable DEPLOY_ENABLED is "true". HETZNER_HOST and HETZNER_USER are
+# repository variables; the SSH key is the HETZNER_SSH_KEY secret of the Production environment. See deploy/README.md.
 name: CI/CD
 
 on:
@@ -90,6 +90,8 @@ jobs:
                github.event.pull_request.head.repo.full_name == github.repository)
             )
         runs-on: ubuntu-latest
+        # HETZNER_SSH_KEY is a secret of the Production environment.
+        environment: Production
         permissions:
             contents: read
             pull-requests: write
@@ -134,8 +136,8 @@ jobs:
             - name: Upload to the server
               uses: appleboy/scp-action@v0.1.7
               with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USER }}
+                  host: ${{ vars.HETZNER_HOST }}
+                  username: ${{ vars.HETZNER_USER }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   source: deploy_bundle
                   target: /opt/juleavslutning/${{ steps.environment.outputs.safe_name }}
@@ -144,8 +146,8 @@ jobs:
             - name: Install and restart
               uses: appleboy/ssh-action@v1.2.0
               with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USER }}
+                  host: ${{ vars.HETZNER_HOST }}
+                  username: ${{ vars.HETZNER_USER }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   script_stop: true
                   script: |
@@ -174,14 +176,15 @@ jobs:
             github.event_name == 'pull_request_target' &&
             github.event.pull_request.head.repo.full_name == github.repository
         runs-on: ubuntu-latest
+        environment: Production
         steps:
             # pull_request_target checks out main, so this is main's cleanup script, never the PR's.
             - uses: actions/checkout@v5
             - name: Upload the cleanup script
               uses: appleboy/scp-action@v0.1.7
               with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USER }}
+                  host: ${{ vars.HETZNER_HOST }}
+                  username: ${{ vars.HETZNER_USER }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   source: deploy/cleanup.sh
                   target: /opt/juleavslutning/pr-${{ github.event.pull_request.number }}
@@ -189,8 +192,8 @@ jobs:
             - name: Remove the preview
               uses: appleboy/ssh-action@v1.2.0
               with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USER }}
+                  host: ${{ vars.HETZNER_HOST }}
+                  username: ${{ vars.HETZNER_USER }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   script_stop: true
                   script: |
