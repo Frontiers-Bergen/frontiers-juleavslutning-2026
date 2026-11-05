@@ -118,7 +118,7 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *s
 		}()
 
 		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
-		sse := datastar.NewSSE(w, r)
+		sse := datastar.NewSSE(w, r, datastar.WithCompression())
 		if err := patchEmojiCounts(sse, db); err != nil {
 			logger.Error("failed to send initial emoji counts", slog.String("error", err.Error()))
 			return
