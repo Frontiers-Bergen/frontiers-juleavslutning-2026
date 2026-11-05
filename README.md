@@ -59,6 +59,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
 - [ ] Two example mini-games that show the pattern end to end: one with only Go + SQLite + Datastar, one with a web component built with Rocket (web components only when needed)
 - [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
+- [ ] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [ ] CI/CD like conorganizer: test + build on every PR, each PR gets its own preview environment, main deploys to the big screen (needed to merge PRs live at the workshop; Gerhard, weekend of 7–8 Nov)
 - [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (13 slides incl. the app name vote); refine once the mini-games and CI/CD exist
 - [x] QR code with the invite link on the welcome slide (server-rendered SVG at `/{inviteKey}/qr.svg`, big screen only)
