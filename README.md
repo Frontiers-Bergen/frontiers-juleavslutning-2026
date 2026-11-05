@@ -52,12 +52,13 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
 - [ ] Someone tries a fresh clone on macOS and on Windows before the workshop (Gerhard, weekend of 7–8 Nov); update `SETUP.md` with the findings
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
-- [x] Update vendored `static/datastar.js` to v1.0.4 (with its source map), self-hosted in `static/`
+- [x] Datastar v1.0.4 with Rocket (`static/datastar-rocket.js`, with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
 - [x] Mini-game without JavaScript: tug of war, two random, even teams in the logo's colours, the team that smashes the most emojis wins, presenter-controlled countdown (`pages/root/tug_of_war.templ`)
-- [ ] Mini-game with a web component built with Rocket (web components only when needed): shake the snow globe
+- [x] Mini-game with a web component built with Rocket: shake the snow globe (`static/snow-globe.js`, `pages/root/snow_globe.templ`); shakes swirl snow on every screen, subtle on phones
+- [ ] Snow globe: try it on real phones, an iPhone in particular (the "Shake for snow" permission button); tune the shake threshold and how much snow
 - [ ] Short "how to add your own mini-game" guide, pointing at the two example games
 - [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)

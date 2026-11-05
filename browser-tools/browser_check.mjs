@@ -113,7 +113,8 @@ async function presenterSession() {
 }
 
 // One browser tab, like one attendee's phone. reducedMotion emulates the "reduce motion" accessibility setting.
-async function openTab(url, { reducedMotion = false } = {}) {
+// touch emulates a phone (a coarse pointer), which the snow globe needs before it listens to the motion sensor.
+async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 	const target = await (await fetch(`http://127.0.0.1:${devtoolsPort}/json/new?${url}`, { method: "PUT" })).json();
 	const socket = new WebSocket(target.webSocketDebuggerUrl);
 	await new Promise((resolve) => socket.addEventListener("open", resolve));
@@ -146,6 +147,11 @@ async function openTab(url, { reducedMotion = false } = {}) {
 	await send("Network.emulateNetworkConditions", { offline: false, latency: 200, downloadThroughput: -1, uploadThroughput: -1 });
 	if (reducedMotion) {
 		await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+	}
+	if (touch) {
+		await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+	}
+	if (reducedMotion || touch) {
 		await send("Page.reload");
 	}
 	await sleep(2000); // let Datastar connect its SSE streams
@@ -264,8 +270,64 @@ try {
 	check("10 emoji smashes during a tug of war count 10 pulls for your team", tugOfWar.ownPulls === 10, tugOfWar);
 	check("the rope moves toward the team that pulls", tugOfWar.rope !== "" && tugOfWar.rope !== "0.000", tugOfWar);
 
+	// Someone else shakes (a plain request, its own session): it snows on this phone, and the snowfall
+	// removes itself when it has fallen, through its Datastar data-init, with no component.
+	await fetch(`${api}/snow/shake`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shakes: 3 }) });
+	const snowHere = await phone.run(`(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		await sleep(1500);
+		const snowfalls = document.querySelectorAll(".snowfall").length;
+		await sleep(17500); // a snowfall stays 18 s, so the slowest flake finishes falling
+		return { snowfalls, snowfallsAfterFalling: document.querySelectorAll(".snowfall").length };
+	})()`);
+	check("another phone's shakes make it snow here", snowHere.snowfalls === 1, snowHere);
+	check("the snowfall cleans itself up when it has fallen", snowHere.snowfallsAfterFalling === 0, snowHere);
+
 	check("no console errors or exceptions in the phone tab", phone.problems.length === 0, phone.problems);
 	phone.close();
+
+	// Snow globe: shaking a phone shows puffs of snow on it at once, and when the shaking stops, the other
+	// screens get a snowfall with the energy of the shakes. "Another screen" is a plain stream reader here,
+	// because a second browser tab would hide the first, and Datastar closes the stream of a hidden page.
+	const otherScreen = await fetch(`${api}/snow/sse`);
+	const otherScreenReader = otherScreen.body.getReader();
+	let otherScreenText = "";
+	const otherScreenSnow = (async () => {
+		const decoder = new TextDecoder();
+		while (!/class="snowfall"/.test(otherScreenText)) {
+			const { value, done } = await otherScreenReader.read();
+			if (done) return;
+			otherScreenText += decoder.decode(value);
+		}
+	})();
+	const shakingPhone = await openTab(deckURL, { touch: true });
+	const shaking = await shakingPhone.run(`(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const shake = () => window.dispatchEvent(new DeviceMotionEvent("devicemotion", {
+			acceleration: { x: 20, y: 0, z: 0 }, accelerationIncludingGravity: { x: 20, y: 0, z: 9.8 },
+			rotationRate: { alpha: 0, beta: 0, gamma: 0 }, interval: 16,
+		}));
+		const buttonBeforeShaking = document.querySelector(".snow-globe-enable") !== null;
+		shake();
+		await sleep(50);
+		const puffsRightAfterFirstShake = document.querySelectorAll(".snowfall").length;
+		const buttonAfterFirstShake = document.querySelector(".snow-globe-enable") !== null;
+		for (let i = 0; i < 4; i++) {
+			await sleep(250);
+			shake();
+		}
+		return { buttonBeforeShaking, buttonAfterFirstShake, puffsRightAfterFirstShake, puffsAfterFiveShakes: document.querySelectorAll(".snowfall").length };
+	})()`);
+	check("shaking a phone shows a puff of snow on it at once, one per shake", shaking.puffsRightAfterFirstShake === 1 && shaking.puffsAfterFiveShakes === 5, shaking);
+	// Chrome has requestPermission like iOS but sends motion events without asking (already on page load), so no
+	// "Shake for snow" button may be left. On an iPhone it stays until tapped; only a real iPhone can check that.
+	check("a phone that sends motion events gets no 'Shake for snow' button", shaking.buttonAfterFirstShake === false, shaking);
+	await Promise.race([otherScreenSnow, sleep(3000)]);
+	await otherScreenReader.cancel();
+	const otherScreenEnergy = Number(/class="snowfall" style="--energy: (\d+);"/.exec(otherScreenText)?.[1]);
+	check("five shakes make it snow on the other screens with the energy of five shakes", otherScreenEnergy === 5, { otherScreenEnergy });
+	check("no console errors or exceptions in the shaking phone's tab", shakingPhone.problems.length === 0, shakingPhone.problems);
+	shakingPhone.close();
 
 	// Last, because a second tab hides the first one, and Datastar closes the live stream of a hidden page.
 	const calmPhone = await openTab(deckURL, { reducedMotion: true });

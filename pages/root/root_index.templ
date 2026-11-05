@@ -109,6 +109,7 @@ func RootLayoutRoute(
 
 			PollVoteRoutes(db, rootApiRouter, nc, store)
 			TugOfWarRoutes(rootApiRouter, db, nc, store, logger, tugOfWarRules)
+			SnowGlobeRoutes(rootApiRouter, nc, store, logger)
 		})
 	})
 }
@@ -133,6 +134,7 @@ templ rootPageFirstLoad(
 	<div id="root-page-wrapper" data-init={ dataInit }>
 		@rootPageContent(db, inviteKey, isPresenter, sessionID)
 	</div>
+	@SnowGlobe(inviteKey)
 }
 
 templ rootPage(

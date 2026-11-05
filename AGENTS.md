@@ -210,7 +210,10 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
   optional per-slide CSS goes in `slides/welcome.css`, nested under `.slide-welcome`. The format is documented in `slides/markdown_slides.go`.
   Interactive slides (polls, games) are templ components.
 - Use the Go + SQLite + Datastar stack first; it handles most interactive features. Add a web component only when a feature needs
-  client-side state or rendering the server cannot do well. Rocket (Datastar's web component API, `datastar-rocket.js`) is the choice then.
+  something only the browser can do (a sensor, dragging at 60 fps, physics). Rocket (Datastar's web component API, in
+  `static/datastar-rocket.js`, which also contains Datastar) is the choice then; `static/snow-globe.js` is the example.
+  Props down, events up: the component emits events (bubbling) and Datastar markup on a wrapper element sends them to the server.
+  Do not put Datastar actions (`@get`, `@post`) on the Rocket element itself: Rocket rewrites them into calls to the component's own actions.
 - Domain terms are listed in `domain_dictionary.md` and are used unchanged everywhere: code, database, UI and docs.
   Everything else is in English. Frontiers runs its events in English, so the app is English only (no bilingual frontend).
 
