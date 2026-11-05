@@ -12,3 +12,4 @@ Notes:
 - Tug of war is one templ file, one CSS file and one test file: `pages/root/tug_of_war.*`, `tug_of_war_test.go`.
 - JavaScript is only needed when the phone must react on its own: sensors, dragging, physics. Animation alone is CSS.
 - The snow globe shows when JavaScript is worth it: `static/snow-globe.js` reads the sensor; the snowfall on every other screen is server-rendered HTML and CSS.
+- The step-by-step guide is `MINI_GAMES.md` in the repo root.
