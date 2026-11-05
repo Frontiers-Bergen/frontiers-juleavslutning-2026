@@ -145,7 +145,7 @@ anyone could notice; optimising page updates further buys nothing and costs simp
 1. **First load.** `GET /<invite key>/` renders the full page from SQLite, so the first paint already has content.
 2. **One read stream.** The page's `data-init` opens one long-lived SSE stream (`/<invite key>/root/api/`), the read side.
    The handler first does everything that needs response headers (attendee session cookie, validation, `http.Error`),
-   subscribes to `deck.changed`, then calls `datastar.NewSSE(w, r, datastar.WithCompression())` and immediately sends
+   subscribes to `deck.changed`, then calls `datastar.NewSSE(w, r, compressedStream())` and immediately sends
    a full patch of `#root-page-wrapper`. After `NewSSE` the headers are gone: report errors by logging and ending the stream.
 3. **Short writes.** A tap or click is a short `POST` (the write side): it validates, writes SQLite, publishes
    `deck.changed` (`publishDeckChanged` in `pages/root/live_updates.go`) and answers `204`. It never returns HTML.
