@@ -19,7 +19,7 @@ Choices, and why:
 
 ## One-time setup
 
-On the server, as root. The `deploy` user and its SSH key already exist for conorganizer.
+On the server, as root. The `deploy` user already exists for conorganizer.
 
 ```sh
 # 1. Let the deploy user run our deploy and cleanup scripts as root (mv, chown, chmod and systemctl
@@ -45,9 +45,29 @@ chmod 600 /etc/juleavslutning/env
 cat /etc/juleavslutning/env   # note the invite and presenter keys
 ```
 
+A dedicated SSH key for this project, so it can be revoked on its own when the project ends. On a laptop with `gh`:
+
+```sh
+ssh-keygen -t ed25519 -N "" -C "github-actions deploy juleavslutning" -f ~/.ssh/juleavslutning-deploy
+gh secret set HETZNER_SSH_KEY --env Production --repo frontiers-bergen/frontiers-juleavslutning-2026 < ~/.ssh/juleavslutning-deploy
+scp ~/.ssh/juleavslutning-deploy.pub gerhard@regncon.no:
+```
+
+On the server (the deploy user's home is `/opt/conorganizer`):
+
+```sh
+sudo tee -a /opt/conorganizer/.ssh/authorized_keys < ~/juleavslutning-deploy.pub
+rm ~/juleavslutning-deploy.pub
+```
+
 In the GitHub repository (Settings → Secrets and variables → Actions):
-- Secrets `HETZNER_HOST`, `HETZNER_USER` (`deploy`) and `HETZNER_SSH_KEY` (the deploy user's private key, the same as in conorganizer).
-- Variable `DEPLOY_ENABLED` = `true`. Until it is set, CI only runs the checks.
+- Secret `HETZNER_SSH_KEY` in the **Production** environment (above). The deploy jobs use `environment: Production`.
+- Repository variables (not secrets): `HETZNER_HOST` = `regncon.no` (it has an IPv4 address; GitHub's runners have no IPv6),
+  `HETZNER_USER` = `deploy`, and `DEPLOY_ENABLED` = `true`. Until `DEPLOY_ENABLED` is set, CI only runs the checks.
+  It must be a repository variable: environment variables are not available when GitHub decides whether a job runs.
+
+Every step runs on the server in a root shell (`sudo -i`), or with `sudo tee` instead of `>` redirects: a redirect is
+done by your own shell, before `sudo`, and fails in `/etc`.
 
 ## Security note
 
@@ -56,7 +76,7 @@ on the server. Keep it in GitHub secrets only.
 
 ## When the project ends
 
-Remove `/etc/sudoers.d/deploy-juleavslutning`, `/etc/juleavslutning`, `/opt/juleavslutning`,
+Remove the `github-actions deploy juleavslutning` line from `/opt/conorganizer/.ssh/authorized_keys`, `/etc/sudoers.d/deploy-juleavslutning`, `/etc/juleavslutning`, `/opt/juleavslutning`,
 `/etc/systemd/system/juleavslutning-*.service` and `/etc/caddy/sites-enabled/juleavslutning-*.caddy`,
 then `systemctl daemon-reload && systemctl reload caddy`. Back up `/opt/juleavslutning/main/presentation.db` first:
 the ideas and feedback from the juleavslutning are analysed from it.
