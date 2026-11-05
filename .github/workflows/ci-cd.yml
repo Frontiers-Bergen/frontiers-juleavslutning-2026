@@ -1,7 +1,12 @@
 # CI/CD for the juleavslutning app.
 #
 # Every pull request runs the same checks a developer runs locally (go tool task check, task browser-check).
-# Deploy jobs (a preview per pull request, main on the big screen) are added in deploy/; see deploy/README.md.
+# When they pass, the app is deployed to the lekeplassen server (shared with conorganizer):
+#   - each pull request gets a preview at https://juleavslutning-<PR>.lekeplassen.regncon.no (port 23000 + PR)
+#   - main is the big screen at https://juleavslutning.lekeplassen.regncon.no (port 23000)
+#   - a preview is removed when its pull request closes
+# Deploys only run when the repository variable DEPLOY_ENABLED is "true"; deploy/README.md lists the one-time
+# server setup and the secrets.
 name: CI/CD
 
 on:
@@ -9,9 +14,13 @@ on:
         branches: [main]
     pull_request:
         types: [opened, reopened, synchronize, ready_for_review]
+    # Closing uses pull_request_target, because GitHub runs no pull_request workflow for a PR with merge
+    # conflicts, not even on close. Only cleanup-preview runs on it, and it uses main's cleanup script, never PR code.
+    pull_request_target:
+        types: [closed]
 
-# One run at a time per pull request (or per branch for pushes); a newer push waits instead of
-# cancelling a run that may be deploying.
+# One run at a time per pull request (or per branch for pushes). A running deploy is never cancelled
+# halfway; GitHub keeps only the newest pending run, so the latest commit deploys last.
 concurrency:
     group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
     cancel-in-progress: false
@@ -22,6 +31,7 @@ permissions:
 jobs:
     check:
         name: task check
+        if: github.event_name != 'pull_request_target'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v5
@@ -37,6 +47,7 @@ jobs:
 
     browser-check:
         name: task browser-check
+        if: github.event_name != 'pull_request_target'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v5
@@ -48,3 +59,142 @@ jobs:
                   node-version: 22
             # The runner image has Google Chrome; browser_check.mjs finds it on the PATH.
             - run: go tool task browser-check
+
+    build:
+        name: build
+        if: github.event_name != 'pull_request_target'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-go@v6
+              with:
+                  go-version-file: go.mod
+            - run: go tool task build
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: app
+                  path: |
+                      bin/main
+                      static/
+                      deploy/
+
+    deploy:
+        name: deploy
+        needs: [check, browser-check, build]
+        # main on every push; a preview for every non-draft PR from this repository (forks get no secrets).
+        if: >
+            vars.DEPLOY_ENABLED == 'true' && (
+              (github.event_name == 'push' && github.ref_name == 'main') ||
+              (github.event_name == 'pull_request' &&
+               github.event.pull_request.draft == false &&
+               github.event.pull_request.head.repo.full_name == github.repository)
+            )
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - name: Work out the environment
+              id: environment
+              run: |
+                  set -euo pipefail
+                  if [ "${{ github.event_name }}" = "push" ]; then
+                    echo "safe_name=main" >> "$GITHUB_OUTPUT"
+                    echo "port=23000" >> "$GITHUB_OUTPUT"
+                    echo "host=juleavslutning.lekeplassen.regncon.no" >> "$GITHUB_OUTPUT"
+                  else
+                    pr="${{ github.event.pull_request.number }}"
+                    echo "safe_name=pr-$pr" >> "$GITHUB_OUTPUT"
+                    echo "port=$((23000 + pr))" >> "$GITHUB_OUTPUT"
+                    echo "host=juleavslutning-$pr.lekeplassen.regncon.no" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - uses: actions/download-artifact@v4
+              with:
+                  name: app
+                  path: artifact
+
+            - name: Prepare the deploy bundle
+              env:
+                  SAFE_NAME: ${{ steps.environment.outputs.safe_name }}
+                  PORT: ${{ steps.environment.outputs.port }}
+                  HOST: ${{ steps.environment.outputs.host }}
+              run: |
+                  set -euo pipefail
+                  mkdir deploy_bundle
+                  cp artifact/bin/main deploy_bundle/juleavslutning.new
+                  cp -r artifact/static deploy_bundle/static
+                  cp artifact/deploy/deploy.sh deploy_bundle/deploy.sh
+                  sed -e "s/%SAFE_NAME%/$SAFE_NAME/g" -e "s/%PORT%/$PORT/g" \
+                    artifact/deploy/juleavslutning.service.tmpl > "deploy_bundle/juleavslutning-$SAFE_NAME.service"
+                  sed -e "s/%HOST%/$HOST/g" -e "s/%PORT%/$PORT/g" \
+                    artifact/deploy/caddy-site.tmpl > "deploy_bundle/caddy-$SAFE_NAME.caddy"
+                  ls -lR deploy_bundle | head -30
+
+            - name: Upload to the server
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  source: deploy_bundle
+                  target: /opt/juleavslutning/${{ steps.environment.outputs.safe_name }}
+                  strip_components: 1
+
+            - name: Install and restart
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  script_stop: true
+                  script: |
+                      set -euo pipefail
+                      app_dir="/opt/juleavslutning/${{ steps.environment.outputs.safe_name }}"
+                      sudo chmod +x "$app_dir/deploy.sh"
+                      sudo "$app_dir/deploy.sh" "${{ steps.environment.outputs.safe_name }}"
+
+            - name: Link the preview from the pull request
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const marker = '<!-- preview-link -->'
+                      const link = `${marker}\n## Preview\n\n_Added by CI/CD_\n\n🔗 https://${{ steps.environment.outputs.host }}/<INVITE_KEY>/`
+                      const { data: pullRequest } = await github.rest.pulls.get({ ...context.repo, pull_number: context.issue.number })
+                      const body = pullRequest.body ?? ''
+                      if (!body.includes(marker)) {
+                        await github.rest.pulls.update({ ...context.repo, pull_number: context.issue.number, body: body ? `${body}\n\n${link}` : link })
+                      }
+
+    cleanup-preview:
+        name: remove preview
+        if: >
+            vars.DEPLOY_ENABLED == 'true' &&
+            github.event_name == 'pull_request_target' &&
+            github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+        steps:
+            # pull_request_target checks out main, so this is main's cleanup script, never the PR's.
+            - uses: actions/checkout@v5
+            - name: Upload the cleanup script
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  source: deploy/cleanup.sh
+                  target: /opt/juleavslutning/pr-${{ github.event.pull_request.number }}
+                  strip_components: 1
+            - name: Remove the preview
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  script_stop: true
+                  script: |
+                      set -euo pipefail
+                      app_dir="/opt/juleavslutning/pr-${{ github.event.pull_request.number }}"
+                      sudo chmod +x "$app_dir/cleanup.sh"
+                      sudo "$app_dir/cleanup.sh" "pr-${{ github.event.pull_request.number }}"
