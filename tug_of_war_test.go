@@ -61,15 +61,14 @@ func TestTugOfWar_OnlyThePresenter_CanStartARound(t *testing.T) {
 	}
 }
 
-func TestTugOfWar_PullBeforeTheCountdownEnds_DoesNotCount(t *testing.T) {
+func TestTugOfWar_SmashBeforeTheCountdownEnds_DoesNotPull(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the presenter has just started the countdown.",
-		When:  "When an eager attendee pulls before it ends.",
-		Then:  "Then the pull is rejected and no team gets a point.",
+		When:  "When an eager attendee smashes an emoji before it ends.",
+		Then:  "Then no team gets a pull.",
 	})
 
 	// Given
-	expectedStatus := http.StatusConflict
 	expectedPulls := 0
 	app := startTestApp(t)
 	presenter := app.newPresenter()
@@ -79,22 +78,19 @@ func TestTugOfWar_PullBeforeTheCountdownEnds_DoesNotCount(t *testing.T) {
 	app.startTugOfWar(presenter)
 
 	// When
-	actualStatus := app.post(attendee, "/root/api/tug-of-war/pull")
+	app.smash(attendee)
 
 	// Then
-	if actualStatus != expectedStatus {
-		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
-	}
 	state := tugOfWarState(t, app.deckPage(attendee))
 	if state.tealPulls != expectedPulls || state.orangePulls != expectedPulls {
 		t.Fatalf("expected no pulls, got teal %d, orange %d", state.tealPulls, state.orangePulls)
 	}
 }
 
-func TestTugOfWar_PullsDuringTheRound_CountForYourTeam(t *testing.T) {
+func TestTugOfWar_SmashesDuringTheRound_PullForYourTeam(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given a round has started and the countdown is over.",
-		When:  "When an attendee pulls three times.",
+		When:  "When an attendee smashes emojis three times.",
 		Then:  "Then their team has three pulls and the other team none.",
 	})
 
@@ -110,7 +106,7 @@ func TestTugOfWar_PullsDuringTheRound_CountForYourTeam(t *testing.T) {
 
 	// When
 	for range expectedOwnPulls {
-		app.pullForTeam(attendee)
+		app.smash(attendee)
 	}
 
 	// Then
@@ -127,14 +123,14 @@ func TestTugOfWar_PullsDuringTheRound_CountForYourTeam(t *testing.T) {
 
 func TestTugOfWar_WinningLead_EndsTheRoundEarly(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a round is running and one team pulls alone.",
-		When:  "When that team reaches the winning lead.",
-		Then:  "Then the round is over at once, that team wins, and further pulls do not count.",
+		Given: "Given a round is running and one team smashes alone.",
+		When:  "When that team reaches the winning lead and keeps smashing.",
+		Then:  "Then the round is over at once, that team wins, and further smashes do not pull.",
 	})
 
 	// Given
 	expectedPhase := "finished"
-	expectedStatusAfterWin := http.StatusConflict
+	expectedPulls := testTugOfWarRules.WinningLead
 	app := startTestApp(t)
 	presenter := app.newPresenter()
 	app.showSlideWith(presenter, "data-tug-of-war-phase")
@@ -144,30 +140,29 @@ func TestTugOfWar_WinningLead_EndsTheRoundEarly(t *testing.T) {
 	time.Sleep(testTugOfWarRules.Countdown + 50*time.Millisecond)
 
 	// When
-	for range testTugOfWarRules.WinningLead {
-		app.pullForTeam(attendee)
+	for range testTugOfWarRules.WinningLead + 2 {
+		app.smash(attendee)
 	}
-	statusAfterWin := app.post(attendee, "/root/api/tug-of-war/pull")
 
 	// Then
 	state := tugOfWarState(t, app.deckPage(attendee))
 	if state.phase != expectedPhase || state.winner != team {
 		t.Fatalf("expected phase %q won by %s, got phase %q won by %q", expectedPhase, team, state.phase, state.winner)
 	}
-	if statusAfterWin != expectedStatusAfterWin {
-		t.Fatalf("expected a pull after the win to get status %d, got %d", expectedStatusAfterWin, statusAfterWin)
+	if state.tealPulls+state.orangePulls != expectedPulls {
+		t.Fatalf("expected the pulls to stop at %d, got teal %d, orange %d", expectedPulls, state.tealPulls, state.orangePulls)
 	}
 }
 
-func TestTugOfWar_AfterTheRoundEnds_PullsDoNotCount(t *testing.T) {
+func TestTugOfWar_AfterTheRoundEnds_SmashesDoNotPull(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given a round that has run out of time.",
-		When:  "When an attendee pulls.",
-		Then:  "Then the pull is rejected and the round shows as finished.",
+		When:  "When an attendee smashes an emoji.",
+		Then:  "Then no team gets a pull and the round shows as finished.",
 	})
 
 	// Given
-	expectedStatus := http.StatusConflict
+	expectedPulls := 0
 	expectedPhase := "finished"
 	app := startTestApp(t)
 	presenter := app.newPresenter()
@@ -178,14 +173,15 @@ func TestTugOfWar_AfterTheRoundEnds_PullsDoNotCount(t *testing.T) {
 	time.Sleep(testTugOfWarRules.Countdown + testTugOfWarRules.Round + 100*time.Millisecond)
 
 	// When
-	actualStatus := app.post(attendee, "/root/api/tug-of-war/pull")
+	app.smash(attendee)
 
 	// Then
-	if actualStatus != expectedStatus {
-		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
+	state := tugOfWarState(t, app.deckPage(attendee))
+	if state.phase != expectedPhase {
+		t.Fatalf("expected phase %q, got %q", expectedPhase, state.phase)
 	}
-	if phase := tugOfWarState(t, app.deckPage(attendee)).phase; phase != expectedPhase {
-		t.Fatalf("expected phase %q, got %q", expectedPhase, phase)
+	if state.tealPulls != expectedPulls || state.orangePulls != expectedPulls {
+		t.Fatalf("expected no pulls, got teal %d, orange %d", state.tealPulls, state.orangePulls)
 	}
 }
 
@@ -198,10 +194,11 @@ func (app *testApp) startTugOfWar(presenter *http.Client) {
 	}
 }
 
-func (app *testApp) pullForTeam(attendee *http.Client) {
+// smash taps an emoji reaction button, which also pulls for the attendee's team during a round.
+func (app *testApp) smash(attendee *http.Client) {
 	app.t.Helper()
-	if status := app.post(attendee, "/root/api/tug-of-war/pull"); status != http.StatusNoContent {
-		app.t.Fatalf("a pull during the round got status %d", status)
+	if status := app.postEmoji(attendee, "🔥"); status != http.StatusNoContent {
+		app.t.Fatalf("a smash got status %d", status)
 	}
 }
 

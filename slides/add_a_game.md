@@ -2,7 +2,7 @@
 
 Two example games show the way:
 
-- **Tug of war**, next slide: only Go, SQLite and Datastar
+- **Tug of war**, next slide: only Go, SQLite and Datastar; your emoji smashes are the pulls
 - Shake the snow globe: a web component built with Rocket (coming soon)
 
 Start with the first. Most games don't need more.

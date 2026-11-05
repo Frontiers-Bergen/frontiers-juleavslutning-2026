@@ -104,7 +104,7 @@ func RootLayoutRoute(
 				}
 			})
 
-			IncrementEmojiRoute(rootApiRouter, db, nc, logger)
+			IncrementEmojiRoute(rootApiRouter, db, nc, store, logger)
 			TopNavigationRoutes(db, rootApiRouter, nc, store)
 
 			PollVoteRoutes(db, rootApiRouter, nc, store)

@@ -29,11 +29,21 @@
 		gap: var(--space-1);
 	}
 
-	.tug-of-war-score {
-		min-width: 3ch;
-		font-size: var(--font-body);
-		font-weight: 700;
-		text-align: center;
+	/* Each end of the rope: the Frontiers logo with the team's score below it, in the team colour. */
+	.tug-of-war-end {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+
+		& img {
+			height: 2.5rem;
+			width: auto;
+
+			@media (width >= 40rem) {
+				height: 4rem;
+			}
+		}
 
 		&.teal {
 			color: var(--color-team-teal);
@@ -42,6 +52,13 @@
 		&.orange {
 			color: var(--color-team-orange);
 		}
+	}
+
+	.tug-of-war-score {
+		min-width: 3ch;
+		font-size: var(--font-body);
+		font-weight: 700;
+		text-align: center;
 	}
 
 	/* The track shows each team's half; the rope slides toward the team that is ahead. */
@@ -75,8 +92,8 @@
 		justify-content: center;
 		/* Teal pulls left, orange pulls right; at a full winning lead the knot reaches the team's end. */
 		transform: translateX(calc(var(--rope) * -40%));
-		/* Matches the server's update rate (tugOfWarTickInterval), so the rope glides between updates. */
-		transition: transform 200ms linear;
+		/* Every counted smash updates the page; a short ease-out makes each pull glide instead of jump. */
+		transition: transform 150ms ease-out;
 
 		&::before {
 			content: "";
@@ -112,33 +129,10 @@
 		font-weight: 700;
 	}
 
-	/* The pull button is the whole point on a phone: big, in the team colour, made for a thumb. */
-	.tug-of-war-pull {
-		min-height: 30vh;
-		border: none;
-		border-radius: var(--radius);
-		color: var(--color-bg-base);
+	/* While pulling, point at the reaction bar: the emoji buttons are the pull. */
+	.tug-of-war-smash {
 		font-size: var(--font-h1);
 		font-weight: 700;
-		cursor: pointer;
-		touch-action: manipulation;
-		user-select: none;
-
-		&.teal {
-			background: var(--color-team-teal);
-		}
-
-		&.orange {
-			background: var(--color-team-orange);
-		}
-
-		&:active {
-			transform: scale(0.98);
-		}
-
-		@media (width >= 40rem) {
-			min-height: 6rem;
-		}
 	}
 
 	.tug-of-war-start {

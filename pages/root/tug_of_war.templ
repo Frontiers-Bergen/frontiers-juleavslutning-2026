@@ -15,15 +15,16 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-// Tug of war: the room splits into two teams, in the Frontiers logo's teal and orange, and smashes a button
-// to pull a rope. One slide, controlled by the presenter:
+// Tug of war: the room splits into two teams, in the Frontiers logo's teal and orange, and the team that
+// smashes the most emoji reactions pulls the rope to its side. One slide, controlled by the presenter:
 //
 //	waiting → (presenter: Start) → countdown → pulling → finished → (presenter: Play again) → countdown …
 //
-// No JavaScript: the state lives in SQLite (teams, and the round with its rules and pull counts). While a
-// round runs, a ticker publishes deck.changed five times a second, every page re-renders from SQLite, and the
-// rope moves with a CSS transition. Pulls do not publish themselves, so page updates stay at a steady rate
-// however hard the room smashes.
+// No JavaScript: the state lives in SQLite (teams, and the round with its rules and pull counts). While the
+// rope is being pulled, every emoji smash also counts as a pull for the smasher's team (countSmashForTugOfWar,
+// called from the emoji route) and publishes deck.changed, so every page re-renders from SQLite on every
+// counted smash. The streams are compressed, so each update costs a phone tens of bytes. A once-a-second
+// tick updates the clock (countdown, seconds left, the end of the round), which changes without any smash.
 
 type tugOfWarTeam string
 
@@ -49,7 +50,8 @@ type TugOfWarRules struct {
 
 var DefaultTugOfWarRules = TugOfWarRules{Countdown: 5 * time.Second, Round: 20 * time.Second, WinningLead: 100}
 
-const tugOfWarTickInterval = 200 * time.Millisecond
+// The clock on the slide shows whole seconds; smashes update the page on their own.
+const tugOfWarClockTick = time.Second
 
 type tugOfWarPhase string
 
@@ -213,13 +215,13 @@ func tugOfWarTeamFor(db *sql.DB, sessionID string) (tugOfWarTeam, error) {
 	return tugOfWarTeam(team), nil
 }
 
-// tickTugOfWar makes every page re-render five times a second while the round runs, and once more after it
-// ends to show the result. A round restarted halfway leaves two tickers running for a moment; the extra
-// re-renders are harmless.
-func tickTugOfWar(nc *nats.Conn, logger *slog.Logger, rules TugOfWarRules, startedAt time.Time) {
-	ticker := time.NewTicker(tugOfWarTickInterval)
+// tickTugOfWarClock re-renders every page once a second while the round runs, and once more after it ends,
+// so the countdown, the seconds left and the result appear without anyone smashing. A round restarted
+// halfway leaves two tickers running for a moment; the extra re-renders are harmless.
+func tickTugOfWarClock(nc *nats.Conn, logger *slog.Logger, rules TugOfWarRules, startedAt time.Time) {
+	ticker := time.NewTicker(tugOfWarClockTick)
 	defer ticker.Stop()
-	lastTick := startedAt.Add(rules.Countdown + rules.Round + tugOfWarTickInterval)
+	lastTick := startedAt.Add(rules.Countdown + rules.Round + tugOfWarClockTick)
 	for now := range ticker.C {
 		if err := publishDeckChanged(nc); err != nil {
 			logger.Error("failed to publish tug of war tick", slog.String("error", err.Error()))
@@ -246,39 +248,33 @@ func TugOfWarRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions
 		if err := publishDeckChanged(nc); err != nil {
 			logger.Error("failed to publish tug of war start", slog.String("error", err.Error()))
 		}
-		go tickTugOfWar(nc, logger, rules, now)
-		w.WriteHeader(http.StatusNoContent)
-	})
-
-	router.Post("/tug-of-war/pull", func(w http.ResponseWriter, r *http.Request) {
-		sessionID, err := attendeeSessionID(store, w, r)
-		if err != nil {
-			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		team, err := tugOfWarTeamFor(db, sessionID)
-		if err != nil {
-			logger.Error("failed to get tug of war team", slog.String("error", err.Error()))
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		counted, err := pullForTeam(db, team, time.Now())
-		if err != nil {
-			logger.Error("failed to count tug of war pull", slog.String("error", err.Error()))
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		if !counted {
-			http.Error(w, "the rope is not being pulled right now", http.StatusConflict)
-			return
-		}
+		go tickTugOfWarClock(nc, logger, rules, now)
 		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
+// countSmashForTugOfWar counts an emoji smash as a pull for the smasher's team while the rope is being pulled,
+// and makes every page show the new score. Outside a round it does nothing, so smashing never assigns a team.
+func countSmashForTugOfWar(db *sql.DB, nc *nats.Conn, sessionID string, now time.Time) error {
+	round, err := loadTugOfWarRound(db)
+	if err != nil {
+		return err
+	}
+	if round.phase(now) != phasePulling {
+		return nil
+	}
+	team, err := tugOfWarTeamFor(db, sessionID)
+	if err != nil {
+		return err
+	}
+	counted, err := pullForTeam(db, team, now)
+	if err != nil || !counted {
+		return err
+	}
+	return publishDeckChanged(nc)
+}
+
 func tugOfWarPostURL(inviteKey string, action string) string {
-	// Like the emoji smashes, fast taps must not cancel each other's requests.
 	return fmt.Sprintf("@post('/%s/root/api/tug-of-war/%s',{requestCancellation: 'disabled'})", inviteKey, action)
 }
 
@@ -311,24 +307,28 @@ templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter 
 				You pull for <strong class={ "tug-of-war-team-name", string(team) }>{ team.name() }</strong>
 			</p>
 			<div class="tug-of-war-arena">
-				<span class="tug-of-war-score teal">{ fmt.Sprint(round.TealPulls) }</span>
+				<div class="tug-of-war-end teal">
+					<img src="/static/frontiers-logo.svg" alt="Team Teal"/>
+					<span class="tug-of-war-score">{ fmt.Sprint(round.TealPulls) }</span>
+				</div>
 				<div class="tug-of-war-track" aria-hidden="true">
 					<div class="tug-of-war-rope">
 						<span class="tug-of-war-knot">🎀</span>
 					</div>
 				</div>
-				<span class="tug-of-war-score orange">{ fmt.Sprint(round.OrangePulls) }</span>
+				<div class="tug-of-war-end orange">
+					<img src="/static/frontiers-logo.svg" alt="Team Orange"/>
+					<span class="tug-of-war-score">{ fmt.Sprint(round.OrangePulls) }</span>
+				</div>
 			</div>
 			switch phase {
 				case phaseWaiting:
-					<p class="tug-of-war-status">When the countdown ends, smash the button for your team. Pull the rope to your side to win!</p>
+					<p class="tug-of-war-status">When the countdown ends, smash the emoji buttons for your team. The team that smashes the most pulls the rope to its side!</p>
 				case phaseCountdown:
 					<p class="tug-of-war-status tug-of-war-countdown">Get ready… { fmt.Sprint(round.secondsLeft(now)) }</p>
 				case phasePulling:
-					<p class="tug-of-war-status">Pull! { fmt.Sprint(round.secondsLeft(now)) } seconds left</p>
-					<button type="button" class={ "tug-of-war-pull", string(team) } data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "pull")) }>
-						Pull!
-					</button>
+					<p class="tug-of-war-status tug-of-war-smash">Smash the emojis! 👇</p>
+					<p class="tug-of-war-status">{ fmt.Sprint(round.secondsLeft(now)) } seconds left</p>
 				case phaseFinished:
 					if winner := round.winner(); winner != "" {
 						<p class="tug-of-war-status tug-of-war-result" data-winner={ string(winner) }>

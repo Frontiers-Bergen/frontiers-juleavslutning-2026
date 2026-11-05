@@ -146,6 +146,8 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Live updates go through embedded NATS core messages. A change to anything on the deck page publishes `deck.changed`
   (`pages/root/live_updates.go`), and every open page renders itself again from SQLite. When every single event matters
   (one balloon per emoji smash), the event gets its own subject and carries what the receiver needs (`emoji_counter.templ`).
+  Re-render on every change, even many per second: the live streams are compressed, so a further page update costs a phone tens of bytes.
+  Only add a timer for things that change with time alone, like a countdown (`tug_of_war.templ` ticks once a second).
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
   Content slides are markdown files, one per slide (`slides/welcome.md`), added to the deck with `slides.MustMarkdownSlide("welcome")`.
