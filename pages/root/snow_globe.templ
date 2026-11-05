@@ -1,0 +1,150 @@
+package root
+
+import (
+	"fmt"
+	"log/slog"
+	"math/rand/v2"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
+	"github.com/starfederation/datastar-go/datastar"
+)
+
+// Snow globe: shake your phone and it snows on every screen, subtly, like shaking a real snow globe.
+//
+// The phone part is the <snow-globe> Rocket component (static/snow-globe.js): it reads the motion sensor, shows
+// an immediate puff of snow on the shaking phone, and when the shaking stops emits `shaken` with the number
+// of shakes. The markup below turns that into a POST. The server publishes one snowSubject message per burst,
+// and every other screen's snow stream appends a Snowfall whose starting swirl grows with the number of shakes,
+// then settles and falls slowly. Like emoji balloons, a shake is an event, not state: nothing is stored.
+
+const snowSubject = "snow.shaken"
+
+// A burst can claim at most this many shakes, so a single phone cannot fill every screen with snow.
+const maxShakesPerBurst = 20
+
+// The phone shows only the first few flakes (snow_globe.css); the big screen shows them all.
+const flakesPerShake, maxFlakes = 3, 24
+
+func SnowGlobeRoutes(router chi.Router, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
+	router.Post("/snow/shake", func(w http.ResponseWriter, r *http.Request) {
+		var signals struct {
+			Shakes int `json:"shakes"`
+		}
+		if err := datastar.ReadSignals(r, &signals); err != nil || signals.Shakes < 1 {
+			http.Error(w, "a shake needs a positive number of shakes", http.StatusBadRequest)
+			return
+		}
+		sessionID, err := attendeeSessionID(store, w, r)
+		if err != nil {
+			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		shakes := min(signals.Shakes, maxShakesPerBurst)
+		// The sender's session travels along, so the shaking phone, which already showed its own snow, skips it.
+		if err := nc.Publish(snowSubject, []byte(fmt.Sprintf("%d %s", shakes, sessionID))); err != nil {
+			logger.Error("failed to publish snow", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	router.Get("/snow/sse", func(w http.ResponseWriter, r *http.Request) {
+		sessionID, err := attendeeSessionID(store, w, r)
+		if err != nil {
+			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		bursts := make(chan *nats.Msg, 64)
+		subscription, err := nc.ChanSubscribe(snowSubject, bursts)
+		if err != nil {
+			logger.Error("failed to subscribe to snow", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer func() {
+			if err := subscription.Unsubscribe(); err != nil {
+				logger.Error("failed to unsubscribe from snow", slog.String("error", err.Error()))
+			}
+		}()
+
+		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
+		sse := datastar.NewSSE(w, r, datastar.WithCompression())
+		for {
+			select {
+			case <-r.Context().Done():
+				return
+			case burst := <-bursts:
+				shakesText, senderSessionID, _ := strings.Cut(string(burst.Data), " ")
+				if senderSessionID == sessionID {
+					continue
+				}
+				shakes, err := strconv.Atoi(shakesText)
+				if err != nil {
+					logger.Error("invalid snow message", slog.String("message", string(burst.Data)))
+					continue
+				}
+				if err := sse.PatchElementTempl(Snowfall(shakes), datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
+					logger.Error("failed to send snowfall", slog.String("error", err.Error()))
+					return
+				}
+			}
+		}
+	})
+}
+
+type snowflake struct {
+	X, Top, Drift, Size float64
+	DelayMs             int
+}
+
+func (flake snowflake) style() string {
+	return fmt.Sprintf("--x: %.1f%%; --top: %.1f%%; --drift: %.2fvw; --size: %.2f; --delay: %dms;",
+		flake.X, flake.Top, flake.Drift, flake.Size, flake.DelayMs)
+}
+
+// randomSnowflakes scatters flakes over the screen; static/snow-globe.js does the same for the local puff.
+func randomSnowflakes(shakes int) []snowflake {
+	random := func(low, high float64) float64 { return low + rand.Float64()*(high-low) }
+	flakes := make([]snowflake, min(shakes*flakesPerShake, maxFlakes))
+	for i := range flakes {
+		flakes[i] = snowflake{
+			X:       random(5, 95),
+			Top:     random(10, 50),
+			Drift:   random(-3, 3),
+			Size:    random(0.6, 1.2),
+			DelayMs: rand.IntN(400),
+		}
+	}
+	return flakes
+}
+
+// Snowfall removes itself when it has fallen, through a Datastar expression; no component needed.
+templ Snowfall(shakes int) {
+	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init="setTimeout(() => el.remove(), 10000)">
+		for _, flake := range randomSnowflakes(shakes) {
+			<span class="snowflake" style={ flake.style() }>❄</span>
+		}
+	</div>
+}
+
+// SnowGlobe is placed next to #root-page-wrapper, not inside it, so page updates never morph it (or the iOS
+// permission button the component adds) away. The Datastar attributes sit on a wrapper, not on <snow-globe>:
+// Rocket rewrites Datastar actions on its own element into calls to the component's own actions.
+templ SnowGlobe(inviteKey string) {
+	<div
+		class="snow-globe"
+		data-signals="{ shakes: 0 }"
+		data-init={ fmt.Sprintf("@get('/%s/root/api/snow/sse',{requestCancellation: 'disabled'})", inviteKey) }
+		data-on:shaken={ fmt.Sprintf("$shakes = evt.detail.count; @post('/%s/root/api/snow/shake',{requestCancellation: 'disabled'})", inviteKey) }
+	>
+		<snow-globe></snow-globe>
+	</div>
+}

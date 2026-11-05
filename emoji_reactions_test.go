@@ -135,29 +135,35 @@ type sseEvent struct {
 	data []string
 }
 
-type emojiStream struct {
+type sseStream struct {
 	t      *testing.T
 	events chan sseEvent
 }
 
-// openEmojiStream connects to the reaction stream like the reaction bar does, and collects
-// its server-sent events in the background until the test ends.
-func (app *testApp) openEmojiStream(client *http.Client) *emojiStream {
+// openEmojiStream connects to the reaction stream like the reaction bar does.
+func (app *testApp) openEmojiStream(client *http.Client) *sseStream {
+	app.t.Helper()
+	return app.openStream(client, "/root/api/emoji/sse")
+}
+
+// openStream connects to a live stream under the invite key and collects its server-sent events in the
+// background until the test ends.
+func (app *testApp) openStream(client *http.Client, path string) *sseStream {
 	app.t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	app.t.Cleanup(cancel)
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, app.server.URL+"/"+testInviteKey+"/root/api/emoji/sse", nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, app.server.URL+"/"+testInviteKey+path, nil)
 	if err != nil {
 		app.t.Fatalf("failed to create stream request: %v", err)
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		app.t.Fatalf("failed to open emoji stream: %v", err)
+		app.t.Fatalf("failed to open stream %s: %v", path, err)
 	}
 	app.t.Cleanup(func() { _ = response.Body.Close() }) // closing an aborted stream reports the abort
 
-	stream := &emojiStream{t: app.t, events: make(chan sseEvent, 1000)}
+	stream := &sseStream{t: app.t, events: make(chan sseEvent, 1000)}
 	go func() {
 		defer close(stream.events)
 		scanner := bufio.NewScanner(response.Body)
@@ -180,7 +186,7 @@ func (app *testApp) openEmojiStream(client *http.Client) *emojiStream {
 	return stream
 }
 
-func (stream *emojiStream) nextEmojiCounts() emojiCounts {
+func (stream *sseStream) nextEmojiCounts() emojiCounts {
 	stream.t.Helper()
 	timeout := time.After(5 * time.Second)
 	for {
@@ -206,7 +212,7 @@ func (stream *emojiStream) nextEmojiCounts() emojiCounts {
 
 // countBalloonsUntilQuiet counts appended <emoji-balloon> elements for emoji until the stream
 // has been quiet for quietPeriod.
-func (stream *emojiStream) countBalloonsUntilQuiet(emoji string, quietPeriod time.Duration) int {
+func (stream *sseStream) countBalloonsUntilQuiet(emoji string, quietPeriod time.Duration) int {
 	stream.t.Helper()
 	balloonMarkup := `emoji="` + emoji + `"`
 	count := 0
