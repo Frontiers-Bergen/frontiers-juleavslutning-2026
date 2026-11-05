@@ -100,37 +100,45 @@ func SnowGlobeRoutes(router chi.Router, nc *nats.Conn, store sessions.Store, log
 	})
 }
 
+// snowflake holds one flake's random variation, so the flakes swirl, fall and sway out of step.
 type snowflake struct {
-	X, Top, Drift, Size float64
-	DelayMs             int
+	X, Top, Drift, Size float64 // where it starts (%), its sideways swirl per shake (vw), its size (rem)
+	DelayMs, DurationMs int     // when it starts, and how long its fall takes
+	Fall                float64 // how far down it falls (vh)
+	Sway, SwayMs        float64 // how far (vw) and how slowly (ms) it sways from side to side while falling
 }
 
 func (flake snowflake) style() string {
-	return fmt.Sprintf("--x: %.1f%%; --top: %.1f%%; --drift: %.2fvw; --size: %.2f; --delay: %dms;",
-		flake.X, flake.Top, flake.Drift, flake.Size, flake.DelayMs)
+	return fmt.Sprintf("--x: %.1f%%; --top: %.1f%%; --drift: %.2fvw; --size: %.2f; --delay: %dms; --duration: %dms; --fall: %.0fvh; --sway: %.2fvw; --sway-duration: %.0fms;",
+		flake.X, flake.Top, flake.Drift, flake.Size, flake.DelayMs, flake.DurationMs, flake.Fall, flake.Sway, flake.SwayMs)
 }
 
-// randomSnowflakes scatters flakes over the screen; static/snow-globe.js does the same for the local puff.
+// randomSnowflakes scatters flakes along the top of the screen; static/snow-globe.js does the same for the local puff.
 func randomSnowflakes(shakes int) []snowflake {
 	random := func(low, high float64) float64 { return low + rand.Float64()*(high-low) }
 	flakes := make([]snowflake, min(shakes*flakesPerShake, maxFlakes))
 	for i := range flakes {
 		flakes[i] = snowflake{
-			X:       random(5, 95),
-			Top:     random(10, 50),
-			Drift:   random(-3, 3),
-			Size:    random(0.6, 1.2),
-			DelayMs: rand.IntN(400),
+			X:          random(5, 95),
+			Top:        random(0, 10),
+			Drift:      random(-3, 3),
+			Size:       random(0.6, 1.2),
+			DelayMs:    rand.IntN(400),
+			DurationMs: 10000 + rand.IntN(4000),
+			Fall:       random(75, 95),
+			Sway:       random(1, 3),
+			SwayMs:     random(2500, 4500),
 		}
 	}
 	return flakes
 }
 
-// Snowfall removes itself when it has fallen, through a Datastar expression; no component needed.
+// Snowfall removes itself when it has fallen, through a Datastar expression; no component needed. Each flake is
+// two elements: the outer one swirls and falls, the inner one sways from side to side (snow_globe.css).
 templ Snowfall(shakes int) {
-	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init="setTimeout(() => el.remove(), 10000)">
+	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init="setTimeout(() => el.remove(), 16000)">
 		for _, flake := range randomSnowflakes(shakes) {
-			<span class="snowflake" style={ flake.style() }>❄</span>
+			<span class="snowflake" style={ flake.style() }><span class="snowflake-sway">❄</span></span>
 		}
 	</div>
 }

@@ -21,11 +21,13 @@ const MIN_MS_BETWEEN_SHAKES = 200;
 // Shaking has stopped after this much stillness; then the shakes are sent as one burst.
 const BURST_ENDS_AFTER_MS = 600;
 const MAX_SHAKES_PER_BURST = 20;
-const SNOWFALL_VISIBLE_MS = 10000;
+// Longer than the slowest flake: 400 ms delay + 14 s fall.
+const SNOWFALL_VISIBLE_MS = 16000;
 
 const random = (min, max) => min + Math.random() * (max - min);
 
-// A snowfall with `flakes` flakes swirling with `energy`, the same markup the server sends.
+// A snowfall with `flakes` flakes swirling with `energy`, the same markup and variation the server sends
+// (randomSnowflakes and Snowfall in snow_globe.templ): the outer span swirls and falls, the inner one sways.
 function snowfall(energy, flakes) {
 	const container = document.createElement("div");
 	container.className = "snowfall";
@@ -33,12 +35,19 @@ function snowfall(energy, flakes) {
 	for (let i = 0; i < flakes; i++) {
 		const flake = document.createElement("span");
 		flake.className = "snowflake";
-		flake.textContent = "❄";
 		flake.style.setProperty("--x", `${random(5, 95).toFixed(1)}%`);
-		flake.style.setProperty("--top", `${random(10, 50).toFixed(1)}%`);
+		flake.style.setProperty("--top", `${random(0, 10).toFixed(1)}%`);
 		flake.style.setProperty("--drift", `${random(-3, 3).toFixed(2)}vw`);
 		flake.style.setProperty("--size", random(0.6, 1.2).toFixed(2));
 		flake.style.setProperty("--delay", `${Math.round(random(0, 400))}ms`);
+		flake.style.setProperty("--duration", `${Math.round(random(10000, 14000))}ms`);
+		flake.style.setProperty("--fall", `${Math.round(random(75, 95))}vh`);
+		flake.style.setProperty("--sway", `${random(1, 3).toFixed(2)}vw`);
+		flake.style.setProperty("--sway-duration", `${Math.round(random(2500, 4500))}ms`);
+		const sway = document.createElement("span");
+		sway.className = "snowflake-sway";
+		sway.textContent = "❄";
+		flake.append(sway);
 		container.append(flake);
 	}
 	return container;

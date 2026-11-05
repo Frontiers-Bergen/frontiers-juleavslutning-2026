@@ -12,8 +12,9 @@
 	}
 }
 
-/* Set per flake: --x, --top (where it starts), --drift (sideways swirl per unit of energy), --size, --delay.
-   Set per snowfall: --energy, the number of shakes. */
+/* Set per flake: --x, --top (where it starts), --drift (sideways swirl per shake), --size, --delay,
+   --duration and --fall (how long and how far it falls), --sway and --sway-duration (its side-to-side sway).
+   Set per snowfall: --energy, the number of shakes. Every flake differs, so they never move in step. */
 .snowflake {
 	position: absolute;
 	top: var(--top);
@@ -23,7 +24,7 @@
 	color: #fff;
 	text-shadow: 0 0 4px rgb(255 255 255 / 60%);
 	opacity: 0;
-	animation: snow-globe-swirl-and-settle 9s cubic-bezier(0.2, 0.6, 0.4, 1) var(--delay) forwards;
+	animation: snow-globe-swirl-and-fall var(--duration) var(--delay) forwards;
 
 	/* Subtle on a phone: a few flakes; the big screen shows them all. */
 	&:nth-child(n + 9) {
@@ -35,22 +36,42 @@
 	}
 }
 
-/* Like shaking a real snow globe: the flakes swirl up and sideways, harder the more you shook,
-   then settle and fall slowly. */
-@keyframes snow-globe-swirl-and-settle {
+/* Like shaking a real snow globe: a quick swirl, mostly sideways and harder the more you shook, then a slow,
+   even fall. The swirl eases out; the fall is linear, so the flakes drift down instead of dropping. */
+@keyframes snow-globe-swirl-and-fall {
 	0% {
 		opacity: 0;
-		transform: translate(0, 0) rotate(0deg);
+		transform: translate(0, 0);
+		animation-timing-function: ease-out;
 	}
-	8% {
+	4% {
 		opacity: 0.9;
 	}
-	20% {
-		transform: translate(calc(var(--drift) * min(var(--energy), 10)), calc(-1.5vh * min(var(--energy), 10))) rotate(90deg);
+	12% {
+		transform: translate(calc(var(--drift) * min(var(--energy), 10)), calc(-0.5vh * min(var(--energy), 10)));
+		animation-timing-function: linear;
+	}
+	85% {
+		opacity: 0.8;
 	}
 	100% {
 		opacity: 0;
-		transform: translate(calc(var(--drift) * min(var(--energy), 10) * 0.4), 70vh) rotate(360deg);
+		transform: translate(calc(var(--drift) * min(var(--energy), 10) * 0.6), var(--fall));
+	}
+}
+
+/* The sway: back and forth while falling, with a slow spin; each flake at its own width and rhythm. */
+.snowflake-sway {
+	display: inline-block;
+	animation: snow-globe-sway var(--sway-duration) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes snow-globe-sway {
+	from {
+		transform: translateX(calc(var(--sway) * -1)) rotate(-30deg);
+	}
+	to {
+		transform: translateX(var(--sway)) rotate(30deg);
 	}
 }
 

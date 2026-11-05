@@ -277,7 +277,7 @@ try {
 		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 		await sleep(1500);
 		const snowfalls = document.querySelectorAll(".snowfall").length;
-		await sleep(10000);
+		await sleep(15500); // a snowfall stays 16 s, so the slowest flake finishes falling
 		return { snowfalls, snowfallsAfterFalling: document.querySelectorAll(".snowfall").length };
 	})()`);
 	check("another phone's shakes make it snow here", snowHere.snowfalls === 1, snowHere);
