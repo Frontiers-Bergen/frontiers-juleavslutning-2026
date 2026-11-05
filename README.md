@@ -144,7 +144,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [x] Rocket (Datastar web components): free since Datastar v1.0.4. Decision: no migration of `<emoji-balloon>` (fire-and-forget animation, nothing for Rocket to improve, double bundle size); try Rocket in the web component mini-game demo
 - [x] Load test: how many button smashers can one server take? `go tool task loadtest`, local only (the Hetzner server is shared). First results on a 20-core laptop, 6 taps/s per phone: 40 phones missed the 100 ms goal (P99 340 ms, 6 cores busy, 1.4 GB memory); the findings below fix most of it
-- [ ] Fix: SQLite connections are opened and closed under load (database/sql keeps 2 idle by default); opening one applies the pragmas and parses the schema, half the CPU at 40 phones
+- [x] Fix: SQLite connections were opened and closed under load (database/sql keeps 2 idle by default); opening one applies the pragmas and parses the schema, half the CPU at 40 phones. A fixed pool of 32 (`database.go`): 40 phones P99 19 ms on 3 cores, 80 phones P99 35 ms
 - [ ] Memory: every live stream has its own Brotli compressor with a 4 MB window, about 12 MB per phone (1.4 GB at 40 phones, on a shared server); a smaller window cuts it to about 6 MB per phone
 - [ ] Next hotspot: for every smash, every phone's emoji stream queries the counts and compresses two events
 
