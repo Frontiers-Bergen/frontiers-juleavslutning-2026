@@ -27,7 +27,13 @@ let failures = 0;
 
 function cleanUp() {
 	for (const child of processes) child.kill();
-	rmSync(work, { recursive: true, force: true });
+	// Chrome may still be writing its profile for a moment after being stopped; retry, and never let
+	// cleanup turn passing checks into a failure.
+	try {
+		rmSync(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+	} catch (error) {
+		console.warn(`could not remove ${work}: ${error.message}`);
+	}
 }
 process.on("SIGINT", () => {
 	cleanUp();
