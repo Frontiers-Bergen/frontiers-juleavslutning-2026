@@ -95,7 +95,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS next to each feature (first `<style>` blocks, now `.css` files, see below), no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
 - [x] Mobile first pass: poll and results use one column on phones (no more mid-word breaks), less slide padding on phones, thumb-sized reaction buttons
 - [x] Confirm the CSS approach with Torstein (coldasice): feature CSS in `.css` files next to the `.templ` files, served by `feature_styles.go`
-- [ ] Nest all CSS (Torstein's wish, rule in `AGENTS.md`): `pages/root/top_navigation.css` has 17 top-level classes, and `pages/root/snow_globe.css` can nest its flakes under `.snowfall`
+- [x] Nest all CSS (Torstein's wish, rule in `AGENTS.md`): `top_navigation.css` and `snow_globe.css` nested (pixel-identical); `static/index.css` already nests like conorganizer's
 - [x] **Fix: any attendee can change the presenter's slide.** `POST /{inviteKey}/root/api/slides/set` does not check presenter mode, so anyone with the invite link can move the deck (curl or devtools). Start with a test.
 - [x] Keep the internet out: the invite key opens the deck, the presenter key gives control, and the app listens on 127.0.0.1 behind Caddy (`HOST`)
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
