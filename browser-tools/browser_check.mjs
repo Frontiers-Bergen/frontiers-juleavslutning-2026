@@ -54,8 +54,11 @@ async function waitFor(url) {
 }
 
 // Finds Chrome or Chromium on Linux, macOS and Windows without a shell (Windows has no `command -v`).
+// Google Chrome first: Ubuntu's chromium can be a snap, which cannot use a profile directory in /tmp.
+// BROWSER_PATH overrides the search.
 function findBrowser() {
-	const names = ["chromium", "chromium-browser", "google-chrome-stable", "google-chrome"];
+	if (process.env.BROWSER_PATH) return process.env.BROWSER_PATH;
+	const names = ["google-chrome-stable", "google-chrome", "chromium", "chromium-browser"];
 	const extensions = process.platform === "win32" ? [".exe", ""] : [""];
 	for (const directory of (process.env.PATH ?? "").split(delimiter)) {
 		for (const name of names) {
@@ -159,7 +162,9 @@ try {
 	const browserArguments = ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`];
 	// GitHub's Ubuntu runners block Chrome's sandbox (AppArmor), and Chrome exits at once. Only on CI.
 	if (process.env.CI) browserArguments.push("--no-sandbox");
-	const browser = spawn(findBrowser(), [...browserArguments, "about:blank"], { stdio: ["ignore", "ignore", "pipe"] });
+	const browserPath = findBrowser();
+	console.log(`browser: ${browserPath}`);
+	const browser = spawn(browserPath, [...browserArguments, "about:blank"], { stdio: ["ignore", "ignore", "pipe"] });
 	let browserErrors = "";
 	browser.stderr.on("data", (chunk) => (browserErrors += chunk));
 	processes.push(browser);
