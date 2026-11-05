@@ -52,7 +52,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
 - [ ] Someone tries a fresh clone on macOS and on Windows before the workshop (Gerhard, weekend of 7–8 Nov); update `SETUP.md` with the findings
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
-- [x] Update vendored `static/datastar.js` to v1.0.4 (with its source map), self-hosted in `static/`
+- [x] Datastar v1.0.4 with Rocket (`static/datastar-rocket.js`, with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
