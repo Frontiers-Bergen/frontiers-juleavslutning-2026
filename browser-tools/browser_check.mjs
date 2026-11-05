@@ -27,7 +27,13 @@ let failures = 0;
 
 function cleanUp() {
 	for (const child of processes) child.kill();
-	rmSync(work, { recursive: true, force: true });
+	// Chrome may still be writing its profile for a moment after being stopped; retry, and never let
+	// cleanup turn passing checks into a failure.
+	try {
+		rmSync(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+	} catch (error) {
+		console.warn(`could not remove ${work}: ${error.message}`);
+	}
 }
 process.on("SIGINT", () => {
 	cleanUp();
@@ -54,8 +60,11 @@ async function waitFor(url) {
 }
 
 // Finds Chrome or Chromium on Linux, macOS and Windows without a shell (Windows has no `command -v`).
+// Google Chrome first: Ubuntu's chromium can be a snap, which cannot use a profile directory in /tmp.
+// BROWSER_PATH overrides the search.
 function findBrowser() {
-	const names = ["chromium", "chromium-browser", "google-chrome-stable", "google-chrome"];
+	if (process.env.BROWSER_PATH) return process.env.BROWSER_PATH;
+	const names = ["google-chrome-stable", "google-chrome", "chromium", "chromium-browser"];
 	const extensions = process.platform === "win32" ? [".exe", ""] : [""];
 	for (const directory of (process.env.PATH ?? "").split(delimiter)) {
 		for (const name of names) {
@@ -156,11 +165,21 @@ try {
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
 	processes.push(spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
-	processes.push(
-		spawn(findBrowser(), ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`, "about:blank"], { stdio: "ignore" }),
-	);
+	const browserArguments = ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`];
+	// GitHub's Ubuntu runners block Chrome's sandbox (AppArmor), and Chrome exits at once. Only on CI.
+	if (process.env.CI) browserArguments.push("--no-sandbox");
+	const browserPath = findBrowser();
+	console.log(`browser: ${browserPath}`);
+	const browser = spawn(browserPath, [...browserArguments, "about:blank"], { stdio: ["ignore", "ignore", "pipe"] });
+	let browserErrors = "";
+	browser.stderr.on("data", (chunk) => (browserErrors += chunk));
+	processes.push(browser);
 	await waitFor(deckURL);
-	await waitFor(`http://127.0.0.1:${devtoolsPort}/json/version`);
+	try {
+		await waitFor(`http://127.0.0.1:${devtoolsPort}/json/version`);
+	} catch (error) {
+		throw new Error(`${error.message}; the browser said:\n${browserErrors.slice(-2000)}`);
+	}
 
 	const presenter = await presenterSession();
 	const phone = await openTab(deckURL);
