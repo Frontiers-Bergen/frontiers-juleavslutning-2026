@@ -56,8 +56,9 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
 - [x] Remove the January docs (`agent_project.md`, `project_summary.md`, `presentationOutline.md`); `README.md`, `AGENTS.md` and code comments replace them
-- [ ] A short "how to add your own mini-game" guide (the extension point attendees will use)
-- [ ] Two example mini-games that show the pattern end to end: one with only Go + SQLite + Datastar, one with a web component built with Rocket (web components only when needed)
+- [x] Mini-game without JavaScript: tug of war, two random, even teams in the logo's colours, presenter-controlled countdown (`pages/root/tug_of_war.templ`)
+- [ ] Mini-game with a web component built with Rocket (web components only when needed): shake the snow globe
+- [ ] Short "how to add your own mini-game" guide, pointing at the two example games
 - [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [x] CD: a preview per PR at `juleavslutning-<PR>.lekeplassen.regncon.no`, main on the big screen at https://juleavslutning.lekeplassen.regncon.no, previews removed on close (`deploy/`); tested end to end
@@ -117,7 +118,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Mini-game ideas
 
-- [ ] Tug of war: two halves of the room (teams assigned per phone)
+- [x] Tug of war: two even teams, assigned per phone
+- [ ] Spaceship snowball shooter
 - [ ] Collaborative pixel canvas (r/place, Christmas edition)
 - [ ] Button-mash reindeer race
 - [ ] Snowball fight

@@ -48,6 +48,10 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		--color-link: #80ffea;
 		--color-link-hover: #fad000;
 
+		/* Team colours for team games: the two colours of the Frontiers logo. Text on them is near-black. */
+		--color-team-teal: #07d9b2;
+		--color-team-orange: #ff9200;
+
 		/* Layout */
 		--stage-max-width: 68rem;
 

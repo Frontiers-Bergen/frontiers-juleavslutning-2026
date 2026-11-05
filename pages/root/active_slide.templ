@@ -36,6 +36,7 @@ func deck(
 		markdown("codebase"),
 		markdown("live_updates"),
 		markdown("add_a_game"),
+		{Title: "Tug of war", Render: func() templ.Component { return TugOfWarSlide(db, inviteKey, sessionID, isPresenter) }},
 		markdown("tonight"),
 		markdown("house_rules"),
 		markdown("lets_build"),

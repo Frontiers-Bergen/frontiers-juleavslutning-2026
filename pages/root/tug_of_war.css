@@ -1,0 +1,154 @@
+/* Tug of war (tug_of_war.templ). Loaded into @layer features via /feature-styles.css.
+   --rope is set on the slide: the lead as a share of the winning lead, 1 when teal wins, -1 when orange wins. */
+.tug-of-war {
+	gap: var(--space-2);
+
+	& h1 {
+		margin: 0;
+	}
+
+	.tug-of-war-your-team {
+		margin: 0;
+		font-size: var(--font-body);
+	}
+
+	.tug-of-war-team-name {
+		&.teal {
+			color: var(--color-team-teal);
+		}
+
+		&.orange {
+			color: var(--color-team-orange);
+		}
+	}
+
+	.tug-of-war-arena {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: var(--space-1);
+	}
+
+	.tug-of-war-score {
+		min-width: 3ch;
+		font-size: var(--font-body);
+		font-weight: 700;
+		text-align: center;
+
+		&.teal {
+			color: var(--color-team-teal);
+		}
+
+		&.orange {
+			color: var(--color-team-orange);
+		}
+	}
+
+	/* The track shows each team's half; the rope slides toward the team that is ahead. */
+	.tug-of-war-track {
+		position: relative;
+		height: 4rem;
+		overflow: hidden;
+		border-radius: var(--radius);
+		background: linear-gradient(
+			to right,
+			hsl(from var(--color-team-teal) h s l / 25%) 50%,
+			hsl(from var(--color-team-orange) h s l / 25%) 50%
+		);
+		border: var(--border-subtle);
+
+		/* The middle line: the rope's knot starts here. */
+		&::after {
+			content: "";
+			position: absolute;
+			inset: 0 auto 0 50%;
+			width: 2px;
+			background: var(--color-text-muted);
+		}
+	}
+
+	.tug-of-war-rope {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		/* Teal pulls left, orange pulls right; at a full winning lead the knot reaches the team's end. */
+		transform: translateX(calc(var(--rope) * -40%));
+		/* Matches the server's update rate (tugOfWarTickInterval), so the rope glides between updates. */
+		transition: transform 200ms linear;
+
+		&::before {
+			content: "";
+			position: absolute;
+			inset: 45% -50%;
+			border-radius: 999px;
+			background: repeating-linear-gradient(45deg, #c8a165 0 6px, #a07a45 6px 12px);
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	.tug-of-war-knot {
+		position: relative;
+		font-size: 2rem;
+	}
+
+	.tug-of-war-status {
+		margin: 0;
+		font-size: var(--font-body);
+		color: var(--color-text-strong);
+	}
+
+	.tug-of-war-countdown {
+		font-size: var(--font-h1);
+		font-weight: 700;
+	}
+
+	.tug-of-war-result {
+		font-size: var(--font-h1);
+		font-weight: 700;
+	}
+
+	/* The pull button is the whole point on a phone: big, in the team colour, made for a thumb. */
+	.tug-of-war-pull {
+		min-height: 30vh;
+		border: none;
+		border-radius: var(--radius);
+		color: var(--color-bg-base);
+		font-size: var(--font-h1);
+		font-weight: 700;
+		cursor: pointer;
+		touch-action: manipulation;
+		user-select: none;
+
+		&.teal {
+			background: var(--color-team-teal);
+		}
+
+		&.orange {
+			background: var(--color-team-orange);
+		}
+
+		&:active {
+			transform: scale(0.98);
+		}
+
+		@media (width >= 40rem) {
+			min-height: 6rem;
+		}
+	}
+
+	.tug-of-war-start {
+		align-self: flex-start;
+		min-height: 3rem;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		color: var(--color-text-strong);
+		cursor: pointer;
+	}
+}

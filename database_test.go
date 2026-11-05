@@ -19,7 +19,7 @@ func TestOpenDatabase_FreshFile_CreatesTablesAndFirstSlide(t *testing.T) {
 	})
 
 	// Given
-	expectedTables := []string{"emoji_counter", "poll_votes", "slide_state"}
+	expectedTables := []string{"emoji_counter", "poll_votes", "slide_state", "tug_of_war_round", "tug_of_war_teams"}
 	expectedSlideIndex := 0
 	path := filepath.Join(t.TempDir(), "presentation.db")
 

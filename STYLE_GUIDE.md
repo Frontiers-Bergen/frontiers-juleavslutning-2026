@@ -25,6 +25,8 @@ the same purple, the same monospace font, the same markdown-style headings, with
 | `--color-accent` | `#ff9d00` | The `#` before headings. Use sparingly; it is the brand's spark |
 | `--color-link` | `#80ffea` | Links and inline code |
 | `--color-link-hover` | `#fad000` | Links on hover |
+| `--color-team-teal` | `#07d9b2` | Team colour in team games (the logo's teal); near-black text on it |
+| `--color-team-orange` | `#ff9200` | Team colour in team games (the logo's orange); near-black text on it |
 
 Rules:
 - Use the tokens, never raw colour values, in feature CSS.

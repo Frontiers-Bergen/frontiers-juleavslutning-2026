@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,8 +14,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
+	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 )
 
 // Test harness for HTTP-level tests: the real router from newApp, with a fresh SQLite file
@@ -25,6 +28,9 @@ const (
 	testInviteKey    = "test-invite-key"
 	testPresenterKey = "test-presenter-key"
 )
+
+// Short tug of war rounds, so a whole round fits in a test.
+var testTugOfWarRules = root.TugOfWarRules{Countdown: 100 * time.Millisecond, Round: 1500 * time.Millisecond, WinningLead: 5}
 
 type testApp struct {
 	t      *testing.T
@@ -46,6 +52,7 @@ func startTestApp(t *testing.T) *testApp {
 		NATSStoreDir:  t.TempDir(),
 		InviteKey:     testInviteKey,
 		SessionSecret: "test-session-secret",
+		TugOfWarRules: testTugOfWarRules,
 	})
 	if err != nil {
 		t.Fatalf("failed to start app: %v", err)
@@ -122,6 +129,27 @@ func shownSlideIndex(t *testing.T, page string) int {
 		t.Fatalf("invalid slideIndex %q: %v", match[1], err)
 	}
 	return index
+}
+
+// showSlideWith steps the presenter through the deck until a slide containing marker is shown, like a
+// presenter clicking "next", so tests do not depend on slide order. Returns the page an attendee sees then.
+// It checks an attendee's page on purpose: the presenter's page also holds previews of every slide in its
+// sidebar, so it contains every slide even when another one is active.
+func (app *testApp) showSlideWith(presenter *http.Client, marker string) string {
+	app.t.Helper()
+	viewer := app.newAttendee()
+	for index := 0; ; index++ {
+		if status := app.post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index)); status != http.StatusNoContent {
+			app.t.Fatalf("presenter could not move to slide %d: status %d", index, status)
+		}
+		page := app.deckPage(viewer)
+		if strings.Contains(page, marker) {
+			return page
+		}
+		if shownSlideIndex(app.t, page) < index {
+			app.t.Fatalf("reached the end of the deck without a slide containing %q", marker)
+		}
+	}
 }
 
 func closeBody(t *testing.T, response *http.Response) {

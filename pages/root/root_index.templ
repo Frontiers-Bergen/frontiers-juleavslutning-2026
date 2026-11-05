@@ -21,6 +21,7 @@ func RootLayoutRoute(
 	store sessions.Store,
 	logger *slog.Logger,
 	nc *nats.Conn,
+	tugOfWarRules TugOfWarRules,
 ) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -105,6 +106,7 @@ func RootLayoutRoute(
 			TopNavigationRoutes(db, rootApiRouter, nc, store)
 
 			PollVoteRoutes(db, rootApiRouter, nc, store)
+			TugOfWarRoutes(rootApiRouter, db, nc, store, logger, tugOfWarRules)
 		})
 	})
 }

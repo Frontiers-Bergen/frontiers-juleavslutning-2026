@@ -108,7 +108,8 @@ async function presenterSession() {
 		}
 		throw new Error(`no slide matches ${pattern}`);
 	};
-	return { moveToSlideWith };
+	const startTugOfWar = () => fetch(`${api}/tug-of-war/start`, { method: "POST", headers: { cookie } });
+	return { moveToSlideWith, startTugOfWar };
 }
 
 // One browser tab, like one attendee's phone. reducedMotion emulates the "reduce motion" accessibility setting.
@@ -241,6 +242,28 @@ try {
 	const resultsHTML = await presenter.moveToSlideWith(/data-poll-results="app-name"/);
 	const counted = /data-option-key="smash-the-halls"\s+data-vote-count="1"/.test(resultsHTML);
 	check("the tapped vote is counted in the results", counted);
+
+	// Tug of war: the presenter starts a round; after the 5 second countdown, taps on Pull! count for the
+	// phone's team and the rope moves through the live updates.
+	await presenter.moveToSlideWith(/data-tug-of-war-phase/);
+	await sleep(1500);
+	await presenter.startTugOfWar();
+	await sleep(5500);
+	const tugOfWar = await phone.run(`(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const pull = document.querySelector(".tug-of-war-pull");
+		if (!pull) return { pullButtonShown: false };
+		for (let i = 0; i < 10; i++) {
+			pull.click();
+			await sleep(50);
+		}
+		await sleep(1500);
+		const slide = document.querySelector(".tug-of-war");
+		const ownPulls = Number(slide.dataset.team === "teal" ? slide.dataset.tealPulls : slide.dataset.orangePulls);
+		return { pullButtonShown: true, team: slide.dataset.team, ownPulls, rope: slide.style.getPropertyValue("--rope").trim() };
+	})()`);
+	check("tapping Pull! 10 times in a tug of war counts 10 pulls for your team", tugOfWar.ownPulls === 10, tugOfWar);
+	check("the rope moves toward the team that pulls", tugOfWar.rope !== "" && tugOfWar.rope !== "0.000", tugOfWar);
 
 	check("no console errors or exceptions in the phone tab", phone.problems.length === 0, phone.problems);
 	phone.close();

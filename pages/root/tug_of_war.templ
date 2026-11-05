@@ -1,0 +1,352 @@
+package root
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"log/slog"
+	"math"
+	"math/rand/v2"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
+)
+
+// Tug of war: the room splits into two teams, in the Frontiers logo's teal and orange, and smashes a button
+// to pull a rope. One slide, controlled by the presenter:
+//
+//	waiting → (presenter: Start) → countdown → pulling → finished → (presenter: Play again) → countdown …
+//
+// No JavaScript: the state lives in SQLite (teams, and the round with its rules and pull counts). While a
+// round runs, a ticker publishes deck.changed five times a second, every page re-renders from SQLite, and the
+// rope moves with a CSS transition. Pulls do not publish themselves, so page updates stay at a steady rate
+// however hard the room smashes.
+
+type tugOfWarTeam string
+
+const (
+	teamTeal   tugOfWarTeam = "teal"
+	teamOrange tugOfWarTeam = "orange"
+)
+
+func (team tugOfWarTeam) name() string {
+	if team == teamTeal {
+		return "Team Teal"
+	}
+	return "Team Orange"
+}
+
+// TugOfWarRules are a round's countdown, length and the lead that wins early. The app uses
+// DefaultTugOfWarRules; tests use short rounds.
+type TugOfWarRules struct {
+	Countdown   time.Duration
+	Round       time.Duration
+	WinningLead int
+}
+
+var DefaultTugOfWarRules = TugOfWarRules{Countdown: 5 * time.Second, Round: 20 * time.Second, WinningLead: 100}
+
+const tugOfWarTickInterval = 200 * time.Millisecond
+
+type tugOfWarPhase string
+
+const (
+	phaseWaiting   tugOfWarPhase = "waiting"
+	phaseCountdown tugOfWarPhase = "countdown"
+	phasePulling   tugOfWarPhase = "pulling"
+	phaseFinished  tugOfWarPhase = "finished"
+)
+
+type tugOfWarRound struct {
+	Started     bool
+	StartedAt   time.Time
+	Countdown   time.Duration
+	Round       time.Duration
+	WinningLead int
+	TealPulls   int
+	OrangePulls int
+}
+
+// lead is positive when teal is ahead, negative when orange is.
+func (round tugOfWarRound) lead() int {
+	return round.TealPulls - round.OrangePulls
+}
+
+func (round tugOfWarRound) phase(now time.Time) tugOfWarPhase {
+	if !round.Started {
+		return phaseWaiting
+	}
+	pullingStarts := round.StartedAt.Add(round.Countdown)
+	switch {
+	case now.Before(pullingStarts):
+		return phaseCountdown
+	case now.Before(pullingStarts.Add(round.Round)) && abs(round.lead()) < round.WinningLead:
+		return phasePulling
+	default:
+		return phaseFinished
+	}
+}
+
+// secondsLeft in the countdown or the pulling phase, rounded up, for display.
+func (round tugOfWarRound) secondsLeft(now time.Time) int {
+	var end time.Time
+	switch round.phase(now) {
+	case phaseCountdown:
+		end = round.StartedAt.Add(round.Countdown)
+	case phasePulling:
+		end = round.StartedAt.Add(round.Countdown + round.Round)
+	default:
+		return 0
+	}
+	return int(math.Ceil(end.Sub(now).Seconds()))
+}
+
+// winner of a finished round: the team ahead, or "" for a draw.
+func (round tugOfWarRound) winner() tugOfWarTeam {
+	switch {
+	case round.lead() > 0:
+		return teamTeal
+	case round.lead() < 0:
+		return teamOrange
+	default:
+		return ""
+	}
+}
+
+// ropeOffset is the lead as a share of the winning lead: 1 when teal has won, -1 when orange has.
+func (round tugOfWarRound) ropeOffset() float64 {
+	if round.WinningLead <= 0 {
+		return 0
+	}
+	return math.Max(-1, math.Min(1, float64(round.lead())/float64(round.WinningLead)))
+}
+
+func abs(number int) int {
+	if number < 0 {
+		return -number
+	}
+	return number
+}
+
+func loadTugOfWarRound(db *sql.DB) (tugOfWarRound, error) {
+	var startedAtUnixMs sql.NullInt64
+	var countdownMs, roundMs int64
+	round := tugOfWarRound{}
+	err := db.QueryRow(`
+		SELECT started_at_unix_ms, countdown_ms, round_ms, winning_lead, teal_pulls, orange_pulls
+		FROM tug_of_war_round WHERE id = 1
+	`).Scan(&startedAtUnixMs, &countdownMs, &roundMs, &round.WinningLead, &round.TealPulls, &round.OrangePulls)
+	if err != nil {
+		return tugOfWarRound{}, fmt.Errorf("failed to load tug of war round: %w", err)
+	}
+	round.Started = startedAtUnixMs.Valid
+	round.StartedAt = time.UnixMilli(startedAtUnixMs.Int64)
+	round.Countdown = time.Duration(countdownMs) * time.Millisecond
+	round.Round = time.Duration(roundMs) * time.Millisecond
+	return round, nil
+}
+
+// startTugOfWarRound resets the pulls and starts a new round now, with its countdown.
+func startTugOfWarRound(db *sql.DB, rules TugOfWarRules, now time.Time) error {
+	_, err := db.Exec(`
+		UPDATE tug_of_war_round
+		SET started_at_unix_ms = ?, countdown_ms = ?, round_ms = ?, winning_lead = ?, teal_pulls = 0, orange_pulls = 0
+		WHERE id = 1
+	`, now.UnixMilli(), rules.Countdown.Milliseconds(), rules.Round.Milliseconds(), rules.WinningLead)
+	if err != nil {
+		return fmt.Errorf("failed to start tug of war round: %w", err)
+	}
+	return nil
+}
+
+// pullForTeam counts one pull for team and reports whether it counted. A pull only counts while the round is
+// pulling: the time window and the winning lead are checked in the same statement as the increment, so a pull
+// that arrives just after the end, or just after the winning pull, cannot sneak in.
+func pullForTeam(db *sql.DB, team tugOfWarTeam, now time.Time) (bool, error) {
+	column := "orange_pulls"
+	if team == teamTeal {
+		column = "teal_pulls"
+	}
+	result, err := db.Exec(fmt.Sprintf(`
+		UPDATE tug_of_war_round SET %[1]s = %[1]s + 1
+		WHERE id = 1
+			AND started_at_unix_ms IS NOT NULL
+			AND ? >= started_at_unix_ms + countdown_ms
+			AND ? < started_at_unix_ms + countdown_ms + round_ms
+			AND abs(teal_pulls - orange_pulls) < winning_lead
+	`, column), now.UnixMilli(), now.UnixMilli())
+	if err != nil {
+		return false, fmt.Errorf("failed to count pull: %w", err)
+	}
+	counted, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to read whether the pull counted: %w", err)
+	}
+	return counted == 1, nil
+}
+
+// tugOfWarTeamFor returns the attendee's team. The first time, the attendee joins the smaller team, with a
+// coin toss when both are the same size. Comparing and inserting happen in one statement, so many phones
+// joining at once still split evenly.
+func tugOfWarTeamFor(db *sql.DB, sessionID string) (tugOfWarTeam, error) {
+	coinToss := teamTeal
+	if rand.IntN(2) == 1 {
+		coinToss = teamOrange
+	}
+	_, err := db.Exec(`
+		INSERT OR IGNORE INTO tug_of_war_teams (session_id, team)
+		SELECT ?, CASE WHEN teal < orange THEN 'teal' WHEN orange < teal THEN 'orange' ELSE ? END
+		FROM (SELECT
+			(SELECT COUNT(*) FROM tug_of_war_teams WHERE team = 'teal') AS teal,
+			(SELECT COUNT(*) FROM tug_of_war_teams WHERE team = 'orange') AS orange)
+	`, sessionID, string(coinToss))
+	if err != nil {
+		return "", fmt.Errorf("failed to assign tug of war team: %w", err)
+	}
+	var team string
+	if err := db.QueryRow(`SELECT team FROM tug_of_war_teams WHERE session_id = ?`, sessionID).Scan(&team); err != nil {
+		return "", fmt.Errorf("failed to read tug of war team: %w", err)
+	}
+	return tugOfWarTeam(team), nil
+}
+
+// tickTugOfWar makes every page re-render five times a second while the round runs, and once more after it
+// ends to show the result. A round restarted halfway leaves two tickers running for a moment; the extra
+// re-renders are harmless.
+func tickTugOfWar(nc *nats.Conn, logger *slog.Logger, rules TugOfWarRules, startedAt time.Time) {
+	ticker := time.NewTicker(tugOfWarTickInterval)
+	defer ticker.Stop()
+	lastTick := startedAt.Add(rules.Countdown + rules.Round + tugOfWarTickInterval)
+	for now := range ticker.C {
+		if err := publishDeckChanged(nc); err != nil {
+			logger.Error("failed to publish tug of war tick", slog.String("error", err.Error()))
+			return
+		}
+		if now.After(lastTick) {
+			return
+		}
+	}
+}
+
+func TugOfWarRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger, rules TugOfWarRules) {
+	router.Post("/tug-of-war/start", func(w http.ResponseWriter, r *http.Request) {
+		if !isPresenterFromSession(r, store) {
+			http.Error(w, "only the presenter can start the tug of war", http.StatusForbidden)
+			return
+		}
+		now := time.Now()
+		if err := startTugOfWarRound(db, rules, now); err != nil {
+			logger.Error("failed to start tug of war", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		if err := publishDeckChanged(nc); err != nil {
+			logger.Error("failed to publish tug of war start", slog.String("error", err.Error()))
+		}
+		go tickTugOfWar(nc, logger, rules, now)
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	router.Post("/tug-of-war/pull", func(w http.ResponseWriter, r *http.Request) {
+		sessionID, err := attendeeSessionID(store, w, r)
+		if err != nil {
+			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		team, err := tugOfWarTeamFor(db, sessionID)
+		if err != nil {
+			logger.Error("failed to get tug of war team", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		counted, err := pullForTeam(db, team, time.Now())
+		if err != nil {
+			logger.Error("failed to count tug of war pull", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		if !counted {
+			http.Error(w, "the rope is not being pulled right now", http.StatusConflict)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+}
+
+func tugOfWarPostURL(inviteKey string, action string) string {
+	// Like the emoji smashes, fast taps must not cancel each other's requests.
+	return fmt.Sprintf("@post('/%s/root/api/tug-of-war/%s',{requestCancellation: 'disabled'})", inviteKey, action)
+}
+
+func loadTugOfWar(db *sql.DB, sessionID string) (tugOfWarRound, tugOfWarTeam, error) {
+	round, roundErr := loadTugOfWarRound(db)
+	team, teamErr := tugOfWarTeamFor(db, sessionID)
+	return round, team, errors.Join(roundErr, teamErr)
+}
+
+templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter bool) {
+	{{ round, team, err := loadTugOfWar(db, sessionID) }}
+	if err != nil {
+		<div class="slide tug-of-war">
+			<h1>Tug of war</h1>
+			<p>Unable to load the game.</p>
+		</div>
+	} else {
+		{{ now := time.Now() }}
+		{{ phase := round.phase(now) }}
+		<div
+			class="slide tug-of-war"
+			data-tug-of-war-phase={ string(phase) }
+			data-team={ string(team) }
+			data-teal-pulls={ fmt.Sprint(round.TealPulls) }
+			data-orange-pulls={ fmt.Sprint(round.OrangePulls) }
+			style={ fmt.Sprintf("--rope: %.3f;", round.ropeOffset()) }
+		>
+			<h1>Tug of war</h1>
+			<p class="tug-of-war-your-team">
+				You pull for <strong class={ "tug-of-war-team-name", string(team) }>{ team.name() }</strong>
+			</p>
+			<div class="tug-of-war-arena">
+				<span class="tug-of-war-score teal">{ fmt.Sprint(round.TealPulls) }</span>
+				<div class="tug-of-war-track" aria-hidden="true">
+					<div class="tug-of-war-rope">
+						<span class="tug-of-war-knot">🎀</span>
+					</div>
+				</div>
+				<span class="tug-of-war-score orange">{ fmt.Sprint(round.OrangePulls) }</span>
+			</div>
+			switch phase {
+				case phaseWaiting:
+					<p class="tug-of-war-status">When the countdown ends, smash the button for your team. Pull the rope to your side to win!</p>
+				case phaseCountdown:
+					<p class="tug-of-war-status tug-of-war-countdown">Get ready… { fmt.Sprint(round.secondsLeft(now)) }</p>
+				case phasePulling:
+					<p class="tug-of-war-status">Pull! { fmt.Sprint(round.secondsLeft(now)) } seconds left</p>
+					<button type="button" class={ "tug-of-war-pull", string(team) } data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "pull")) }>
+						Pull!
+					</button>
+				case phaseFinished:
+					if winner := round.winner(); winner != "" {
+						<p class="tug-of-war-status tug-of-war-result" data-winner={ string(winner) }>
+							<strong class={ "tug-of-war-team-name", string(winner) }>{ winner.name() }</strong> wins! 🎉
+						</p>
+					} else {
+						<p class="tug-of-war-status tug-of-war-result" data-winner="draw">It's a draw! 🤝</p>
+					}
+			}
+			if isPresenter && (phase == phaseWaiting || phase == phaseFinished) {
+				<button type="button" class="tug-of-war-start" data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "start")) }>
+					if phase == phaseWaiting {
+						Start countdown
+					} else {
+						Play again
+					}
+				</button>
+			}
+		</div>
+	}
+}
