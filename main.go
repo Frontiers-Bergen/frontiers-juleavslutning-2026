@@ -91,6 +91,8 @@ type appConfig struct {
 	// uses the same link; there is no remote audience.
 	InviteKey     string
 	SessionSecret string
+	// TugOfWarRules sets the tug of war's countdown, round length and winning lead; zero means the defaults.
+	TugOfWarRules root.TugOfWarRules
 }
 
 // newApp wires the whole application: database, embedded NATS, sessions and routes.
@@ -163,12 +165,17 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 		return nil, nil, fmt.Errorf("failed to create nats client: %w", err)
 	}
 
+	tugOfWarRules := config.TugOfWarRules
+	if tugOfWarRules == (root.TugOfWarRules{}) {
+		tugOfWarRules = root.DefaultTugOfWarRules
+	}
+
 	pages.PresenterRoutes(router, sessionStore, logger)
 
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {
 		inviteRouter.Use(inviteKeyMiddleware(config.InviteKey))
-		root.RootLayoutRoute(inviteRouter, db, sessionStore, logger, nc)
+		root.RootLayoutRoute(inviteRouter, db, sessionStore, logger, nc, tugOfWarRules)
 	})
 
 	closeApp = func() {

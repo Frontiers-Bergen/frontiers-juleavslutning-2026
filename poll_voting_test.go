@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
@@ -106,26 +105,10 @@ func (app *testApp) vote(client *http.Client, optionKey string) {
 	}
 }
 
-// showPollResults steps the presenter through the deck until the results slide for pollKey is shown,
-// like a presenter clicking "next", so the tests do not depend on slide order. Returns the page an
-// attendee sees then. It checks an attendee's page on purpose: the presenter's page also holds previews
-// of every slide in its sidebar, so it contains the results slide even when another slide is active.
+// showPollResults moves the deck to the results slide for pollKey and returns the page an attendee sees.
 func (app *testApp) showPollResults(presenter *http.Client, pollKey string) string {
 	app.t.Helper()
-	resultsMarker := fmt.Sprintf(`data-poll-results="%s"`, pollKey)
-	viewer := app.newAttendee()
-	for index := 0; ; index++ {
-		if status := app.post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index)); status != http.StatusNoContent {
-			app.t.Fatalf("presenter could not move to slide %d: status %d", index, status)
-		}
-		page := app.deckPage(viewer)
-		if strings.Contains(page, resultsMarker) {
-			return page
-		}
-		if shownSlideIndex(app.t, page) < index {
-			app.t.Fatalf("reached the end of the deck without a results slide for poll %q", pollKey)
-		}
-	}
+	return app.showSlideWith(presenter, fmt.Sprintf(`data-poll-results="%s"`, pollKey))
 }
 
 var pollOptionResult = regexp.MustCompile(`data-option-key="([^"]+)"\s+data-vote-count="(\d+)"`)

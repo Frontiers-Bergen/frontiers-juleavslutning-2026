@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
 	"github.com/starfederation/datastar-go/datastar"
 )
@@ -99,7 +101,7 @@ func patchEmojiCounts(sse *datastar.ServerSentEventGenerator, db *sql.DB) error 
 	return sse.MarshalAndPatchSignals(signals)
 }
 
-func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *slog.Logger) {
+func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
 		// Subscribe before sending the initial counts, so no smash falls between the two.
 		// The buffer absorbs bursts; if a phone still falls behind, NATS drops its oldest
@@ -118,7 +120,7 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *s
 		}()
 
 		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
-		sse := datastar.NewSSE(w, r)
+		sse := datastar.NewSSE(w, r, datastar.WithCompression())
 		if err := patchEmojiCounts(sse, db); err != nil {
 			logger.Error("failed to send initial emoji counts", slog.String("error", err.Error()))
 			return
@@ -165,6 +167,16 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, logger *s
 			logger.Error("failed to publish emoji smash", slog.String("error", err.Error()))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
+		}
+
+		// During a tug of war round, a smash is also a pull for the smasher's team (tug_of_war.templ).
+		// The smash itself already counted, so a failure here is logged, not returned.
+		sessionID, err := attendeeSessionID(store, w, r)
+		if err == nil {
+			err = countSmashForTugOfWar(db, nc, sessionID, time.Now())
+		}
+		if err != nil {
+			logger.Error("failed to count smash for the tug of war", slog.String("error", err.Error()))
 		}
 
 		w.WriteHeader(http.StatusNoContent)
