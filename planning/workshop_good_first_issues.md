@@ -10,10 +10,9 @@ Each item: a user story, what done looks like, and where to start.
 Done: a sixth button that counts and sends balloons like the others; tests still pass.
 Start: `reactionEmojis` and `EmojiVoteWidget` in `pages/root/emoji_counter.templ`.
 
-## 2. Smash milestones
-*As the room, we want the big screen to celebrate when we reach 1,000 smashes together, so smashing has a goal.*
-Done: at every 1,000 total smashes, the big screen shows a short celebration; a test covers the milestone rule.
-Start: `pages/root/emoji_counter.templ` (counts live in the `emoji_counter` table).
+## 2. Smash milestones ✅ created as issue #41
+Every power of two plus fun numbers (42, 67, 69, 1337, 9001…), each celebrated exactly once on the big screen.
+https://github.com/frontiers-bergen/frontiers-juleavslutning-2026/issues/41
 
 ## 3. Snow when we smash ❄️
 *As an attendee, I want the big screen to snow harder the more we smash, so fidgeting during talks looks pretty.*
