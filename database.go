@@ -26,6 +26,12 @@ func openDatabase(path string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	// A fixed pool. database/sql keeps only 2 idle connections by default, so under load (every smash makes every
+	// open page query the database) it kept opening and closing connections, and opening one applies the pragmas
+	// and parses the schema: half the CPU at 40 phones (go tool task loadtest). With the pool, queries beyond 32
+	// wait a moment for a free connection instead.
+	db.SetMaxOpenConns(32)
+	db.SetMaxIdleConns(32)
 	if err := db.Ping(); err != nil {
 		return nil, errors.Join(fmt.Errorf("failed to ping database: %w", err), db.Close())
 	}
