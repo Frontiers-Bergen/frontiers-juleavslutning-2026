@@ -59,7 +59,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Mini-game without JavaScript: tug of war, two random, even teams in the logo's colours, the team that smashes the most emojis wins, presenter-controlled countdown (`pages/root/tug_of_war.templ`)
 - [x] Mini-game with a web component built with Rocket: shake the snow globe (`static/snow-globe.js`, `pages/root/snow_globe.templ`); shakes swirl snow on every screen, subtle on phones
 - [ ] Snow globe: try it on real phones, an iPhone in particular (the "Shake for snow" permission button); tune the shake threshold and how much snow
-- [ ] Short "how to add your own mini-game" guide, pointing at the two example games
+- [x] Short "how to add your own mini-game" guide, pointing at the two example games (`MINI_GAMES.md`)
 - [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [x] CD: a preview per PR at `juleavslutning-<PR>.lekeplassen.regncon.no`, main on the big screen at https://juleavslutning.lekeplassen.regncon.no, previews removed on close (`deploy/`); tested end to end
@@ -92,11 +92,12 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Safety net for polls before the CSS refactor (`poll_voting_test.go`): changing a vote replaces it, every person counts once, unknown options are rejected
 - [ ] Bring over conorganizer's `testutil/templtest` when a test needs to render a component on its own (not needed yet: HTTP tests read semantic `data-` attributes)
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
-- [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS in `<style>` blocks inside the `.templ` files, no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
+- [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS next to each feature (first `<style>` blocks, now `.css` files, see below), no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
 - [x] Mobile first pass: poll and results use one column on phones (no more mid-word breaks), less slide padding on phones, thumb-sized reaction buttons
 - [x] Confirm the CSS approach with Torstein (coldasice): feature CSS in `.css` files next to the `.templ` files, served by `feature_styles.go`
+- [ ] Nest all CSS (Torstein's wish, rule in `AGENTS.md`): `pages/root/top_navigation.css` has 17 top-level classes, and `pages/root/snow_globe.css` can nest its flakes under `.snowfall`
 - [x] **Fix: any attendee can change the presenter's slide.** `POST /{inviteKey}/root/api/slides/set` does not check presenter mode, so anyone with the invite link can move the deck (curl or devtools). Start with a test.
-- [ ] Add secret keys to prevent the internet from accessing the services (carried over)
+- [x] Keep the internet out: the invite key opens the deck, the presenter key gives control, and the app listens on 127.0.0.1 behind Caddy (`HOST`)
 - [x] Remove all Tailwind leftovers from the northstar example (`gotailwind` tool, utility classes); the project uses plain CSS
 
 - [x] Presenter controls: on the first and last slide the previous/next box is visibly empty and not clickable (it looked like a clickable "End" slide)
@@ -160,6 +161,7 @@ Then open http://localhost:8080/dev-key/ and edit any `.templ`, `.css` or `.go` 
 - Try it on your phone: open `http://<your computer's LAN address>:8080/dev-key/` on the same wifi.
 - Older Go? `go.mod` asks for Go 1.27; with Go 1.21 or newer, the right version is downloaded automatically on first run.
 - Before opening a pull request: `go tool task check` (needs golangci-lint, see below). Read `AGENTS.md` first; it holds the rules for people and AI agents alike.
+- Want to build a mini-game? `MINI_GAMES.md` walks you through it, using the two example games.
 - Stuck? `SETUP.md` covers installing Go per OS, busy ports, the phone on the LAN and other common problems; it is written so an AI agent can walk you through it.
 - Optional tools: [golangci-lint](https://golangci-lint.run) for `task check`; Chrome/Chromium (and Node for `task browser-check`, bash for `task screenshots`) for the browser tools.
 

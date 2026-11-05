@@ -3,7 +3,7 @@
 Read the **Why** section in `README.md` first. Every change should serve it: the people at the Frontiers juleavslutning having fun.
 The README also holds the checklist of planned work and the non-goals.
 
-When you help someone install or run the app, follow `SETUP.md`.
+When you help someone install or run the app, follow `SETUP.md`. When you help someone add a mini-game, follow `MINI_GAMES.md`.
 
 ## Engineering principles
 
@@ -195,7 +195,9 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
 - Styling is plain CSS. No Tailwind or other CSS frameworks; the project started from the northstar example and its Tailwind leftovers were removed on purpose.
 - Shared CSS (design tokens, element defaults, app layout) lives in `static/index.css`, which declares the layers `tokens, base, layout, features`.
   A feature's CSS lives in a `.css` file next to its `.templ` file (`pages/root/poll.css` next to `poll.templ`), nested under the feature's
-  root class (`.poll { ... }`), so features cannot break each other. Do not wrap it in `@layer`: `/feature-styles.css` imports every
+  root class (`.poll { ... }`), so features cannot break each other. All CSS is nested (Torstein's wish, agreed): a file has one
+  top-level rule per root element the feature renders (usually just one), and everything else is nested inside it, with `&` where needed.
+  `@keyframes` cannot be nested in a style rule, so they stay top level, named after the feature. Do not wrap it in `@layer`: `/feature-styles.css` imports every
   feature file into `layer(features)`, which always wins over the shared layout. Reuse the tokens (`var(--space-2)`, `var(--radius)`, ...).
   The files are embedded and served by `feature_styles.go`; a new folder with CSS needs a `go:embed` pattern there (a test fails until it is added).
   No `<style>` blocks in templates, and no inline styles except to pass dynamic values as custom properties (`style="--share: 42%"`).
