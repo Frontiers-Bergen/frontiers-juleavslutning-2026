@@ -53,6 +53,7 @@ Every feature follows three steps:
 Keep structural changes (tidying, refactoring) and behavior changes apart so each can be reviewed on its own terms.
 For small tidyings, separate commits in one pull request are enough.
 When a step is big enough to deserve its own review, use stacked pull requests (GitHub stacked PRs, `gh stack` CLI extension): each step is one PR based on the previous, merged bottom-up.
+Before merging the bottom PR of a stack with "delete branch", point the next PR at `main`: deleting the branch under an open PR closes that PR instead of retargeting it.
 Skip steps that are not needed; an empty tidy or refactor step is fine.
 
 Run `go tool task check` before opening a pull request: formatting, vet, `go fix`, golangci-lint and tests. Fix with `go tool task fmt` where it applies.
@@ -122,9 +123,69 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Avoid packages named `helpers`, `utils` or `common`; put code next to the feature that uses it.
 - Prefer explicit parameters over hidden state.
 
+## Page life cycle
+
+This stack turns a lot of conventional web practice upside down. Read this before you design anything that updates a page.
+
+Most frontend practice (client state stores, optimistic updates, partial updates, cache invalidation, debouncing,
+"only send what changed") exists because re-rendering a page is expensive. Here it is not: the server renders the
+whole page from SQLite in a fraction of a millisecond (measured: 0.1–0.4 ms for an attendee's page, about 0.8 ms
+for the presenter's, which previews every slide), Datastar morphs only what actually changed into the DOM (keeping
+focus, scroll and local signals), and the live stream is compressed, so a further page update costs a phone tens of
+bytes (measured: ~38 bytes for an attendee, ~170 for the presenter). So the page life cycle stays simple:
+**on every change, every open page renders itself again, whole, from the database.**
+
+For perspective: responses under about 100 ms feel instant to people (Jakob Nielsen's classic thresholds: 0.1 s
+instant, 1 s keeps the flow, 10 s loses attention). conorganizer, on the same stack and server, answered with a P50 of
+4 ms and a P99 of 113 ms over the whole Regncon festival weekend. We are far below the point where
+anyone could notice; optimising page updates further buys nothing and costs simplicity.
+
+### The life cycle
+
+1. **First load.** `GET /<invite key>/` renders the full page from SQLite, so the first paint already has content.
+2. **One read stream.** The page's `data-init` opens one long-lived SSE stream (`/<invite key>/root/api/`), the read side.
+   The handler first does everything that needs response headers (attendee session cookie, validation, `http.Error`),
+   subscribes to `deck.changed`, then calls `datastar.NewSSE(w, r, datastar.WithCompression())` and immediately sends
+   a full patch of `#root-page-wrapper`. After `NewSSE` the headers are gone: report errors by logging and ending the stream.
+3. **Short writes.** A tap or click is a short `POST` (the write side): it validates, writes SQLite, publishes
+   `deck.changed` (`publishDeckChanged` in `pages/root/live_updates.go`) and answers `204`. It never returns HTML.
+4. **Every stream re-renders.** Each open stream gets the message, renders the whole page from SQLite and patches it.
+   The message carries no data; the database is the only truth.
+5. **The end.** Closing the tab ends the stream. Datastar also closes it while a page is hidden and reopens it when
+   the page is visible again; a reconnect, like a server restart, simply gets a fresh full patch.
+
+Datastar calls this CQRS (one read stream, short writes) plus "fat morph" (send the whole page, let morphing find the
+difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer uses the same life cycle
+(`documentation/live-update-lifecycle.md` in Regncon/conorganizer), with a KV bucket per page type instead of one message.
+
+### Rules
+
+- **Re-render the whole page on every change, even many times per second.** Do not write targeted patches for one
+  element, diffing, client-side caches, or "send only what changed" logic, and do not throttle or debounce updates:
+  every smash deserves to count, and every page should show it.
+- **State lives on the server**, in SQLite (slides, votes, emoji counts, teams, later ideas and feedback). NATS only says
+  that something changed and keeps nothing between restarts; anything that must survive a restart goes in SQLite.
+  Datastar signals are for local UI (an open menu, form input), never for shared state.
+- **No optimistic updates.** The page shows what the server knows. If a write is slow enough to notice, show a loading
+  indicator (`data-indicator`) and let the next patch replace it.
+- **Rendering must stay cheap,** because it happens for every open page on every change: small, simple SQL, no network calls,
+  no heavy work. Rendering should not change state; the one exception is idempotent setup such as assigning a tug of war team.
+- **A timer only for what changes with time alone,** like a countdown (`tug_of_war.templ` ticks once a second). Smashes,
+  votes and slide changes update the page on their own.
+- **Events are not state.** When every single event must show up on its own (one balloon per emoji smash), the event
+  gets its own subject and the stream appends a small patch for it (`emoji_counter.templ`). Its count still lives in
+  SQLite and arrives with the page.
+- **Navigation:** attendees do not navigate; the presenter moves the deck (the slide index lives in SQLite) and every
+  page follows. Anything else uses plain links and server redirects, never client-side routing or history management.
+- **Partial updates are the exception that needs a reason:** only for data so large that rendering the whole page is
+  measurably slow, such as millions of rows or a DOM with hundreds of thousands of elements. Measure first, and discuss
+  it with the user before adding it.
+- **Testing follows the same idea:** HTTP tests read the full page an attendee gets (`app_test.go`), and
+  `go tool task browser-check` checks that open pages follow live in a real browser.
+
 ## Project conventions
 
-- Stack: Go, templ, Datastar (SSE), embedded NATS JetStream KV for live updates, SQLite.
+- Stack: Go, templ, Datastar (SSE), embedded NATS (core messages) for live updates, SQLite for all state.
 - Group code by feature, not by technical role. A simple feature can be a single file; a feature with several related files gets its own folder.
 - Develop mobile first. Attendees use their phones as controllers, so every feature must work well on a small touch screen, one-handed.
   The big screen is the shared stage; design for both, starting with the phone.
@@ -141,13 +202,7 @@ and each attendee or presenter is an `http.Client` with its own cookies. `slide_
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
 - `schema.sql` is the single source of truth for the database and is applied on every startup, so every statement must be idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
   There are no migrations: changing an existing table means deleting the local database file. Schema changes are frozen on the juleavslutning evening.
-- State lives in SQLite (slides, votes, emoji counts, and later ideas and feedback). NATS only says that something changed,
-  and keeps nothing between restarts (its store is a temp or `/run` directory): anything that must survive a restart goes in SQLite.
-- Live updates go through embedded NATS core messages. A change to anything on the deck page publishes `deck.changed`
-  (`pages/root/live_updates.go`), and every open page renders itself again from SQLite. When every single event matters
-  (one balloon per emoji smash), the event gets its own subject and carries what the receiver needs (`emoji_counter.templ`).
-  Re-render on every change, even many per second: the live streams are compressed, so a further page update costs a phone tens of bytes.
-  Only add a timer for things that change with time alone, like a countdown (`tug_of_war.templ` ticks once a second).
+- Live updates and where state lives: see "Page life cycle" above.
 - Keep templates close to their data access. If a feature both reads and writes, keep both in the same file or feature folder.
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
   Content slides are markdown files, one per slide (`slides/welcome.md`), added to the deck with `slides.MustMarkdownSlide("welcome")`.
