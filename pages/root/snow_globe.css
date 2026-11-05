@@ -1,5 +1,6 @@
 /* Snow globe snowfall (snow_globe.templ, static/snow-globe.js). Loaded into @layer features via /feature-styles.css.
-   Not nested under a feature root: snowfalls are appended to <body>, over the whole screen. */
+   Two roots: a snowfall, appended to <body> over the whole screen, and the .snow-globe wrapper with the iPhone button.
+   The keyframes stay top level (they cannot be nested in a rule) and are named after the feature. */
 .snowfall {
 	position: fixed;
 	inset: 0;
@@ -10,31 +11,43 @@
 	@media (prefers-reduced-motion: reduce) {
 		display: none;
 	}
-}
 
-/* Set per flake: --x, --top (where it starts), --drift (sideways swirl per shake), --size,
-   --delay and --swirl-duration (the swirl), --fall-delay, --duration, --fall and --fall-drift (the fall),
-   --sway and --sway-duration (the sway). Set per snowfall: --energy, the number of shakes.
-   Each movement has its own nested element, so the fall can start while the swirl is still slowing down,
-   at a different moment for every flake: the motion blends instead of switching. */
-.snowflake {
-	position: absolute;
-	top: var(--top);
-	left: var(--x);
-	font-size: calc(var(--size) * 1rem);
-	line-height: 1;
-	color: #fff;
-	text-shadow: 0 0 4px rgb(255 255 255 / 60%);
-	opacity: 0;
-	animation: snow-globe-swirl var(--swirl-duration) ease-out var(--delay) forwards;
+	/* Set per flake: --x, --top (where it starts), --drift (sideways swirl per shake), --size,
+	   --delay and --swirl-duration (the swirl), --fall-delay, --duration, --fall and --fall-drift (the fall),
+	   --sway and --sway-duration (the sway). Set per snowfall: --energy, the number of shakes.
+	   Each movement has its own nested element, so the fall can start while the swirl is still slowing down,
+	   at a different moment for every flake: the motion blends instead of switching. */
+	.snowflake {
+		position: absolute;
+		top: var(--top);
+		left: var(--x);
+		font-size: calc(var(--size) * 1rem);
+		line-height: 1;
+		color: #fff;
+		text-shadow: 0 0 4px rgb(255 255 255 / 60%);
+		opacity: 0;
+		animation: snow-globe-swirl var(--swirl-duration) ease-out var(--delay) forwards;
 
-	/* Subtle on a phone: a few flakes; the big screen shows them all. */
-	&:nth-child(n + 9) {
-		display: none;
+		/* Subtle on a phone: a few flakes; the big screen shows them all. */
+		&:nth-child(n + 9) {
+			display: none;
 
-		@media (width >= 40rem) {
-			display: block;
+			@media (width >= 40rem) {
+				display: block;
+			}
 		}
+	}
+
+	/* The fall starts from rest and picks up speed gently, then drifts down evenly with a little wind, fading out. */
+	.snowflake-fall {
+		display: inline-block;
+		animation: snow-globe-fall var(--duration) cubic-bezier(0.45, 0, 0.75, 1) var(--fall-delay) forwards;
+	}
+
+	/* The sway: back and forth while falling, with a slow spin; each flake at its own width and rhythm. */
+	.snowflake-sway {
+		display: inline-block;
+		animation: snow-globe-sway var(--sway-duration) ease-in-out var(--delay) infinite alternate;
 	}
 }
 
@@ -53,12 +66,6 @@
 	}
 }
 
-/* The fall starts from rest and picks up speed gently, then drifts down evenly with a little wind, fading out. */
-.snowflake-fall {
-	display: inline-block;
-	animation: snow-globe-fall var(--duration) cubic-bezier(0.45, 0, 0.75, 1) var(--fall-delay) forwards;
-}
-
 @keyframes snow-globe-fall {
 	0% {
 		opacity: 1;
@@ -73,12 +80,6 @@
 	}
 }
 
-/* The sway: back and forth while falling, with a slow spin; each flake at its own width and rhythm. */
-.snowflake-sway {
-	display: inline-block;
-	animation: snow-globe-sway var(--sway-duration) ease-in-out var(--delay) infinite alternate;
-}
-
 @keyframes snow-globe-sway {
 	from {
 		transform: translateX(calc(var(--sway) * -1)) rotate(-30deg);
@@ -89,15 +90,17 @@
 }
 
 /* <snow-globe> itself is invisible, except on iPhones, which only allow the motion sensor after a tap. */
-.snow-globe-enable {
-	position: fixed;
-	left: var(--space-2);
-	bottom: calc(var(--reactions-min-height) + var(--space-1));
-	z-index: 10;
-	min-height: 3rem;
-	padding: 0 var(--space-2);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius);
-	background: var(--color-surface);
-	color: var(--color-text-strong);
+.snow-globe {
+	.snow-globe-enable {
+		position: fixed;
+		left: var(--space-2);
+		bottom: calc(var(--reactions-min-height) + var(--space-1));
+		z-index: 10;
+		min-height: 3rem;
+		padding: 0 var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		color: var(--color-text-strong);
+	}
 }

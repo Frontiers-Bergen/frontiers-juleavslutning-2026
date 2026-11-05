@@ -197,8 +197,10 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
   A feature's CSS lives in a `.css` file next to its `.templ` file (`pages/root/poll.css` next to `poll.templ`), nested under the feature's
   root class (`.poll { ... }`), so features cannot break each other. All CSS is nested (Torstein's wish, agreed): a file has one
   top-level rule per root element the feature renders (usually just one), and everything else is nested inside it, with `&` where needed.
-  `@keyframes` cannot be nested in a style rule, so they stay top level, named after the feature. Do not wrap it in `@layer`: `/feature-styles.css` imports every
-  feature file into `layer(features)`, which always wins over the shared layout. Reuse the tokens (`var(--space-2)`, `var(--radius)`, ...).
+  `@keyframes` cannot be nested in a style rule, so they stay top level, named after the feature. Do not wrap a feature file in `@layer`:
+  `/feature-styles.css` imports every feature file into `layer(features)`, which always wins over the shared layout. Reuse the tokens
+  (`var(--space-2)`, `var(--radius)`, ...). `static/index.css` is shared, not a feature, and nests like conorganizer's `index.css`:
+  tokens, element defaults and each layout piece are top level, with their states and children nested inside them.
   The files are embedded and served by `feature_styles.go`; a new folder with CSS needs a `go:embed` pattern there (a test fails until it is added).
   No `<style>` blocks in templates, and no inline styles except to pass dynamic values as custom properties (`style="--share: 42%"`).
 - Write explicit SQL, keep it close to where it is used, and handle every database error.
