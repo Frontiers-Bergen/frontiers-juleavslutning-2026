@@ -172,7 +172,7 @@ The commands below are `go tool task <name>`; with Task installed globally, plai
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/dev-key/` to see the deck; `/` only shows "you need a key"
-- Runtime data lives next to the app: `presentation.db` (SQLite) and `nats-data/` (embedded NATS JetStream). Both are ignored by git; delete both to start fresh
+- Runtime data: `presentation.db` (SQLite, ignored by git; delete it to start fresh). Embedded NATS keeps nothing between runs: a temp directory per run, or `NATS_STORE_DIR` on the server
 
 Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
 
@@ -180,3 +180,4 @@ Environment variables (put them in `.env`, which is not in git). All except `PRE
 - `PRESENTER_KEY` — unlocks presenter mode at `/presenter`
 - `SESSION_SECRET` — signs the session cookies
 - `PORT` — HTTP port, default 8080
+- `NATS_STORE_DIR` — where embedded NATS keeps its data while running; default a temp directory removed on exit (the server uses a systemd runtime directory)
