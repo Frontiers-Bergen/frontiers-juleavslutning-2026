@@ -76,7 +76,7 @@ func SnowGlobeRoutes(router chi.Router, nc *nats.Conn, store sessions.Store, log
 		}()
 
 		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
-		sse := datastar.NewSSE(w, r, datastar.WithCompression())
+		sse := datastar.NewSSE(w, r, compressedStream())
 		for {
 			select {
 			case <-r.Context().Done():

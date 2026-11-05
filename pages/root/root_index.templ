@@ -85,7 +85,7 @@ func RootLayoutRoute(
 				// logged and end the stream; http.Error would write a second, ignored header.
 				// Compressed: on a long-lived stream each further page update is nearly identical to the previous one
 				// and costs tens of bytes, which is what makes re-rendering on every change cheap (the Datastar way).
-				sse := datastar.NewSSE(w, r, datastar.WithCompression())
+				sse := datastar.NewSSE(w, r, compressedStream())
 				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
 					logger.Error("failed to send initial page patch", slog.String("error", err.Error()))
 					return

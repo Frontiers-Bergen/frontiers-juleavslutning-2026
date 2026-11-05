@@ -7,6 +7,7 @@ import (
 	"github.com/delaneyj/toolbelt/id"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
+	"github.com/starfederation/datastar-go/datastar"
 )
 
 // Live updates for the deck page: when anything shown on it changes (the presenter moves the deck, someone
@@ -23,6 +24,14 @@ func publishDeckChanged(nc *nats.Conn) error {
 		return fmt.Errorf("failed to publish deck change: %w", err)
 	}
 	return nil
+}
+
+// compressedStream is the compression every live stream uses. Each stream keeps its own Brotli compressor for as
+// long as the page is open, and the default window (4 MB) cost about 36 MB per phone over its three streams:
+// 1.4 GB at 40 phones, on a shared server. A 256 KB window still holds the previous page, so an update compresses
+// just as well (same bytes and CPU, measured with go tool task loadtest), at about 8 MB per phone.
+func compressedStream() datastar.SSEOption {
+	return datastar.WithCompression(datastar.WithBrotli(datastar.WithBrotliLevel(5), datastar.WithBrotliLGWin(18)))
 }
 
 // attendeeSessionCookie identifies one phone (browser) across requests, so a poll vote can be changed
