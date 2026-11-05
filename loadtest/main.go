@@ -347,12 +347,13 @@ func runRound(binary, work string, s settings) (result roundResult, err error) {
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	closeStreams()
-
-	result.peakMemoryMB = app.peakMemory()
+	// Read the errors before the phones leave: a stream closed in the middle of sending logs an error too.
 	if result.errorsLogged, err = app.loggedErrors(); err != nil {
 		return result, err
 	}
+	closeStreams()
+
+	result.peakMemoryMB = app.peakMemory()
 	if cpu := cpuAfter - cpuBefore; cpu > 0 {
 		result.cpuCores = cpu.Seconds() / smashEnd.Sub(smashStart).Seconds()
 	}
