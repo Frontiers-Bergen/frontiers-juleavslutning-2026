@@ -12,6 +12,7 @@ Choices, and why:
 - **Ports 23000 and up, and the `juleavslutning` name**, so nothing collides with conorganizer (19080–19082, 20000 + PR, `<PR>-merge.lekeplassen…`).
 - **One subdomain level** (`juleavslutning-42`, not `42.juleavslutning`): the existing `*.lekeplassen.regncon.no` wildcard DNS covers only one level. No DNS changes are needed.
 - **Nothing on the Hetzner volume.** Each environment's binary, static files and `presentation.db` live on the server's own disk in `/opt/juleavslutning/<name>`.
+- **The app listens on 127.0.0.1 only** (`HOST` in the service file): Caddy, with TLS, is the only way in. Without it, `<server IP>:<port>` answered over plain HTTP from the internet; the server's firewall does not block these ports.
 - **NATS keeps nothing**: it uses the service's systemd runtime directory (`/run/juleavslutning-<name>`), in memory and wiped on restart. Anything that must survive a restart is in SQLite.
 - **main keeps its database across deploys**; a preview starts empty and its database is deleted with the preview.
 - **Schema changes on main** need the database deleted by hand (there are no migrations): `sudo systemctl stop juleavslutning-main`, remove `/opt/juleavslutning/main/presentation.db*`, start again. Never on the evening itself.

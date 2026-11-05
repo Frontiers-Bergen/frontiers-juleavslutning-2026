@@ -56,7 +56,9 @@ func main() {
 	}
 	defer closeApp()
 
-	address := ":" + readEnvOrDefault(logger, "PORT", "8080")
+	// HOST is empty locally, so phones on the LAN can reach the app. On the server it is 127.0.0.1:
+	// Caddy is the only way in, with TLS (deploy/juleavslutning.service.tmpl).
+	address := strings.TrimSpace(os.Getenv("HOST")) + ":" + readEnvOrDefault(logger, "PORT", "8080")
 	server := &http.Server{Addr: address, Handler: app}
 	serverStopped := make(chan error, 1)
 	go func() { serverStopped <- server.ListenAndServe() }()
