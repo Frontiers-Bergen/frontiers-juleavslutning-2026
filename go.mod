@@ -11,6 +11,7 @@ tool (
 
 require (
 	github.com/a-h/templ v0.3.1100
+	github.com/andybalholm/brotli v1.2.7
 	github.com/delaneyj/toolbelt v0.9.1
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/gomarkdown/markdown v0.0.0-20261102130400-ab7f242c96ec
@@ -46,7 +47,6 @@ require (
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
 	github.com/air-verse/air v1.67.4 // indirect
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
-	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.8.0-default-no-op // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.44.0 // indirect

@@ -80,6 +80,11 @@ tasks:
     cmds:
       - node browser-tools/browser_check.mjs
 
+  # Smashes a local copy of the app with simulated phones; see loadtest/main.go. Local only: never the shared server.
+  loadtest:
+    cmds:
+      - go run ./loadtest {{.CLI_ARGS}}
+
   default:
     cmds:
       - task: start

@@ -143,7 +143,10 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 ### To investigate (spike before committing)
 
 - [x] Rocket (Datastar web components): free since Datastar v1.0.4. Decision: no migration of `<emoji-balloon>` (fire-and-forget animation, nothing for Rocket to improve, double bundle size); try Rocket in the web component mini-game demo
-- [ ] Load test: how many button smashers can one server take?
+- [x] Load test: how many button smashers can one server take? `go tool task loadtest`, local only (the Hetzner server is shared). First results on a 20-core laptop, 6 taps/s per phone: 40 phones missed the 100 ms goal (P99 340 ms, 6 cores busy, 1.4 GB memory); the findings below fix most of it
+- [ ] Fix: SQLite connections are opened and closed under load (database/sql keeps 2 idle by default); opening one applies the pragmas and parses the schema, half the CPU at 40 phones
+- [ ] Memory: every live stream has its own Brotli compressor with a 4 MB window, about 12 MB per phone (1.4 GB at 40 phones, on a shared server); a smaller window cuts it to about 6 MB per phone
+- [ ] Next hotspot: for every smash, every phone's emoji stream queries the counts and compresses two events
 
 ## Getting started
 
@@ -175,6 +178,7 @@ The commands below are `go tool task <name>`; with Task installed globally, plai
 - `task check` — everything a PR must pass (formatting, vet, `go fix`, lint, tests); `task fmt` fixes formatting
 - `task screenshots` — screenshots of every screen (phone and big screen, presenter view) into `tmp/screenshots`, for checking UI changes; needs bash and Chrome/Chromium. See `browser-tools/screenshots.sh` for comparing two runs
 - `task browser-check` — clicks real buttons in headless Chromium on a simulated slow network: fast smashing, a live slide change, voting; needs Node and Chrome/Chromium
+- `task loadtest` — simulated phones smash a local copy of the app during a tug of war round and report smash-to-screen time, lost smashes, CPU and memory. `task loadtest -- -phones 80`, `-- -scenario ramp` doubles the phones until it is no longer instant, `-- -server-cores 2` mimics a small server. Never run it against the deployed app: the server is shared
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/dev-key/` to see the deck; `/` only shows "you need a key"
