@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,6 +33,38 @@ func TestTugOfWar_Teams_AreEven(t *testing.T) {
 	difference := teamSizes["teal"] - teamSizes["orange"]
 	if teamSizes["teal"]+teamSizes["orange"] != 7 || difference > maximumDifference || difference < -maximumDifference {
 		t.Fatalf("expected two teams differing by at most %d, got %v", maximumDifference, teamSizes)
+	}
+}
+
+func TestTugOfWar_PhonesJoiningAtOnce_TeamsAreEven(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the tug of war slide is shown.",
+		When:  "When the first phone has it open and 39 more open it at the same moment.",
+		Then:  "Then the forty phones split into two teams of twenty.",
+	})
+
+	// Given
+	expectedTeamSize := 20
+	app := startTestApp(t)
+	firstPhonePage := app.showSlideWith(app.newPresenter(), "data-tug-of-war-phase")
+	teamSizes := map[string]int{tugOfWarState(t, firstPhonePage).team: 1}
+	var mu sync.Mutex
+
+	// When
+	var phones sync.WaitGroup
+	for range 2*expectedTeamSize - 1 {
+		phones.Go(func() {
+			team := tugOfWarState(t, app.deckPage(app.newAttendee())).team
+			mu.Lock()
+			defer mu.Unlock()
+			teamSizes[team]++
+		})
+	}
+	phones.Wait()
+
+	// Then
+	if teamSizes["teal"] != expectedTeamSize || teamSizes["orange"] != expectedTeamSize {
+		t.Fatalf("expected two teams of %d, got %v", expectedTeamSize, teamSizes)
 	}
 }
 
