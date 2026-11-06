@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS emoji_counter (
   click_count INTEGER NOT NULL DEFAULT 0
 );
 
--- Tug of war (pages/root/tug_of_war.templ): which team each attendee pulls for. Assigned the first time the
--- attendee sees the game, to the smaller team, so the teams stay even.
+-- Tug of war (pages/root/tug_of_war.templ): which team each attendee pulls for in the current round. Cleared when
+-- a round starts; assigned when the attendee's page next shows the game, to the smaller team, so the teams stay even.
 CREATE TABLE IF NOT EXISTS tug_of_war_teams (
   session_id TEXT PRIMARY KEY,
   team TEXT NOT NULL CHECK (team IN ('teal', 'orange'))

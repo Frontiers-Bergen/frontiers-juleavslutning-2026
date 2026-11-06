@@ -120,7 +120,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 ### Mini-game ideas
 
-- [x] Tug of war: two even teams, assigned per phone
+- [x] Tug of war: two even teams, drawn again every round among the phones watching (user test: 6 people felt the first-come teams were unfair)
 - [ ] Spaceship snowball shooter
 - [ ] Collaborative pixel canvas (r/place, Christmas edition)
 - [ ] Button-mash reindeer race

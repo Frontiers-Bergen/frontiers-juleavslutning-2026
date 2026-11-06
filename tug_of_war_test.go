@@ -68,6 +68,33 @@ func TestTugOfWar_PhonesJoiningAtOnce_TeamsAreEven(t *testing.T) {
 	}
 }
 
+func TestTugOfWar_StartingARound_DrawsNewTeams(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given two phones on the same team, and others who opened the slide and left.",
+		When:  "When the presenter starts a round with only those two phones still watching.",
+		Then:  "Then the two are drawn into one team each, so the teams are even among the people playing now.",
+	})
+
+	// Given
+	expectedTeamSizes := map[string]int{"teal": 1, "orange": 1}
+	app := startTestApp(t)
+	presenter := app.newPresenter()
+	app.showSlideWith(presenter, "data-tug-of-war-phase")
+	stillWatching := app.twoPhonesOnTheSameTeam()
+
+	// When
+	app.startTugOfWar(presenter)
+	teamSizes := map[string]int{}
+	for _, phone := range stillWatching {
+		teamSizes[tugOfWarState(t, app.deckPage(phone)).team]++
+	}
+
+	// Then
+	if teamSizes["teal"] != expectedTeamSizes["teal"] || teamSizes["orange"] != expectedTeamSizes["orange"] {
+		t.Fatalf("expected one phone on each team, got %v", teamSizes)
+	}
+}
+
 func TestTugOfWar_OnlyThePresenter_CanStartARound(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given an attendee on the tug of war slide.",
@@ -133,9 +160,9 @@ func TestTugOfWar_SmashesDuringTheRound_PullForYourTeam(t *testing.T) {
 	presenter := app.newPresenter()
 	app.showSlideWith(presenter, "data-tug-of-war-phase")
 	attendee := app.newAttendee()
-	team := tugOfWarState(t, app.deckPage(attendee)).team
 	app.startTugOfWar(presenter)
 	time.Sleep(testTugOfWarRules.Countdown + 50*time.Millisecond)
+	team := tugOfWarState(t, app.deckPage(attendee)).team
 
 	// When
 	for range expectedOwnPulls {
@@ -168,9 +195,9 @@ func TestTugOfWar_WinningLead_EndsTheRoundEarly(t *testing.T) {
 	presenter := app.newPresenter()
 	app.showSlideWith(presenter, "data-tug-of-war-phase")
 	attendee := app.newAttendee()
-	team := tugOfWarState(t, app.deckPage(attendee)).team
 	app.startTugOfWar(presenter)
 	time.Sleep(testTugOfWarRules.Countdown + 50*time.Millisecond)
+	team := tugOfWarState(t, app.deckPage(attendee)).team
 
 	// When
 	for range testTugOfWarRules.WinningLead + 2 {
@@ -225,6 +252,23 @@ func (app *testApp) startTugOfWar(presenter *http.Client) {
 	if status := app.post(presenter, "/root/api/tug-of-war/start"); status != http.StatusNoContent {
 		app.t.Fatalf("presenter could not start the tug of war: status %d", status)
 	}
+}
+
+// twoPhonesOnTheSameTeam opens the slide on new phones until two of them are on the same team; the other
+// phones leave (they never load the page again).
+func (app *testApp) twoPhonesOnTheSameTeam() []*http.Client {
+	app.t.Helper()
+	phonesByTeam := map[string][]*http.Client{}
+	for range 3 {
+		phone := app.newAttendee()
+		team := tugOfWarState(app.t, app.deckPage(phone)).team
+		phonesByTeam[team] = append(phonesByTeam[team], phone)
+		if len(phonesByTeam[team]) == 2 {
+			return phonesByTeam[team]
+		}
+	}
+	app.t.Fatalf("three phones on two teams, yet no two on the same team: %v", phonesByTeam)
+	return nil
 }
 
 // smash taps an emoji reaction button, which also pulls for the attendee's team during a round.
