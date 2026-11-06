@@ -358,8 +358,12 @@ func runRound(binary, work string, s settings) (result roundResult, err error) {
 		result.cpuCores = cpu.Seconds() / smashEnd.Sub(smashStart).Seconds()
 	}
 	result.teams = map[string]int{}
+	for _, screen := range screens {
+		if team, ok := screen.team.Load().(string); ok {
+			result.teams[team]++
+		}
+	}
 	for _, screen := range screens[1:] {
-		result.teams[screen.team]++
 		result.joinTimes = append(result.joinTimes, screen.joinTime)
 	}
 	result.smashTimes = smashes.times
@@ -545,7 +549,7 @@ type screen struct {
 	firstPage chan struct{}
 	firstOnce sync.Once
 	joinTime  time.Duration
-	team      string
+	team      atomic.Value // the team shown on the last page update
 
 	probeSeen  atomic.Int64 // the ❤️ count on the screen
 	smashCount atomic.Int64 // the other emojis' total on the screen
@@ -579,11 +583,12 @@ func (s *screen) onPage(event, data string) {
 	}
 	s.stats.pagePatches.Add(1)
 	s.pullsShown.Store(pulls(data))
+	// Teams are drawn again when the round starts, so keep the latest.
+	if match := teamPattern.FindStringSubmatch(data); match != nil {
+		s.team.Store(match[1])
+	}
 	s.firstOnce.Do(func() {
 		s.joinTime = time.Since(s.joinStart)
-		if match := teamPattern.FindStringSubmatch(data); match != nil {
-			s.team = match[1]
-		}
 		close(s.firstPage)
 	})
 }
@@ -689,7 +694,7 @@ func (r roundResult) print(s settings) {
 	screens := int64(s.phones + 1)
 	seconds := s.smashFor.Seconds()
 	fmt.Printf("\n%d phones, %.0f taps/s each, %s of smashing, the app on %s\n", s.phones, s.taps, s.smashFor, cores)
-	fmt.Printf("  joined          first live page after p50 %s, p99 %s; teams: teal %d, orange %d\n",
+	fmt.Printf("  joined          first live page after p50 %s, p99 %s; teams this round (with the presenter): teal %d, orange %d\n",
 		ms(percentile(r.joinTimes, 50)), ms(percentile(r.joinTimes, 99)), r.teams["teal"], r.teams["orange"])
 	fmt.Printf("  smashes         %d sent (%.0f/s), %d failed; POST p50 %s, p99 %s\n",
 		r.smashes, float64(r.smashes)/seconds, r.failedSmash, ms(percentile(r.smashTimes, 50)), ms(percentile(r.smashTimes, 99)))

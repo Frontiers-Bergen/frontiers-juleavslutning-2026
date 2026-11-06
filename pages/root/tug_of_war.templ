@@ -20,6 +20,8 @@ import (
 //
 //	waiting → (presenter: Start) → countdown → pulling → finished → (presenter: Play again) → countdown …
 //
+// Teams are drawn again every time the presenter starts a round, evenly among the phones watching at that moment.
+//
 // No JavaScript: the state lives in SQLite (teams, and the round with its rules and pull counts). While the
 // rope is being pulled, every emoji smash also counts as a pull for the smasher's team (countSmashForTugOfWar,
 // called from the emoji route) and publishes deck.changed, so every page re-renders from SQLite on every
@@ -151,15 +153,35 @@ func loadTugOfWarRound(db *sql.DB) (tugOfWarRound, error) {
 	return round, nil
 }
 
-// startTugOfWarRound resets the pulls and starts a new round now, with its countdown.
-func startTugOfWarRound(db *sql.DB, rules TugOfWarRules, now time.Time) error {
-	_, err := db.Exec(`
+// startTugOfWarRound starts a new round now, with its countdown: the pulls are reset and the teams are drawn
+// again. Clearing the teams makes every page that renders the new round join the smaller team, and every open page
+// does, on the deck.changed that follows the start. So the teams are even among the people watching now, not
+// among everyone who ever opened the slide (people who left, a phone that lost its cookie), and they change every round.
+func startTugOfWarRound(db *sql.DB, rules TugOfWarRules, now time.Time) (err error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin starting a tug of war round: %w", err)
+	}
+	defer func() {
+		if err == nil {
+			return
+		}
+		if rollbackErr := tx.Rollback(); rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+			err = errors.Join(err, fmt.Errorf("failed to roll back starting a tug of war round: %w", rollbackErr))
+		}
+	}()
+	if _, err := tx.Exec(`DELETE FROM tug_of_war_teams`); err != nil {
+		return fmt.Errorf("failed to clear the tug of war teams: %w", err)
+	}
+	if _, err := tx.Exec(`
 		UPDATE tug_of_war_round
 		SET started_at_unix_ms = ?, countdown_ms = ?, round_ms = ?, winning_lead = ?, teal_pulls = 0, orange_pulls = 0
 		WHERE id = 1
-	`, now.UnixMilli(), rules.Countdown.Milliseconds(), rules.Round.Milliseconds(), rules.WinningLead)
-	if err != nil {
+	`, now.UnixMilli(), rules.Countdown.Milliseconds(), rules.Round.Milliseconds(), rules.WinningLead); err != nil {
 		return fmt.Errorf("failed to start tug of war round: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit starting a tug of war round: %w", err)
 	}
 	return nil
 }
@@ -190,8 +212,8 @@ func pullForTeam(db *sql.DB, team tugOfWarTeam, now time.Time) (bool, error) {
 	return counted == 1, nil
 }
 
-// tugOfWarTeamFor returns the attendee's team. The first time, the attendee joins the smaller team, with a
-// coin toss when both are the same size. Comparing and inserting happen in one statement, so many phones
+// tugOfWarTeamFor returns the attendee's team. The first time in a round (startTugOfWarRound clears the teams),
+// the attendee joins the smaller team, with a coin toss when both are the same size. Comparing and inserting happen in one statement, so many phones
 // joining at once still split evenly.
 func tugOfWarTeamFor(db *sql.DB, sessionID string) (tugOfWarTeam, error) {
 	coinToss := teamTeal
