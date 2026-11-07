@@ -16,7 +16,27 @@ Choices, and why:
 - **NATS keeps nothing**: it uses the service's systemd runtime directory (`/run/juleavslutning-<name>`), in memory and wiped on restart. Anything that must survive a restart is in SQLite.
 - **main keeps its database across deploys**; a preview starts empty and its database is deleted with the preview.
 - **Schema changes on main** need the database deleted by hand (there are no migrations): `sudo systemctl stop juleavslutning-main`, remove `/opt/juleavslutning/main/presentation.db*`, start again. Never on the evening itself.
-- **Previews only for pull requests from this repository**, not forks: GitHub gives fork PRs no secrets. Workshop attendees need push access to the repository to get a preview.
+- **Previews only for pull requests from this repository**, not forks: GitHub gives fork PRs no secrets. Workshop attendees who want a preview get write access; see "Collaborators and safety" below.
+
+## Collaborators and safety
+
+Workshop attendees who want to push are added as collaborators with write access, and removed when the project ends:
+
+```sh
+gh api -X PUT repos/frontiers-bergen/frontiers-juleavslutning-2026/collaborators/<username> -f permission=push
+gh api -X DELETE repos/frontiers-bergen/frontiers-juleavslutning-2026/collaborators/<username>
+```
+
+Write access is more than it looks. A preview runs the pull request's own code on the shared server: the app binary
+as the `deploy` user (which also deploys conorganizer), and the pull request's `deploy/deploy.sh` as root through sudo.
+A branch can also change the workflow itself. So before anyone is added:
+
+- **Require approval for deployments:** the `Production` environment (Settings → Environments) has required
+  reviewers (Gerhard, and another organiser for the evening). Every preview and main deploy waits for one of them;
+  look at the diff first, especially `deploy/` and `.github/`.
+- **Protect `main`:** pull requests only, no direct pushes, so nothing reaches the big screen without a merge.
+
+Fork pull requests are safe as they are: they run the checks without secrets and get no preview.
 
 ## One-time setup
 

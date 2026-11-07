@@ -86,4 +86,10 @@ Open `http://<address>:8080/dev-key/` on the phone. If it does not load:
 ## 7. Before the first pull request
 
 Point them to `AGENTS.md` (the rules for people and AI agents) and to `go tool task check`.
+
+To get a preview of their change, they need write access to the repository: they tell Gerhard (or another organiser)
+their GitHub username and accept the invitation (in the email, or at
+https://github.com/frontiers-bergen/frontiers-juleavslutning-2026/invitations). Then: a branch, `git push -u origin <branch>`,
+and a pull request. CI runs the checks; after an organiser approves the deployment, the preview link appears in the pull request.
+Without access, a pull request from a fork works too, but gets no preview.
 Optional tools: Chrome or Chromium for `task screenshots` (needs bash) and `task browser-check` (needs Node 22+).
