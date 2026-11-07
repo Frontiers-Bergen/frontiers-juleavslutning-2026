@@ -118,6 +118,11 @@
 		transform-origin: top left;
 		pointer-events: none;
 	}
+
+	/* A preview shows the slide as the audience sees it. */
+	.presenter-notes {
+		display: none;
+	}
 }
 
 .presenter-slide-list {
