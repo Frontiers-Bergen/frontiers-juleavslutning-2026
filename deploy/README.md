@@ -16,9 +16,9 @@ Choices, and why:
 - **NATS keeps nothing**: it uses the service's systemd runtime directory (`/run/juleavslutning-<name>`), in memory and wiped on restart. Anything that must survive a restart is in SQLite.
 - **main keeps its database across deploys**; a preview starts empty and its database is deleted with the preview.
 - **Schema changes on main** need the database deleted by hand (there are no migrations): `sudo systemctl stop juleavslutning-main`, remove `/opt/juleavslutning/main/presentation.db*`, start again. Never on the evening itself.
-- **Previews only for pull requests from this repository**, not forks: GitHub gives fork PRs no secrets. Workshop attendees who want a preview get write access; see "Collaborators and safety" below.
+- **Previews only for pull requests from this repository**, not forks: GitHub gives fork PRs no secrets. Workshop attendees who want a preview get write access; see "Collaborators and trust" below.
 
-## Collaborators and safety
+## Collaborators and trust
 
 Workshop attendees who want to push are added as collaborators with write access, and removed when the project ends:
 
@@ -27,16 +27,16 @@ gh api -X PUT repos/frontiers-bergen/frontiers-juleavslutning-2026/collaborators
 gh api -X DELETE repos/frontiers-bergen/frontiers-juleavslutning-2026/collaborators/<username>
 ```
 
-Write access is more than it looks. A preview runs the pull request's own code on the shared server: the app binary
-as the `deploy` user (which also deploys conorganizer), and the pull request's `deploy/deploy.sh` as root through sudo.
-A branch can also change the workflow itself. So before anyone is added:
+Write access is more than it looks: a preview runs the pull request's own code on the shared server (the app as the
+`deploy` user, and the pull request's `deploy/deploy.sh` as root through sudo), and `main` is not protected.
+We decided (7 November 2026) not to add deploy approval or branch protection:
+- It is a social question, not a technical one: there are many ways to spoil an evening for everyone, and we trust the people in the room.
+- The attack surface is small: Regncon 2026 is over, the 2027 site is not in production yet, and the server holds
+  little or no personal information.
+- Approval steps would slow down the workshop, where a merged change should reach the big screen in minutes.
+- Everything is in git, and the code is reviewed before it goes live on the juleavslutning.
 
-- **Require approval for deployments:** the `Production` environment (Settings → Environments) has required
-  reviewers (Gerhard, and another organiser for the evening). Every preview and main deploy waits for one of them;
-  look at the diff first, especially `deploy/` and `.github/`.
-- **Protect `main`:** pull requests only, no direct pushes, so nothing reaches the big screen without a merge.
-
-Fork pull requests are safe as they are: they run the checks without secrets and get no preview.
+Fork pull requests run the checks without secrets and get no preview.
 
 ## One-time setup
 

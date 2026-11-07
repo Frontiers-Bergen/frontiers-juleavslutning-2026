@@ -80,6 +80,9 @@ The phone must be on the same network as the computer. Find the computer's LAN a
 Open `http://<address>:8080/dev-key/` on the phone. If it does not load:
 - Windows Defender Firewall asks the first time the app listens; allow it on private networks.
 - macOS asks to accept incoming connections when its firewall is on; allow it.
+- Linux with ufw (on by default in some setups, such as Omarchy) blocks incoming connections. Allow the port for the
+  local network only, for example `sudo ufw allow from 192.168.1.0/24 to any port 8080 proto tcp` (use the network
+  part of the address above). `systemctl is-active ufw` tells whether it runs.
 - Some venue or guest wifi networks isolate devices from each other. Then use the computer's browser only, or let
   the computer join the phone's hotspot.
 
@@ -90,6 +93,6 @@ Point them to `AGENTS.md` (the rules for people and AI agents) and to `go tool t
 To get a preview of their change, they need write access to the repository: they tell Gerhard (or another organiser)
 their GitHub username and accept the invitation (in the email, or at
 https://github.com/frontiers-bergen/frontiers-juleavslutning-2026/invitations). Then: a branch, `git push -u origin <branch>`,
-and a pull request. CI runs the checks; after an organiser approves the deployment, the preview link appears in the pull request.
+and a pull request. CI runs the checks and adds the preview link to the pull request.
 Without access, a pull request from a fork works too, but gets no preview.
 Optional tools: Chrome or Chromium for `task screenshots` (needs bash) and `task browser-check` (needs Node 22+).
