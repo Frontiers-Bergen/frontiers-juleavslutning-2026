@@ -596,7 +596,7 @@ func (s *screen) onPage(event, data string) {
 func (s *screen) onEmoji(event, data string) {
 	switch event {
 	case "datastar-patch-elements":
-		s.stats.balloons.Add(1)
+		s.stats.balloons.Add(int64(strings.Count(data, "<emoji-balloon")))
 	case "datastar-patch-signals":
 		var counts map[string]int64
 		if err := json.Unmarshal([]byte(strings.TrimPrefix(data, "signals ")), &counts); err != nil {
