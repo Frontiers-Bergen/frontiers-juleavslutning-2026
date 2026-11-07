@@ -155,7 +155,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - Load test results after both fixes (20-core laptop, the load generator on the same machine, 6 taps/s per phone): 40 phones P99 10–35 ms, about 3 cores, 330 MB; 160 phones P99 35–60 ms; 320 phones just under 100 ms; 640 phones break (P99 460 ms, 4 GB). With the app limited to 2 cores, 40 phones miss the goal (P99 145 ms, P95 56 ms): check how many cores the server has before the evening
 - [x] Fix: balloons that arrived while a window was not drawn (another workspace) all took off at once when it was drawn again; they also flew twice as fast on 120 Hz screens. They now fly by the clock with Web Animations on transform (`static/emoji-balloon.js`), which also cut the main-thread work with 400 balloons in the air by 58% (JavaScript −82%, layout −93%)
 - [x] Fix: a snowfall that arrived while a window was not drawn waited, then started with the others when the window was drawn again, cut off by its removal; its animations now start at the moment it arrives (`snowfallInit` in `pages/root/snow_globe.templ`)
-- [ ] Balloons: optimise further for slow phones, without limiting how many: crashing old phones with balloon spam is part of the fun
+- [x] Balloons: read the buttons' positions once per frame instead of once per balloon (layout -57%, main-thread work -11 to -16% with 400 to 1500 balloons). Kept: the shadow DOM per balloon, which measured cheaper than none, because Datastar inspects everything added to `<body>`
+- [ ] Balloons: optimise further for slow phones, without limiting how many: crashing old phones with balloon spam is part of the fun. Biggest remaining cost: style for every new balloon
 - [ ] A phone that leaves while its stream is sending logs an ERROR ("context canceled"); that is a normal goodbye, not an error
 
 ## Getting started
