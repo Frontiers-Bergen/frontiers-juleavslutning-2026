@@ -242,7 +242,9 @@ try {
 		window.requestAnimationFrame = (callback) => { waitingFrames.push(callback); return 0; };
 		const balloons = [];
 		const observer = new MutationObserver((changes) => {
-			for (const change of changes) for (const node of change.addedNodes) if (node.nodeName === "EMOJI-BALLOON") balloons.push(node);
+			for (const change of changes) for (const node of change.addedNodes) {
+				if (node.nodeName === "EMOJI-BALLOON") balloons.push({ node, arrivedAt: performance.now() });
+			}
 		});
 		observer.observe(document.body, { childList: true });
 		for (let i = 0; i < 6; i++) {
@@ -255,11 +257,20 @@ try {
 		waitingFrames = [];
 		await sleep(200);
 		observer.disconnect();
-		const tops = balloons.filter((balloon) => balloon.isConnected).map((balloon) => Math.round(balloon.getBoundingClientRect().top));
-		return { arrived: balloons.length, tops, spread: Math.max(...tops) - Math.min(...tops) };
+		// A balloon rises at 150 or 300 px/s from its button, so by the clock its height matches its age. All at once,
+		// every balloon would have risen at most 60 px in the 200 ms since frames came back, whatever its age.
+		const buttonTop = document.querySelector(".emoji-balloon-button").getBoundingClientRect().top;
+		const now = performance.now();
+		const flying = balloons.filter((balloon) => balloon.node.isConnected).map((balloon) => {
+			const age = (now - balloon.arrivedAt) / 1000;
+			const rose = buttonTop - balloon.node.getBoundingClientRect().top;
+			return { age: Number(age.toFixed(2)), rose: Math.round(rose), byTheClock: rose >= 150 * age - 40 && rose <= 300 * age + 40 };
+		});
+		return { arrived: balloons.length, flying };
 	})()`);
 	check("balloons that arrive while the window is not drawn fly by the clock, not all at once when it is drawn again",
-		balloonsWhileNotDrawn.arrived === 6 && balloonsWhileNotDrawn.tops.length >= 3 && balloonsWhileNotDrawn.spread >= 100, balloonsWhileNotDrawn);
+		balloonsWhileNotDrawn.arrived === 6 && balloonsWhileNotDrawn.flying.length >= 2 && balloonsWhileNotDrawn.flying.every((balloon) => balloon.byTheClock),
+		balloonsWhileNotDrawn);
 
 	// Live update: the presenter moves the deck and the open phone follows without a reload.
 	await presenter.moveToSlideWith(/class="slide poll"/);
