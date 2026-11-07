@@ -163,6 +163,10 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
 - **Re-render the whole page on every change, even many times per second.** Do not write targeted patches for one
   element, diffing, client-side caches, or "send only what changed" logic, and do not throttle or debounce updates:
   every smash deserves to count, and every page should show it.
+  Changes that arrived while a stream was busy are covered by its next render, which reads everything from SQLite:
+  the stream takes the waiting notifications along and renders once (`RootLayoutRoute`). Nothing waits for more,
+  so this is not throttling; it only spares renders that would show the same state. It is safe because a change is
+  written before it is announced, and the stream takes the waiting notifications before it reads.
 - **State lives on the server**, in SQLite (slides, votes, emoji counts, teams, later ideas and feedback). NATS only says
   that something changed and keeps nothing between restarts; anything that must survive a restart goes in SQLite.
   Datastar signals are for local UI (an open menu, form input), never for shared state.
@@ -174,7 +178,8 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
   votes and slide changes update the page on their own.
 - **Events are not state.** When every single event must show up on its own (one balloon per emoji smash), the event
   gets its own subject and the stream appends a small patch for it (`emoji_counter.templ`). Its count still lives in
-  SQLite and arrives with the page.
+  SQLite and arrives with the page. Events are never merged or dropped: smashes already waiting for a stream go out
+  in one patch with one balloon each, with the counts read once.
 - **Navigation:** attendees do not navigate; the presenter moves the deck (the slide index lives in SQLite) and every
   page follows. Anything else uses plain links and server redirects, never client-side routing or history management.
 - **Partial updates are the exception that needs a reason:** only for data so large that rendering the whole page is

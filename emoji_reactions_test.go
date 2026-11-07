@@ -211,7 +211,8 @@ func (stream *sseStream) nextEmojiCounts() emojiCounts {
 }
 
 // countBalloonsUntilQuiet counts appended <emoji-balloon> elements for emoji until the stream
-// has been quiet for quietPeriod.
+// has been quiet for quietPeriod. One patch can carry several balloons: smashes already waiting
+// for a stream go out together.
 func (stream *sseStream) countBalloonsUntilQuiet(emoji string, quietPeriod time.Duration) int {
 	stream.t.Helper()
 	balloonMarkup := `emoji="` + emoji + `"`
@@ -222,8 +223,8 @@ func (stream *sseStream) countBalloonsUntilQuiet(emoji string, quietPeriod time.
 			if !open {
 				return count
 			}
-			if event.name == "datastar-patch-elements" && strings.Contains(strings.Join(event.data, "\n"), balloonMarkup) {
-				count++
+			if event.name == "datastar-patch-elements" {
+				count += strings.Count(strings.Join(event.data, "\n"), balloonMarkup)
 			}
 		case <-time.After(quietPeriod):
 			return count

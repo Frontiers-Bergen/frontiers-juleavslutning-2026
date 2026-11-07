@@ -101,6 +101,11 @@ func patchEmojiCounts(sse *datastar.ServerSentEventGenerator, db *sql.DB) error 
 	return sse.MarshalAndPatchSignals(signals)
 }
 
+// emojiBalloon is the balloon for one smash. The emoji was checked against reactionEmojis before it was published.
+func emojiBalloon(smash *nats.Msg) string {
+	return fmt.Sprintf(`<emoji-balloon emoji="%s"></emoji-balloon>`, string(smash.Data))
+}
+
 func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
 		// Subscribe before sending the initial counts, so no smash falls between the two.
@@ -131,13 +136,18 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 			case <-r.Context().Done():
 				return
 			case smash := <-smashes:
+				// The smashes already waiting go along: one counts update and one patch with all their balloons,
+				// sent at once. Nothing waits for more smashes, so no balloon is delayed; a stream that fell
+				// behind catches up instead of falling further behind.
+				balloons := emojiBalloon(smash)
+				for range len(smashes) {
+					balloons += emojiBalloon(<-smashes)
+				}
 				if err := patchEmojiCounts(sse, db); err != nil {
 					logger.Error("failed to send emoji counts", slog.String("error", err.Error()))
 					return
 				}
-				// The emoji was checked against reactionEmojis before it was published.
-				balloon := fmt.Sprintf(`<emoji-balloon emoji="%s"></emoji-balloon>`, string(smash.Data))
-				if err := sse.PatchElements(balloon, datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
+				if err := sse.PatchElements(balloons, datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
 					logger.Error("failed to send emoji balloon", slog.String("error", err.Error()))
 					return
 				}

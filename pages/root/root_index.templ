@@ -96,6 +96,10 @@ func RootLayoutRoute(
 					case <-r.Context().Done():
 						return
 					case <-deckChanges:
+						// Changes already waiting are in this render too: it reads everything from SQLite.
+						for range len(deckChanges) {
+							<-deckChanges
+						}
 						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
 							logger.Error("failed to send page patch", slog.String("error", err.Error()))
 							return
