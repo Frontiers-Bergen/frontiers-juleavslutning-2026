@@ -302,15 +302,26 @@ try {
 
 	// Someone else shakes (a plain request, its own session): it snows on this phone, and the snowfall
 	// removes itself when it has fallen, through its Datastar data-init, with no component.
+	// The snow falls by the clock: its animations start when it arrives, even in a window that is not drawn
+	// (headless Chrome always draws, so this checks the start time the snowfall sets for itself).
+	await phone.run(`window.snowArrived = new Promise((resolve) => new MutationObserver((changes, observer) => {
+		for (const change of changes) for (const node of change.addedNodes) {
+			if (node.classList?.contains("snowfall")) { observer.disconnect(); resolve({ node, at: performance.now() }); }
+		}
+	}).observe(document.body, { childList: true })); true`);
 	await fetch(`${api}/snow/shake`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shakes: 3 }) });
 	const snowHere = await phone.run(`(async () => {
 		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const arrived = await window.snowArrived;
 		await sleep(1500);
 		const snowfalls = document.querySelectorAll(".snowfall").length;
+		const startTimes = arrived.node.getAnimations({ subtree: true }).map((animation) => animation.startTime);
+		const startsWhenItArrives = startTimes.length > 0 && startTimes.every((start) => start !== null && Math.abs(start - arrived.at) < 5);
 		await sleep(17500); // a snowfall stays 18 s, so the slowest flake finishes falling
-		return { snowfalls, snowfallsAfterFalling: document.querySelectorAll(".snowfall").length };
+		return { snowfalls, animations: startTimes.length, startsWhenItArrives, snowfallsAfterFalling: document.querySelectorAll(".snowfall").length };
 	})()`);
 	check("another phone's shakes make it snow here", snowHere.snowfalls === 1, snowHere);
+	check("the snowfall starts falling at the moment it arrives", snowHere.startsWhenItArrives === true, snowHere);
 	check("the snowfall cleans itself up when it has fallen", snowHere.snowfallsAfterFalling === 0, snowHere);
 
 	check("no console errors or exceptions in the phone tab", phone.problems.length === 0, phone.problems);
