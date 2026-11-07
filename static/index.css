@@ -152,6 +152,20 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		flex-direction: column;
 		position: sticky;
 		top: 0;
+
+		/* Here the reactions bar has its own row below the stage instead of floating over it, so the stage
+		   needs no room for it; a slide with long notes scrolls inside the stage instead of hiding under the bar. */
+		.stage {
+			/* The presenter's copy of the slide is a working view on a laptop: smaller type, so the slide and its
+			   notes fit on the screen together. The projector shows it at full size, and so do the previews. */
+			--font-h1: clamp(1.8rem, 1.2vw + 1rem, 3rem);
+			--font-body: clamp(1.05rem, 0.5vw + 0.8rem, 1.5rem);
+			--font-small: clamp(0.95rem, 0.3vw + 0.8rem, 1.15rem);
+
+			min-height: 0;
+			overflow-y: auto;
+			padding-bottom: clamp(1rem, 3vw, 2rem);
+		}
 	}
 
 	.presenter-bar {
@@ -205,6 +219,13 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 			padding-bottom: clamp(1.5rem, 6vh, 5rem);
 		}
 
+		/* The presenter's view has the controls above the slide and the notes below it: no downward bias there,
+		   or the bottom of the slide ends up out of sight. */
+		.presenter-layout & {
+			padding-top: var(--space-2);
+			padding-bottom: var(--space-2);
+		}
+
 		& h1 {
 			margin: 0 0 var(--space-3) 0;
 			font-size: var(--font-h1);
@@ -248,30 +269,21 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		}
 	}
 
-	/* Presenter notes: a backstage strip above the reactions bar, only rendered for the presenter. */
+	/* Presenter notes: a backstage panel below the slide, only rendered for the presenter. In the flow, not over
+	   the slide: as a fixed strip, long notes covered the slide itself. */
 	.presenter-notes {
 		width: 100%;
 		max-width: var(--stage-max-width);
-
-		position: fixed;
-		left: 50%;
-		bottom: calc(var(--reactions-min-height) + var(--space-2));
-		transform: translateX(-50%);
-		z-index: 5;
-		margin: 0;
+		margin: var(--space-2) auto 0;
 
 		padding: var(--space-3);
 		border: var(--border-subtle);
 		border-radius: var(--radius);
-		background: hsl(from var(--surface-backstage) h s l / 97%);
+		background: var(--surface-backstage);
 
 		font-size: var(--font-small);
 		line-height: 1.4;
 		color: var(--color-text-soft);
-
-		.presenter-layout & {
-			left: calc(50% + 10rem);
-		}
 
 		&::before {
 			content: "Presenter notes";

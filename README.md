@@ -125,7 +125,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 
 - [x] Tug of war: two even teams, drawn again every round among the phones watching (user test: 6 people felt the first-come teams were unfair)
 - [x] Tug of war: your team in heading-size letters above your own end of the rope (user test: hard to see your side); the big screen labels both ends; the start button sits in the heading row, clear of the presenter notes
-- [ ] Presenter view: slides get little height (navigation on top, large top padding on every slide), so the bottom of a slide hides under the reactions bar, such as the tug of war's seconds left
+- [x] Presenter view: the notes covered the slide on most slides, and the bottom of a slide hid under the reactions bar. Now the notes sit below the slide, the presenter's copy of the slide uses smaller type and less padding, and the stage scrolls if a slide with long notes still does not fit (`static/index.css`)
 - [ ] Spaceship snowball shooter
 - [ ] Collaborative pixel canvas (r/place, Christmas edition)
 - [ ] Button-mash reindeer race
