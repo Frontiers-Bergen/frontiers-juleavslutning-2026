@@ -154,7 +154,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Next hotspot: for every smash, every phone's emoji stream queries the counts and compresses two events
 - Load test results after both fixes (20-core laptop, the load generator on the same machine, 6 taps/s per phone): 40 phones P99 10–35 ms, about 3 cores, 330 MB; 160 phones P99 35–60 ms; 320 phones just under 100 ms; 640 phones break (P99 460 ms, 4 GB). With the app limited to 2 cores, 40 phones miss the goal (P99 145 ms, P95 56 ms): check how many cores the server has before the evening
 - [x] Fix: balloons that arrived while a window was not drawn (another workspace) all took off at once when it was drawn again; they also flew twice as fast on 120 Hz screens. They now fly by the clock with Web Animations on transform (`static/emoji-balloon.js`), which also cut the main-thread work with 400 balloons in the air by 58% (JavaScript −82%, layout −93%)
-- [ ] Balloons: optimise further for slow phones (separate issue), for example a cap on how many are in the air at once
+- [x] Fix: a snowfall that arrived while a window was not drawn waited, then started with the others when the window was drawn again, cut off by its removal; its animations now start at the moment it arrives (`snowfallInit` in `pages/root/snow_globe.templ`)
+- [ ] Balloons: optimise further for slow phones, without limiting how many: crashing old phones with balloon spam is part of the fun
 - [ ] A phone that leaves while its stream is sending logs an ERROR ("context canceled"); that is a normal goodbye, not an error
 
 ## Getting started

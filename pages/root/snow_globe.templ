@@ -140,10 +140,18 @@ func randomSnowflakes(shakes int) []snowflake {
 	return flakes
 }
 
-// Snowfall removes itself when it has fallen, through a Datastar expression; no component needed. Each flake is
+// snowfallInit starts a snowfall's animations at the moment it arrived, then removes it when it has fallen.
+// A CSS animation otherwise starts when the browser first draws it: in a window that is not drawn (on another
+// workspace) every snowfall would wait, then start all at once when the window is drawn again, and be cut off
+// by the removal, which counts from the arrival. With the start time set, the snow falls by the clock.
+const snowfallInit = "const arrivedAt = performance.now(); " +
+	"el.getAnimations({subtree: true}).forEach((animation) => animation.startTime = arrivedAt); " +
+	"setTimeout(() => el.remove(), 18000)"
+
+// Snowfall falls by the clock and removes itself, through a Datastar expression; no component needed. Each flake is
 // three nested elements, one per movement, so the movements can overlap (snow_globe.css): swirl, fall, sway.
 templ Snowfall(shakes int) {
-	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init="setTimeout(() => el.remove(), 18000)">
+	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init={ snowfallInit }>
 		for _, flake := range randomSnowflakes(shakes) {
 			<span class="snowflake" style={ flake.style() }><span class="snowflake-fall"><span class="snowflake-sway">❄</span></span></span>
 		}
