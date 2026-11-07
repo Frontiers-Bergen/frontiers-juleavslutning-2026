@@ -148,8 +148,9 @@ const snowfallInit = "const arrivedAt = performance.now(); " +
 	"el.getAnimations({subtree: true}).forEach((animation) => animation.startTime = arrivedAt); " +
 	"setTimeout(() => el.remove(), 18000)"
 
-// Snowfall falls by the clock and removes itself, through a Datastar expression; no component needed. Each flake is
-// three nested elements, one per movement, so the movements can overlap (snow_globe.css): swirl, fall, sway.
+	// Snowfall falls by the clock and removes itself, through a Datastar expression; no component needed. Each flake is
+	// three nested elements, one per movement, so the movements can overlap (snow_globe.css): swirl, fall, sway.
+
 templ Snowfall(shakes int) {
 	<div class="snowfall" style={ fmt.Sprintf("--energy: %d;", shakes) } data-init={ snowfallInit }>
 		for _, flake := range randomSnowflakes(shakes) {
