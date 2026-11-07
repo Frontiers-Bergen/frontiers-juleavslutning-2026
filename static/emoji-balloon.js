@@ -1,126 +1,73 @@
-const EmojiBalloon = (() => {
+// <emoji-balloon emoji="🔥">: one balloon per emoji smash, rising from the smashed button. The emoji stream
+// (emoji_counter.templ) appends one to <body> for every smash, on every screen.
+//
+// The browser animates the flight itself, with two Web Animations on transform: one rising, one swaying from side
+// to side. Both start at the moment the balloon arrived, so the flight follows the clock:
+// - a window the browser does not draw (on another workspace) still receives balloons; when it is drawn again,
+//   the old balloons have already flown away and the recent ones are mid-flight, instead of all taking off at once;
+// - the speed is the same on 60 Hz and 120 Hz screens;
+// - no JavaScript runs per frame, which matters on slow phones with hundreds of balloons in the air.
 
 const REDUCED_MOTION_VISIBLE_MS = 800;
+// Each balloon picks one of each, so the balloons spread out.
+const RISE_PX_PER_SECOND = [150, 300];
+const SWAY_PX_PER_SECOND = [60, 120];
+const SWAY_WIDTH_PX = { min: 25, max: 75 };
+// Above the top of the screen: the flight ends out of sight.
+const FLIGHT_END_PX = -32;
 
-const GLOBAL = {
-	balloons: []
-}
-
-const animate = () => {
-	requestAnimationFrame(animate);
-	for (let i = 0; i < GLOBAL.balloons.length; i++) {
-		const b = GLOBAL.balloons[i];
-		
-		b._position.y = b._position.y + b._velocity.y;
-		b._position.x = b._position.x + b._velocity.x;
-		
-		// moving left
-		if (b._driftDirection === "LEFT") {
-			const xLessThanMaxDrift = b._position.x < b._startPositionX - b._maxDriftX;
-			if (xLessThanMaxDrift) {
-				b._driftDirection = "RIGHT";
-				b._velocity.x = b._velocity.x * -1;
-			}
-		} else {
-			const xGreaterThanMaxDrift = b._position.x > b._startPositionX + b._maxDriftX;
-			if (xGreaterThanMaxDrift) {
-				b._driftDirection = "LEFT";
-				b._velocity.x = b._velocity.x * -1;
-			}
-		}
-		b.style.top = b._position.y + "px"; 
-		b.style.left = b._position.x + "px"; 
-	}
-	GLOBAL.balloons.forEach(b => {
-		if (b._position.y <= -32) {
-			document.body.removeChild(b);
-		}
-	})
-	GLOBAL.balloons = GLOBAL.balloons.filter(b => b._delete === false)
-};
-animate();
-
-class _EmojiBalloon extends HTMLElement {
-	_delete = false;
-	_velocity = { x: -1, y: -2.5 }; // px per tick (16ms)
-	_position = { x: 0, y: 0 };
-	
-	_startPositionX = 0;
-	_maxDriftX = 50
-	_driftDirection = "LEFT"
-
-	constructor() {
-		super();
-
-		this._driftDirection = randomInt(0, 1) === 0 ? "LEFT" : "RIGHT";
-		this._velocity.x = this._driftDirection === "LEFT" ? -1 : 1;
-		
-
-		this._maxDriftX = randomInt(25, 75);
-		this._velocity.y = this._velocity.y * randomInt(0.5, 2)
-		this._velocity.x = this._velocity.x * randomInt(0.5, 2)
-
-
-		this.attachShadow({ mode: "open" })
-
-		const emoji = this.getAttribute("emoji") || "";
-		if (!emoji) {
-			return
-		}
-
-		// position the <emoji-balloon> at the location of the button
-		const buttons = document.body.querySelectorAll(".emoji-balloon-button");
-		let button = null;
-		buttons.forEach(b => {
-			if (b.innerHTML.includes(emoji)) {
-				button = b;
-			}
-		});
-		if (button) {
-			const rect = button.getBoundingClientRect();	
-			this._position.x = rect.x;
-			this._position.y = rect.y;
-			this._startPositionX = rect.x;
-		}
-
-		this.shadowRoot.innerHTML = `<div>${emoji}</div>`;
-
-		this.style.position = "absolute";
-		this.style.userSelect = "none";
-	}
-
-	static get observedAttributes() {
-		return ["emoji"];
-	}
-
+class EmojiBalloon extends HTMLElement {
 	connectedCallback() {
+		const arrivedAt = performance.now(); // the document timeline counts from the same origin
+		const emoji = this.getAttribute("emoji") ?? "";
+		const button = [...document.querySelectorAll(".emoji-balloon-button")].find((candidate) => candidate.textContent.includes(emoji));
+		if (!emoji || !button) {
+			this.remove();
+			return;
+		}
+
+		const start = button.getBoundingClientRect();
+		Object.assign(this.style, { position: "fixed", left: `${start.x}px`, top: `${start.y}px`, userSelect: "none", pointerEvents: "none" });
+		if (!this.shadowRoot) {
+			this.attachShadow({ mode: "open" }).innerHTML = `<div>${emoji}</div>`;
+		}
+
 		// With "reduce motion" on, a smash still shows its balloon at the button, but it does not fly:
 		// it stays for a moment and disappears. Every smash stays visible without the movement.
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 			setTimeout(() => this.remove(), REDUCED_MOTION_VISIBLE_MS);
 			return;
 		}
-		GLOBAL.balloons.push(this)
-	}
 
-	disconnectedCallback() {
-		this._delete = true;	
-	}
+		const rise = start.y - FLIGHT_END_PX;
+		const flight = this.animate([{ transform: "translateY(0)" }, { transform: `translateY(${-rise}px)` }], {
+			duration: (rise / pick(RISE_PX_PER_SECOND)) * 1000,
+			fill: "forwards",
+		});
+		flight.startTime = arrivedAt;
+		flight.finished.then(
+			() => this.remove(),
+			(error) => {
+				// Removing the balloon cancels its flight; anything else is a real problem.
+				if (error.name !== "AbortError") throw error;
+			},
+		);
 
+		// Sway out to one side, back through the start, out to the other side, and back, for as long as it flies.
+		const width = SWAY_WIDTH_PX.min + Math.random() * (SWAY_WIDTH_PX.max - SWAY_WIDTH_PX.min);
+		const side = Math.random() < 0.5 ? -1 : 1;
+		const sway = this.shadowRoot.firstElementChild.animate(
+			[0, side, 0, -side, 0].map((direction) => ({ transform: `translateX(${direction * width}px)` })),
+			{ duration: ((4 * width) / pick(SWAY_PX_PER_SECOND)) * 1000, iterations: Infinity },
+		);
+		sway.startTime = arrivedAt;
+	}
 }
 
-return _EmojiBalloon
-})();
+function pick(choices) {
+	return choices[Math.floor(Math.random() * choices.length)];
+}
 
 if (!customElements.get("emoji-balloon")) {
 	customElements.define("emoji-balloon", EmojiBalloon);
-}
-
-function randomInt(min, max) {
-  // Ensure integers
-  min = Math.ceil(min);
-  max = Math.floor(max);
-
-  // Inclusive of both min and max
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
