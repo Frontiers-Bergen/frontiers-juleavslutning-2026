@@ -66,7 +66,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (13 slides incl. the app name vote); refine once the mini-games and CI/CD exist
 - [x] QR code with the invite link on the welcome slide (server-rendered SVG at `/{inviteKey}/qr.svg`, big screen only)
 - [x] Workshop contributions: attendees who want to push are added as collaborators with write access (forks get no preview: GitHub gives them no secrets). How: `deploy/README.md`
-- [ ] Before adding anyone: require approval for `Production` deployments and protect `main` (see "Collaborators and safety" in `deploy/README.md`): a preview runs the pull request's code, and its `deploy.sh`, on the shared server
+- [x] Decided (7 Nov): no deploy approval or branch protection for workshop collaborators; trust and review instead ("Collaborators and trust" in `deploy/README.md`)
 - [ ] App name vote at the workshop: a poll with 3–4 candidates, the winner becomes the app name shown on the big screen and phones.
       Candidates so far: Rage Against the Debounce, Last Christmas I Gave You My Clicks, It's Tiiime, Smash the Halls.
       The name must make people laugh out loud, not just chuckle.
@@ -171,7 +171,7 @@ Then open http://localhost:8080/dev-key/ and edit any `.templ`, `.css` or `.go` 
 - Try it on your phone: open `http://<your computer's LAN address>:8080/dev-key/` on the same wifi.
 - Older Go? `go.mod` asks for Go 1.27; with Go 1.21 or newer, the right version is downloaded automatically on first run.
 - Before opening a pull request: `go tool task check` (needs golangci-lint, see below). Read `AGENTS.md` first; it holds the rules for people and AI agents alike.
-- Want your change on the big screen? Tell Gerhard your GitHub username: you get write access to this repository (accept the invitation in the email, or at https://github.com/frontiers-bergen/frontiers-juleavslutning-2026/invitations). Then make a branch, push it and open a pull request. CI runs the checks, and once an organiser approves the deployment, a preview link appears in the pull request. No access? A pull request from a fork works too, just without a preview.
+- Want your change on the big screen? Tell Gerhard your GitHub username: you get write access to this repository (accept the invitation in the email, or at https://github.com/frontiers-bergen/frontiers-juleavslutning-2026/invitations). Then make a branch, push it and open a pull request. CI runs the checks and adds a preview link to the pull request. No access? A pull request from a fork works too, just without a preview.
 - Want to build a mini-game? `MINI_GAMES.md` walks you through it, using the two example games.
 - Stuck? `SETUP.md` covers installing Go per OS, busy ports, the phone on the LAN and other common problems; it is written so an AI agent can walk you through it.
 - Optional tools: [golangci-lint](https://golangci-lint.run) for `task check`; Chrome/Chromium (and Node for `task browser-check`, bash for `task screenshots`) for the browser tools.
