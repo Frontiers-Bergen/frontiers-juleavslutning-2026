@@ -87,7 +87,7 @@ func RootLayoutRoute(
 				// and costs tens of bytes, which is what makes re-rendering on every change cheap (the Datastar way).
 				sse := datastar.NewSSE(w, r, compressedStream())
 				if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
-					logger.Error("failed to send initial page patch", slog.String("error", err.Error()))
+					logStreamFailure(logger, r, "failed to send initial page patch", err)
 					return
 				}
 
@@ -101,7 +101,7 @@ func RootLayoutRoute(
 							<-deckChanges
 						}
 						if err := sse.PatchElementTempl(rootPage(db, inviteKey, isPresenter, sessionID)); err != nil {
-							logger.Error("failed to send page patch", slog.String("error", err.Error()))
+							logStreamFailure(logger, r, "failed to send page patch", err)
 							return
 						}
 					}

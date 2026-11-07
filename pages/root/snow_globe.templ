@@ -75,24 +75,24 @@ func SnowGlobeRoutes(router chi.Router, nc *nats.Conn, store sessions.Store, log
 			}
 		}()
 
-		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
+		// NewSSE sends the response headers; from here on, failures are logged (logStreamFailure) and end the stream.
 		sse := datastar.NewSSE(w, r, compressedStream())
 		for {
 			select {
 			case <-r.Context().Done():
 				return
 			case burst := <-bursts:
-				shakesText, senderSessionID, _ := strings.Cut(string(burst.Data), " ")
-				if senderSessionID == sessionID {
+				shakesText, senderSessionID, found := strings.Cut(string(burst.Data), " ")
+				if found && senderSessionID == sessionID {
 					continue
 				}
 				shakes, err := strconv.Atoi(shakesText)
-				if err != nil {
+				if !found || err != nil {
 					logger.Error("invalid snow message", slog.String("message", string(burst.Data)))
 					continue
 				}
 				if err := sse.PatchElementTempl(Snowfall(shakes), datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
-					logger.Error("failed to send snowfall", slog.String("error", err.Error()))
+					logStreamFailure(logger, r, "failed to send snowfall", err)
 					return
 				}
 			}
