@@ -324,10 +324,30 @@ templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter 
 			data-orange-pulls={ fmt.Sprint(round.OrangePulls) }
 			style={ fmt.Sprintf("--rope: %.3f;", round.ropeOffset()) }
 		>
-			<h1>Tug of war</h1>
-			<p class="tug-of-war-your-team">
-				You pull for <strong class={ "tug-of-war-team-name", string(team) }>{ team.name() }</strong>
-			</p>
+			// The start button sits in the heading row, where the presenter notes (fixed at the bottom) never cover it.
+			<div class="tug-of-war-heading">
+				<h1>Tug of war</h1>
+				if isPresenter && (phase == phaseWaiting || phase == phaseFinished) {
+					<button type="button" class="tug-of-war-start" data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "start")) }>
+						if phase == phaseWaiting {
+							Start countdown
+						} else {
+							Play again
+						}
+					</button>
+				}
+			</div>
+			// Your team, as big as the heading, above your own end of the rope: where your name is, is your side.
+			// Both names are rendered; a phone shows only its own, the big screen (a normal view on the projector,
+			// which has a team too) labels both ends instead. See tug_of_war.css.
+			<div class="tug-of-war-teams">
+				<p class="tug-of-war-you-pull-for">You pull for</p>
+				<p class="tug-of-war-team-names">
+					for _, side := range []tugOfWarTeam{teamTeal, teamOrange} {
+						<span class={ "tug-of-war-team-name", string(side), templ.KV("yours", side == team) }>{ side.name() }</span>
+					}
+				</p>
+			</div>
 			<div class="tug-of-war-arena">
 				<div class="tug-of-war-end teal">
 					<img src="/static/frontiers-logo.svg" alt="Team Teal"/>
@@ -343,32 +363,27 @@ templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter 
 					<span class="tug-of-war-score">{ fmt.Sprint(round.OrangePulls) }</span>
 				</div>
 			</div>
-			switch phase {
-				case phaseWaiting:
-					<p class="tug-of-war-status">When the countdown ends, smash the emoji buttons for your team. The team that smashes the most pulls the rope to its side!</p>
-				case phaseCountdown:
-					<p class="tug-of-war-status tug-of-war-countdown">Get ready… { fmt.Sprint(round.secondsLeft(now)) }</p>
-				case phasePulling:
-					<p class="tug-of-war-status tug-of-war-smash">Smash the emojis! 👇</p>
-					<p class="tug-of-war-status">{ fmt.Sprint(round.secondsLeft(now)) } seconds left</p>
-				case phaseFinished:
-					if winner := round.winner(); winner != "" {
-						<p class="tug-of-war-status tug-of-war-result" data-winner={ string(winner) }>
-							<strong class={ "tug-of-war-team-name", string(winner) }>{ winner.name() }</strong> wins! 🎉
-						</p>
-					} else {
-						<p class="tug-of-war-status tug-of-war-result" data-winner="draw">It's a draw! 🤝</p>
-					}
-			}
-			if isPresenter && (phase == phaseWaiting || phase == phaseFinished) {
-				<button type="button" class="tug-of-war-start" data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "start")) }>
-					if phase == phaseWaiting {
-						Start countdown
-					} else {
-						Play again
-					}
-				</button>
-			}
+			// The status area keeps the same height in every phase, so the rope and the names never move.
+			<div class="tug-of-war-status-area">
+				switch phase {
+					case phaseWaiting:
+						<p class="tug-of-war-status">When the countdown ends, smash the emoji buttons for your team. The team that smashes the most pulls the rope to its side!</p>
+					case phaseCountdown:
+						<p class="tug-of-war-status tug-of-war-countdown">Get ready… { fmt.Sprint(round.secondsLeft(now)) }</p>
+						<p class="tug-of-war-status">New teams every round!</p>
+					case phasePulling:
+						<p class="tug-of-war-status tug-of-war-smash">Smash the emojis! 👇</p>
+						<p class="tug-of-war-status">{ fmt.Sprint(round.secondsLeft(now)) } seconds left</p>
+					case phaseFinished:
+						if winner := round.winner(); winner != "" {
+							<p class="tug-of-war-status tug-of-war-result" data-winner={ string(winner) }>
+								<strong class={ "tug-of-war-winner", string(winner) }>{ winner.name() }</strong> wins! 🎉
+							</p>
+						} else {
+							<p class="tug-of-war-status tug-of-war-result" data-winner="draw">It's a draw! 🤝</p>
+						}
+				}
+			</div>
 		</div>
 	}
 }

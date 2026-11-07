@@ -3,16 +3,69 @@
 .tug-of-war {
 	gap: var(--space-2);
 
-	& h1 {
-		margin: 0;
+	/* The heading row: the title, and the presenter's start button on the right. */
+	.tug-of-war-heading {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+
+		& h1 {
+			margin: 0;
+		}
 	}
 
-	.tug-of-war-your-team {
-		margin: 0;
-		font-size: var(--font-body);
+	/* Your team above your end of the rope. Always one line tall, so nothing moves when your team changes
+	   at the start of a round. On a phone only your own team shows, on your side; the other name is gone. */
+	.tug-of-war-teams {
+		.tug-of-war-you-pull-for {
+			margin: 0;
+			font-size: var(--font-small);
+			color: var(--color-text-soft);
+		}
+
+		.tug-of-war-team-names {
+			display: flex;
+			margin: 0;
+			font-size: var(--font-h1);
+			font-weight: 700;
+			line-height: 1.12;
+			white-space: nowrap;
+		}
+
+		.tug-of-war-team-name {
+			display: none;
+
+			&.yours {
+				display: block;
+			}
+
+			/* Orange's end is on the right. */
+			&.orange {
+				margin-inline-start: auto;
+			}
+		}
+
+		/* The big screen is a normal view on the projector, with a team of its own: it labels both ends
+		   instead of showing "its" team to the whole room. Someone playing on a laptop sees no own team. */
+		@media (width >= 40rem) {
+			.tug-of-war-you-pull-for {
+				visibility: hidden;
+			}
+
+			.tug-of-war-team-name {
+				display: block;
+			}
+		}
 	}
 
-	.tug-of-war-team-name {
+	&[data-team="orange"] .tug-of-war-you-pull-for {
+		text-align: end;
+	}
+
+	.tug-of-war-team-name,
+	.tug-of-war-winner {
 		&.teal {
 			color: var(--color-team-teal);
 		}
@@ -113,6 +166,19 @@
 		font-size: 2rem;
 	}
 
+	/* Tall enough for the longest phase (the rules while waiting, or a two-line result on a phone), so the
+	   slide keeps its height and, centred on the stage, nothing above moves when the phase changes. */
+	.tug-of-war-status-area {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		min-height: var(--status-area-height, 10rem);
+
+		@media (width >= 40rem) {
+			--status-area-height: 9rem;
+		}
+	}
+
 	.tug-of-war-status {
 		margin: 0;
 		font-size: var(--font-body);
@@ -136,7 +202,6 @@
 	}
 
 	.tug-of-war-start {
-		align-self: flex-start;
 		min-height: 3rem;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--color-border);
