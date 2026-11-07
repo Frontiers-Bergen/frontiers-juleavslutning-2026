@@ -63,7 +63,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [x] CD: a preview per PR at `juleavslutning-<PR>.lekeplassen.regncon.no`, main on the big screen at https://juleavslutning.lekeplassen.regncon.no, previews removed on close (`deploy/`); tested end to end
-- [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (13 slides incl. the app name vote); refine once the mini-games and CI/CD exist
+- [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (14 slides incl. the app name vote and the tug of war); the mini-games and CI/CD exist now, so the deck can show them
 - [x] QR code with the invite link on the welcome slide (server-rendered SVG at `/{inviteKey}/qr.svg`, big screen only)
 - [x] Workshop contributions: attendees who want to push are added as collaborators with write access (forks get no preview: GitHub gives them no secrets). How: `deploy/README.md`
 - [x] Decided (7 Nov): no deploy approval or branch protection for workshop collaborators; trust and review instead ("Collaborators and trust" in `deploy/README.md`)
@@ -152,12 +152,12 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Fix: SQLite connections were opened and closed under load (database/sql keeps 2 idle by default); opening one applies the pragmas and parses the schema, half the CPU at 40 phones. A fixed pool of 32 (`database.go`): 40 phones P99 19 ms on 3 cores, 80 phones P99 35 ms
 - [x] Memory: every live stream has its own Brotli compressor, and the default 4 MB window cost about 36 MB per phone (1.4 GB at 40 phones, on a shared server). A 256 KB window (`compressedStream` in `pages/root/live_updates.go`): 330 MB at 40 phones, same bytes and CPU
 - [x] Streams take what is already waiting along: the emoji stream sends waiting smashes in one patch (one balloon each, the counts read once), the page stream renders once for waiting changes. Load test: at 160 phones 30% of the balloons were lost (NATS dropped them for streams that fell behind), now 100% arrive; 40 phones on 2 cores went from P99 244 ms to 9 ms
-- Load test results after both fixes (20-core laptop, the load generator on the same machine, 6 taps/s per phone): 40 phones P99 10–35 ms, about 3 cores, 330 MB; 160 phones P99 35–60 ms; 320 phones just under 100 ms; 640 phones break (P99 460 ms, 4 GB). With the app limited to 2 cores, 40 phones miss the goal (P99 145 ms, P95 56 ms): check how many cores the server has before the evening
+- Load test results after both fixes (20-core laptop, the load generator on the same machine, 6 taps/s per phone): 40 phones P99 10–35 ms, about 3 cores, 330 MB; 160 phones P99 35–60 ms; 320 phones just under 100 ms; 640 phones break (P99 460 ms, 4 GB). With the app limited to 2 cores, 40 phones missed the goal (P99 145 to 244 ms) until the streams took what was already waiting along; now P99 9 ms
 - [x] Fix: balloons that arrived while a window was not drawn (another workspace) all took off at once when it was drawn again; they also flew twice as fast on 120 Hz screens. They now fly by the clock with Web Animations on transform (`static/emoji-balloon.js`), which also cut the main-thread work with 400 balloons in the air by 58% (JavaScript −82%, layout −93%)
 - [x] Fix: a snowfall that arrived while a window was not drawn waited, then started with the others when the window was drawn again, cut off by its removal; its animations now start at the moment it arrives (`snowfallInit` in `pages/root/snow_globe.templ`)
 - [x] Balloons: read the buttons' positions once per frame instead of once per balloon (layout -57%, main-thread work -11 to -16% with 400 to 1500 balloons). Kept: the shadow DOM per balloon, which measured cheaper than none, because Datastar inspects everything added to `<body>`
 - [ ] Balloons: optimise further for slow phones, without limiting how many: crashing old phones with balloon spam is part of the fun. Biggest remaining cost: style for every new balloon
-- [ ] A phone that leaves while its stream is sending logs an ERROR ("context canceled"); that is a normal goodbye, not an error
+- [x] A phone that leaves while its stream is sending no longer logs an ERROR ("context canceled"): a normal goodbye is logged at debug level (`logStreamFailure` in `pages/root/live_updates.go`)
 
 ## Getting started
 

@@ -124,10 +124,10 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 			}
 		}()
 
-		// NewSSE sends the response headers; from here on, failures are logged and end the stream.
+		// NewSSE sends the response headers; from here on, failures are logged (logStreamFailure) and end the stream.
 		sse := datastar.NewSSE(w, r, compressedStream())
 		if err := patchEmojiCounts(sse, db); err != nil {
-			logger.Error("failed to send initial emoji counts", slog.String("error", err.Error()))
+			logStreamFailure(logger, r, "failed to send initial emoji counts", err)
 			return
 		}
 
@@ -144,11 +144,11 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 					balloons += emojiBalloon(<-smashes)
 				}
 				if err := patchEmojiCounts(sse, db); err != nil {
-					logger.Error("failed to send emoji counts", slog.String("error", err.Error()))
+					logStreamFailure(logger, r, "failed to send emoji counts", err)
 					return
 				}
 				if err := sse.PatchElements(balloons, datastar.WithSelector("body"), datastar.WithModeAppend()); err != nil {
-					logger.Error("failed to send emoji balloon", slog.String("error", err.Error()))
+					logStreamFailure(logger, r, "failed to send emoji balloon", err)
 					return
 				}
 			}

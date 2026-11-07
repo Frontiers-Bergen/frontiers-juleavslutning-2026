@@ -2,6 +2,7 @@ package root
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/delaneyj/toolbelt/id"
@@ -32,6 +33,17 @@ func publishDeckChanged(nc *nats.Conn) error {
 // just as well (same bytes and CPU, measured with go tool task loadtest), at about 8 MB per phone.
 func compressedStream() datastar.SSEOption {
 	return datastar.WithCompression(datastar.WithBrotli(datastar.WithBrotliLevel(5), datastar.WithBrotliLGWin(18)))
+}
+
+// logStreamFailure logs a failed send on a live stream, which then ends. When the request is already over, the
+// phone simply left: it closed the tab, locked its screen, or Datastar closed the stream of a hidden page. That is
+// a normal goodbye, so it is logged at debug level; as an error it drowned out the real ones.
+func logStreamFailure(logger *slog.Logger, r *http.Request, message string, err error) {
+	if r.Context().Err() != nil {
+		logger.Debug(message+" (the phone left)", slog.String("error", err.Error()))
+		return
+	}
+	logger.Error(message, slog.String("error", err.Error()))
 }
 
 // attendeeSessionCookie identifies one phone (browser) across requests, so a poll vote can be changed

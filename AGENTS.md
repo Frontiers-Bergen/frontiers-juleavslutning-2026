@@ -146,7 +146,7 @@ anyone could notice; optimising page updates further buys nothing and costs simp
 2. **One read stream.** The page's `data-init` opens one long-lived SSE stream (`/<invite key>/root/api/`), the read side.
    The handler first does everything that needs response headers (attendee session cookie, validation, `http.Error`),
    subscribes to `deck.changed`, then calls `datastar.NewSSE(w, r, compressedStream())` and immediately sends
-   a full patch of `#root-page-wrapper`. After `NewSSE` the headers are gone: report errors by logging and ending the stream.
+   a full patch of `#root-page-wrapper`. After `NewSSE` the headers are gone: report errors with `logStreamFailure` and end the stream (it stays quiet when the phone simply left).
 3. **Short writes.** A tap or click is a short `POST` (the write side): it validates, writes SQLite, publishes
    `deck.changed` (`publishDeckChanged` in `pages/root/live_updates.go`) and answers `204`. It never returns HTML.
 4. **Every stream re-renders.** Each open stream gets the message, renders the whole page from SQLite and patches it.
