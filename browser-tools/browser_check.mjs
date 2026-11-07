@@ -231,6 +231,36 @@ try {
 	const normalMotion = await phone.run(balloonMotion);
 	check("balloons fly up", normalMotion.moved === true, normalMotion);
 
+	// A window the browser does not draw (on another workspace) still counts as visible, so its stream stays open
+	// and balloons keep arriving. They must fly by the clock: when the window is drawn again, the old ones are high
+	// up and the recent ones low, not all taking off from the button at once. Headless Chrome always draws, so this
+	// stops requestAnimationFrame instead, which is what a window that is not drawn gets.
+	const balloonsWhileNotDrawn = await phone.run(`(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const realFrame = window.requestAnimationFrame;
+		let waitingFrames = [];
+		window.requestAnimationFrame = (callback) => { waitingFrames.push(callback); return 0; };
+		const balloons = [];
+		const observer = new MutationObserver((changes) => {
+			for (const change of changes) for (const node of change.addedNodes) if (node.nodeName === "EMOJI-BALLOON") balloons.push(node);
+		});
+		observer.observe(document.body, { childList: true });
+		for (let i = 0; i < 6; i++) {
+			document.querySelector(".emoji-balloon-button").click();
+			await sleep(300); // smashes spread over the time away
+		}
+		await sleep(300);
+		window.requestAnimationFrame = realFrame;
+		waitingFrames.forEach((callback) => realFrame(callback));
+		waitingFrames = [];
+		await sleep(200);
+		observer.disconnect();
+		const tops = balloons.filter((balloon) => balloon.isConnected).map((balloon) => Math.round(balloon.getBoundingClientRect().top));
+		return { arrived: balloons.length, tops, spread: Math.max(...tops) - Math.min(...tops) };
+	})()`);
+	check("balloons that arrive while the window is not drawn fly by the clock, not all at once when it is drawn again",
+		balloonsWhileNotDrawn.arrived === 6 && balloonsWhileNotDrawn.tops.length >= 3 && balloonsWhileNotDrawn.spread >= 100, balloonsWhileNotDrawn);
+
 	// Live update: the presenter moves the deck and the open phone follows without a reload.
 	await presenter.moveToSlideWith(/class="slide poll"/);
 	await sleep(1500);
