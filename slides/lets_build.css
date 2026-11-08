@@ -1,0 +1,15 @@
+/* Let's build slide (lets_build.md). Loaded into @layer features via /feature-styles.css. */
+.slide-lets_build {
+	/* The repository QR code is for the big screen: scan it instead of typing the address. On a phone, the address
+	   above is enough. */
+	.repo-qr {
+		display: none;
+
+		@media (width >= 40rem) {
+			display: block;
+			width: min(30vh, 14rem);
+			height: auto;
+			border-radius: var(--radius);
+		}
+	}
+}

@@ -19,21 +19,33 @@ import (
 // The link uses the host the page was opened with. On a LAN that is the machine's IP; in production it is
 // the public domain, with https detected from the reverse proxy's X-Forwarded-Proto header. Opening the big
 // screen as "localhost" gives a QR code a phone cannot open.
+//
+// GET /{inviteKey}/repo-qr.svg returns the repository's address the same way, for the slide where people start
+// building, so nobody has to type it.
+
+const repositoryURL = "https://github.com/frontiers-bergen/frontiers-juleavslutning-2026"
 
 func InviteQRCodeRoute(router chi.Router, logger *slog.Logger) {
 	router.Get("/qr.svg", func(w http.ResponseWriter, r *http.Request) {
-		svg, err := qrCodeSVG(inviteLink(r, chi.URLParam(r, "inviteKey")))
-		if err != nil {
-			logger.Error("failed to draw invite QR code", slog.String("error", err.Error()))
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "image/svg+xml")
-		w.Header().Set("Cache-Control", "no-cache")
-		if _, err := w.Write([]byte(svg)); err != nil {
-			return // the client went away
-		}
+		serveQRCode(w, logger, inviteLink(r, chi.URLParam(r, "inviteKey")))
 	})
+	router.Get("/repo-qr.svg", func(w http.ResponseWriter, r *http.Request) {
+		serveQRCode(w, logger, repositoryURL)
+	})
+}
+
+func serveQRCode(w http.ResponseWriter, logger *slog.Logger, content string) {
+	svg, err := qrCodeSVG(content)
+	if err != nil {
+		logger.Error("failed to draw QR code", slog.String("error", err.Error()))
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "no-cache")
+	if _, err := w.Write([]byte(svg)); err != nil {
+		return // the client went away
+	}
 }
 
 func inviteLink(r *http.Request, inviteKey string) string {
