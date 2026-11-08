@@ -60,7 +60,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Mini-game with a web component built with Rocket: shake the snow globe (`static/snow-globe.js`, `pages/root/snow_globe.templ`); shakes swirl snow on every screen, subtle on phones
 - [ ] Snow globe: try it on real phones, an iPhone in particular (the "Shake for snow" permission button); tune the shake threshold and how much snow
 - [x] Short "how to add your own mini-game" guide, pointing at the two example games (`MINI_GAMES.md`)
-- [ ] Prepare "good first tasks" for attendees (GitHub issues, label `good first issue`) — draft list in `planning/workshop_good_first_issues.md`; first one created: #41 smash milestones
+- [x] Good first issues for attendees (label `good first issue`): #41 smash milestones and four mini-games, #70 reindeer race, #71 decorate the tree, #72 snowball fight, #73 avatar builder (`planning/workshop_good_first_issues.md`)
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [x] CD: a preview per PR at `juleavslutning-<PR>.lekeplassen.regncon.no`, main on the big screen at https://juleavslutning.lekeplassen.regncon.no, previews removed on close (`deploy/`); tested end to end
 - [ ] Opening demo + codebase walkthrough slides for Gerhard — first draft is the deck in `slides/` (14 slides incl. the app name vote and the tug of war); the mini-games and CI/CD exist now, so the deck can show them
@@ -128,9 +128,11 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Presenter view: the notes covered the slide on most slides, and the bottom of a slide hid under the reactions bar. Now the notes sit below the slide, the presenter's copy of the slide uses smaller type and less padding, and the stage scrolls if a slide with long notes still does not fit (`static/index.css`)
 - [ ] Spaceship snowball shooter
 - [ ] Collaborative pixel canvas (r/place, Christmas edition)
-- [ ] Button-mash reindeer race
-- [ ] Snowball fight
+- [ ] Button-mash reindeer race (#70)
+- [ ] Snowball fight (#72)
 - [ ] Hidden easter eggs
+- [ ] Decorate the tree together (#71)
+- [ ] Avatar builder (#73)
 
 ### Later: architecture and design
 
