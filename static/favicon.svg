@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="61 28 343 343">
+  <!-- The mark from frontiers-logo.svg (the three hills), without the text, on the page background. -->
+  <rect x="61" y="28" width="343" height="343" rx="64" fill="#1e1e3f"/>
+  <path fill="#ff9200" d="M250.59,260.03l-121.65-121.85h-57.77l100.87,100.85c13.45,13.44,31.68,20.99,50.69,20.99h27.86Z"/>
+  <path fill="#07d9b2" d="M142.83,138.19l121.65,121.85h57.77l-100.87-100.85c-13.45-13.44-31.68-20.99-50.69-20.99h-27.86Z"/>
+  <path fill="#ff9200" d="M393.82,260.03l-53.86-53.85c-13.45-13.44-31.68-20.99-50.69-20.99h-27.86l74.73,74.85h57.69Z"/>
+</svg>

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -88,6 +89,47 @@ func TestSlideControl_NobodyHasOpenedTheDeck_PresenterCanStillChangeTheSlide(t *
 	actualSlideIndex := shownSlideIndex(t, app.deckPage(presenter))
 	if actualSlideIndex != expectedSlideIndex {
 		t.Fatalf("expected slide %d, got %d", expectedSlideIndex, actualSlideIndex)
+	}
+}
+
+func TestPresenterNavigation_ShowsTheSlidesSourceFile(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the presenter is on the first slide, a markdown slide.",
+		When:  "When the presenter controls are shown.",
+		Then:  "Then they name the markdown file the slide comes from, so it is easy to find.",
+	})
+
+	// Given
+	expectedSource := regexp.MustCompile(`class="presenter-nav-source">slides/[a-z_]+\.md<`)
+	app := startTestApp(t)
+	presenter := app.newPresenter()
+
+	// When
+	page := app.deckPage(presenter)
+
+	// Then
+	if !expectedSource.MatchString(page) {
+		t.Fatalf("the presenter controls do not name the slide's markdown file:\n%s", truncate(page, 1500))
+	}
+}
+
+func TestPresenterNavigation_Attendee_SeesNoSourceFile(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an attendee on the deck.",
+		When:  "When the attendee's page is shown.",
+		Then:  "Then it names no source file: that is for the presenter.",
+	})
+
+	// Given
+	hiddenSource := `class="presenter-nav-source"`
+	app := startTestApp(t)
+
+	// When
+	page := app.deckPage(app.newAttendee())
+
+	// Then
+	if strings.Contains(page, hiddenSource) {
+		t.Fatalf("an attendee's page names the slide's source file")
 	}
 }
 

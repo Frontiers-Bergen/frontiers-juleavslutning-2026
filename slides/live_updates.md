@@ -1,16 +1,18 @@
-# How a live update flows
+# Redraw everything, on every smash
 
-1. You tap a button on your phone
-2. Datastar sends it to the Go server
-3. Go writes to SQLite and publishes a NATS message
-4. Every phone's open stream renders fresh HTML
-5. Datastar patches it into every page
+1. You tap; your phone sends a short POST
+2. Go writes it to SQLite and announces "something changed"
+3. Every open page renders itself again, whole, from SQLite
+4. Datastar morphs only the difference into the page
 
-```html
-<button data-on:click="@post('/poll/vote?option=smash-the-halls')">
-```
+A page renders in 0.1–0.4 ms. An update costs a phone about 38 bytes.
 
 Notes:
 
-- The server owns the state; phones just show it. That's why it stays simple.
-- Emoji smashes use one NATS message per smash, so every balloon shows up.
+- It re-renders everything every time.
+- This took me some time to get used to.
+- It's very different from how we usually think.
+- It's so fast that we don't need to worry about partial updates, debouncing, or client state.
+- This removes a lot of complexity.
+- No client state, no partial updates, no debouncing: the server owns the state, the phones show it.
+- The agents struggle with this. The rules are in "Page life cycle" in AGENTS.md.
