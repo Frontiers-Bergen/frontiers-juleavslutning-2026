@@ -9,7 +9,10 @@ A page renders in 0.1–0.4 ms. An update costs a phone about 38 bytes.
 
 Notes:
 
+- It re-renders everything every time.
+- This took me some time to get used to.
+- It's very different from how we usually think.
+- It's so fast that we don't need to worry about partial updates, debouncing, or client state.
+- This removes a lot of complexity.
 - No client state, no partial updates, no debouncing: the server owns the state, the phones show it.
-- It works because rendering is cheap, morphing keeps focus and scroll, and the stream is compressed.
-- Balloons are events, not state: one message per smash, so every balloon shows up.
-- The rules are in "Page life cycle" in AGENTS.md. Read it before you design anything that updates a page.
+- The agents struggle with this. The rules are in "Page life cycle" in AGENTS.md.

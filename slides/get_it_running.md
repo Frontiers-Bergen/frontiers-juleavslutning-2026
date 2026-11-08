@@ -2,16 +2,15 @@
 
 ```sh
 git clone https://github.com/frontiers-bergen/frontiers-juleavslutning-2026
-cd frontiers-juleavslutning-2026
-go tool task start
 ```
-
-Open `localhost:8080/dev-key/`; on your phone, use your laptop's address instead of localhost.
-
-Stuck? Ask your AI agent to follow SETUP.md.
+- Follow the README.md
+- Ask your AI agent
+- Ask for help
+- Let us know your GitHub username so we can add you to the repo
+- Every PR gets a live environment you can test and share
 
 Notes:
 
-- You need Go and git; everything else comes in as Go tools. The first run downloads modules: a minute or two.
-- Guest wifi often keeps phones from reaching laptops; then use the laptop's browser.
-- Linux with ufw (Omarchy) blocks the port: SETUP.md has the line to open it for the local network.
+- Clone the repo.
+- Follow the instructions or just ask your AI agent.
+- We are here to help if you get stuck.
