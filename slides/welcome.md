@@ -4,7 +4,7 @@
 
 # Let's Build Our Christmas Meetup App!
 
-Frontiers Bergen workshop · 12 November 2026
+Food until 18:00 · show and tell at 20:30
 
 Grab some food, find a seat, and scan the code to join on your phone.
 

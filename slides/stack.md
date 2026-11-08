@@ -12,4 +12,4 @@ Notes:
 
 - Keep this short: context, not a sales pitch.
 - One binary, one SQLite file. The server renders HTML; Datastar patches it into the page.
-- Web components only when a feature really needs client-side state (Rocket, later tonight).
+- A web component only when the browser must do something the server cannot, like reading a sensor (the snow globe).
