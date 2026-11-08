@@ -39,6 +39,31 @@ func TestInviteQRCode_Scanning_OpensTheDeck(t *testing.T) {
 	}
 }
 
+func TestRepositoryQRCode_Scanning_OpensTheRepository(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the big screen shows the repository QR code on the slide where people start building.",
+		When:  "When someone scans it with their phone.",
+		Then:  "Then it opens the repository on GitHub.",
+	})
+
+	// Given
+	expectedLink := "https://github.com/frontiers-bergen/frontiers-juleavslutning-2026"
+	app := startTestApp(t)
+	bigScreen := app.newAttendee()
+
+	// When
+	status, contentType, svg := app.get(bigScreen, "/"+testInviteKey+"/repo-qr.svg")
+	actualLink := scanQRCodeSVG(t, svg)
+
+	// Then
+	if status != http.StatusOK || contentType != "image/svg+xml" {
+		t.Fatalf("expected 200 image/svg+xml, got %d %q", status, contentType)
+	}
+	if actualLink != expectedLink {
+		t.Fatalf("expected the QR code to open %q, got %q", expectedLink, actualLink)
+	}
+}
+
 func TestInviteQRCode_BehindHTTPSProxy_LinksToHTTPS(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the app runs behind a reverse proxy that terminates HTTPS.",
