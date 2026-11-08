@@ -6,7 +6,7 @@ git clone https://github.com/frontiers-bergen/frontiers-juleavslutning-2026
 - Follow the README.md
 - Ask your AI agent
 - Ask for help
-- Let us know your GitHub username so we can add you to the repo
+- Let us know your GitHub username so we can add you to the repo so you can send PRs
 - Every PR gets a live environment you can test and share
 
 Notes:

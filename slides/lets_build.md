@@ -4,7 +4,7 @@ github.com/frontiers-bergen/frontiers-juleavslutning-2026
 
 Push access: tell Gerhard your GitHub username
 
-Show and tell at 20:30
+Show and tell at 20:30. Work in progress is welcome.
 
 Notes:
 

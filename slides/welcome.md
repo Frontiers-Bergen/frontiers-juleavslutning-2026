@@ -2,7 +2,7 @@
 
 ![Frontiers](/static/frontiers-logo.svg)
 
-# Let's Build Our Christmas Meetup App!
+# Let's Build Our Frontiers juleavslutning App!
 
 Food until 18:00 · show and tell at 20:30
 
