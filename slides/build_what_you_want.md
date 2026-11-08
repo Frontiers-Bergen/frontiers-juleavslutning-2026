@@ -1,14 +1,13 @@
-# Pick a game
+# Build what you want 🎨
 
-- 🦌 **Reindeer race:** smash the button to win (#70)
-- 🎄 **Decorate the tree** together from your phones (#71)
-- ⛄ **Snowball fight:** throw at the other team (#72)
-- 🧑‍🎄 **Avatar builder:** you, on the big screen (#73)
+Your idea, your game, your silly surprise for the juleavslutning.
 
-Pair up. Or bring your own silly idea.
+Need inspiration? There are a few suggestions in the issues, or ask your AI agent for ideas.
 
 Notes:
 
-- Each issue describes a minimal playable version a pair can finish tonight, where to start, and stretch ideas.
-- Smash milestones (#41) is there too, for anyone who wants something smaller.
-- The avatar builder blocks nobody: other games fall back to a random avatar.
+- The only rule: it should make the juleavslutning more fun.
+- The suggestions are GitHub issues with the label `good first issue`: a reindeer race, decorating the tree,
+  a snowball fight, an avatar builder, smash milestones. They are inspiration, not a to-do list.
+- Ask your agent, for example: "Read README.md and MINI_GAMES.md, then suggest five silly mini-games for a Christmas party."
+- Pair up if you like; mixed experience levels are the point.
