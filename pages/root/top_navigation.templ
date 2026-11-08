@@ -94,6 +94,9 @@ templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
 		}
 		<div class="presenter-nav-count">
 			Slide { fmt.Sprintf("%d / %d", current+1, len(deckEntries)) }
+			if source := slideEntryAt(deckEntries, current).Source; source != "" {
+				<span class="presenter-nav-source">{ source }</span>
+			}
 		</div>
 	</nav>
 }

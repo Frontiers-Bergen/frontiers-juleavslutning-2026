@@ -96,6 +96,14 @@
 		font-weight: 650;
 		opacity: 0.8;
 		font-size: 2rem;
+		text-align: center;
+	}
+
+	/* The file the current slide comes from, small under the count. */
+	.presenter-nav-source {
+		display: block;
+		font-size: var(--font-small);
+		font-weight: 400;
 	}
 }
 

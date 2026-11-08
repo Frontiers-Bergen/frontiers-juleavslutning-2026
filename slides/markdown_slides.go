@@ -38,6 +38,11 @@ type MarkdownSlide struct {
 	NotesHTML   string
 }
 
+// File is where the slide comes from, relative to the repository root; the presenter view shows it.
+func (slide MarkdownSlide) File() string {
+	return "slides/" + slide.Name + ".md"
+}
+
 var markdownSlides = mustLoadMarkdownSlides(markdownFiles)
 
 // MustMarkdownSlide returns the slide from <name>.md. It panics for an unknown name, like MustPoll:

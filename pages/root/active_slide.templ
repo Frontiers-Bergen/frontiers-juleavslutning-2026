@@ -8,7 +8,9 @@ import (
 )
 
 type slideEntry struct {
-	Title  string
+	Title string
+	// Source is the file the slide comes from, so the presenter can find it (shown in the presenter view).
+	Source string
 	Render func() templ.Component
 }
 
@@ -21,7 +23,7 @@ func deck(
 	appNamePoll := MustPoll("app-name")
 	markdown := func(name string) slideEntry {
 		slide := slides.MustMarkdownSlide(name)
-		return slideEntry{Title: slide.Title, Render: func() templ.Component { return slides.Markdown(slide, isPresenter) }}
+		return slideEntry{Title: slide.Title, Source: slide.File(), Render: func() templ.Component { return slides.Markdown(slide, isPresenter) }}
 	}
 
 	// The workshop deck, 12 November 2026: a short intro (under 15 minutes, 18:00) and show and tell at 20:30.
@@ -34,7 +36,7 @@ func deck(
 		markdown("live_updates"),
 		markdown("what_we_learned"),
 		markdown("add_a_game"),
-		{Title: "Tug of war", Render: func() templ.Component { return TugOfWarSlide(db, inviteKey, sessionID, isPresenter) }},
+		{Title: "Tug of war", Source: "pages/root/tug_of_war.templ", Render: func() templ.Component { return TugOfWarSlide(db, inviteKey, sessionID, isPresenter) }},
 		markdown("pick_a_game"),
 		markdown("get_it_running"),
 		markdown("tonight"),
@@ -42,8 +44,8 @@ func deck(
 		markdown("show_and_tell"),
 		// Not part of the talk: the app name poll was dropped from the intro, but the poll is a feature of its own
 		// (the juleavslutning will use polls), and its tests and the browser check find it here.
-		{Title: "Poll: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
-		{Title: "Results: " + appNamePoll.QuestionText, Render: func() templ.Component { return PollResultsSlide(db, appNamePoll) }},
+		{Title: "Poll: " + appNamePoll.QuestionText, Source: "pages/root/poll.templ", Render: func() templ.Component { return PollSlide(db, inviteKey, sessionID, appNamePoll) }},
+		{Title: "Results: " + appNamePoll.QuestionText, Source: "pages/root/poll_results.templ", Render: func() templ.Component { return PollResultsSlide(db, appNamePoll) }},
 	}
 }
 
