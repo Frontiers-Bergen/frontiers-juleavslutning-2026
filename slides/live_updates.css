@@ -43,6 +43,18 @@
 		line-height: 1;
 	}
 
+	/* The Go gopher stands in for an emoji: as tall as the emoji icons beside it. */
+	.flow-gopher {
+		block-size: 1.6em;
+		inline-size: auto;
+	}
+
+	/* The gopher's licence asks for credit where it is shown. */
+	.credit {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+
 	.flow-text {
 		font-size: var(--font-small);
 		color: var(--color-text-soft);

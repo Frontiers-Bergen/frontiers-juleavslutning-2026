@@ -3,7 +3,7 @@
 <div class="flow" role="img" aria-label="You tap on your phone; a short POST goes to the Go server, which saves it in SQLite and announces that something changed; then every open page, on every phone and the big screen, renders itself again, whole, and Datastar morphs the difference into the page.">
 <div class="flow-node flow-tap"><span class="flow-icon">📱</span><span class="flow-text">You tap</span></div>
 <div class="flow-arrow flow-post"><span class="flow-text">POST</span></div>
-<div class="flow-node flow-server"><span class="flow-icon">🐹</span><span class="flow-text">Go saves it in SQLite</span></div>
+<div class="flow-node flow-server"><img class="flow-icon flow-gopher" src="/static/go-gopher.svg" alt=""><span class="flow-text">Go saves it in SQLite</span></div>
 <div class="flow-arrow flow-changed"><span class="flow-text">"something changed"</span></div>
 <div class="flow-screens">
 <div class="flow-node flow-screen"><span class="flow-icon">📱</span><span class="flow-text">renders the whole page</span></div>
@@ -13,6 +13,8 @@
 </div>
 
 A page renders in 0.1–0.4 ms. An update costs a phone about 38 bytes.
+
+<p class="credit">Go gopher by Renée French, CC BY 4.0</p>
 
 Notes:
 
