@@ -1,15 +1,12 @@
 /* Add your own mini-game slide (add_a_game.md). Loaded into @layer features via /feature-styles.css. */
 .slide-add_a_game {
-	/* A game's files, side by side: two folders, each with its files indented under a line. */
+	/* A game's files, side by side: two folders, each with its files indented under a line. No panel around it:
+	   on a slide next to real buttons, anything boxed looks like something to tap. */
 	.file-tree {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 		margin-bottom: var(--space-3);
-		padding: var(--space-2);
-		border: var(--border-subtle);
-		border-radius: var(--radius);
-		background: var(--color-surface);
 		font-size: var(--font-small);
 
 		@media (width >= 40rem) {
