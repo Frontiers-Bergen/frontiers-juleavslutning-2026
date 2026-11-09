@@ -3,7 +3,7 @@
    Mobile first it stands vertically; on the big screen it reads left to right, with every screen at the end. */
 .slide-live_updates {
 	/* One run through the flow; each step lights up at its moment, and all the screens light up together. */
-	--flow-cycle: 4s;
+	--flow-cycle: 8s;
 
 	.flow {
 		display: flex;
@@ -107,19 +107,19 @@
 
 	/* The chase: tap, POST, Go, "something changed", then every screen at once. */
 	.flow-post {
-		animation-delay: 0.5s;
-	}
-
-	.flow-server {
 		animation-delay: 1s;
 	}
 
+	.flow-server {
+		animation-delay: 2s;
+	}
+
 	.flow-changed {
-		animation-delay: 1.5s;
+		animation-delay: 3s;
 	}
 
 	.flow-screen {
-		animation-delay: 2s;
+		animation-delay: 4s;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
