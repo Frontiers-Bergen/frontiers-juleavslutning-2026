@@ -1,0 +1,67 @@
+/* Build what you want slide (build_what_you_want.md). Loaded into @layer features via /feature-styles.css. */
+.slide-build_what_you_want {
+	/* Your idea comes first and stands out; the suggestions after it are only inspiration. */
+	.ideas {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-1);
+		margin-top: var(--space-1);
+
+		@media (width >= 40rem) {
+			grid-template-columns: 1.6fr repeat(4, 1fr);
+			align-items: stretch;
+		}
+	}
+
+	.idea {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
+		padding: var(--space-1);
+		border: var(--border-subtle);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		text-align: center;
+		opacity: 0.8;
+
+		@media (width >= 40rem) {
+			padding: var(--space-2) var(--space-1);
+			font-size: 1.5rem;
+		}
+
+		&.yours {
+			grid-column: 1 / -1;
+			border: 2px solid var(--color-accent);
+			opacity: 1;
+
+			@media (width >= 40rem) {
+				grid-column: auto;
+			}
+
+			.idea-icon {
+				font-size: 2.6em;
+			}
+
+			.idea-name {
+				font-weight: 700;
+				color: var(--color-text-strong);
+			}
+		}
+	}
+
+	.idea-icon {
+		font-size: 2em;
+		line-height: 1.2;
+	}
+
+	.idea-name {
+		font-size: var(--font-small);
+		color: var(--color-text-soft);
+
+		@media (width >= 40rem) {
+			font-size: 1em;
+		}
+	}
+}

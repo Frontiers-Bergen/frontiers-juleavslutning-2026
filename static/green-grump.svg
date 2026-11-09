@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220">
+  <!-- A green grump in a Santa hat, drawn for the "How to contribute" slide: don't be the Grinch. Our own drawing. -->
+  <!-- Santa hat, flopping to the side -->
+  <path d="M42 78 C55 30 110 8 150 22 C172 30 182 52 176 70 L160 74 C158 56 140 44 120 48 C100 52 82 66 70 82 Z" fill="#d62839"/>
+  <circle cx="176" cy="74" r="13" fill="#fff"/>
+  <!-- Head -->
+  <path d="M38 96 C34 70 70 66 100 66 C130 66 166 70 162 96 C170 120 168 158 150 180 C134 200 118 206 100 206 C82 206 66 200 50 180 C32 158 30 120 38 96 Z" fill="#7cb342"/>
+  <!-- Hat brim -->
+  <rect x="30" y="72" width="140" height="22" rx="11" fill="#fff"/>
+  <!-- Ears -->
+  <path d="M38 118 C24 112 18 126 26 136 C30 142 38 142 42 138 Z" fill="#689f38"/>
+  <path d="M162 118 C176 112 182 126 174 136 C170 142 162 142 158 138 Z" fill="#689f38"/>
+  <!-- Eyebrows, scheming -->
+  <path d="M58 112 L92 124" stroke="#33691e" stroke-width="7" stroke-linecap="round"/>
+  <path d="M142 112 L108 124" stroke="#33691e" stroke-width="7" stroke-linecap="round"/>
+  <!-- Eyes: yellow, half shut -->
+  <ellipse cx="78" cy="134" rx="13" ry="9" fill="#ffeb3b"/>
+  <ellipse cx="122" cy="134" rx="13" ry="9" fill="#ffeb3b"/>
+  <circle cx="81" cy="135" r="4.5" fill="#d62839"/>
+  <circle cx="119" cy="135" r="4.5" fill="#d62839"/>
+  <path d="M64 130 C70 124 86 124 92 130" stroke="#7cb342" stroke-width="7" fill="none"/>
+  <path d="M108 130 C114 124 130 124 136 130" stroke="#7cb342" stroke-width="7" fill="none"/>
+  <!-- Nose -->
+  <ellipse cx="100" cy="152" rx="7" ry="5" fill="#33691e"/>
+  <!-- The grin -->
+  <path d="M62 166 C80 186 120 186 140 162 C128 178 112 184 100 184 C86 184 72 178 62 166 Z" fill="#33691e"/>
+  <path d="M62 166 C80 186 120 186 140 162" stroke="#33691e" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

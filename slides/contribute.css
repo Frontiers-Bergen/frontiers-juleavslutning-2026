@@ -1,0 +1,22 @@
+/* How to contribute slide (contribute.md). Loaded into @layer features via /feature-styles.css. */
+.slide-contribute {
+	position: relative;
+
+	/* The green grump watches from the top corner, next to the heading: don't be the Grinch. */
+	.grump {
+		position: absolute;
+		inset-block-start: var(--space-2);
+		inset-inline-end: 0;
+		inline-size: 4.5rem;
+		block-size: auto;
+
+		@media (width >= 40rem) {
+			inset-block-start: clamp(1.5rem, 8vh, 6rem);
+			inline-size: 9rem;
+		}
+	}
+
+	p:has(> .grump) {
+		margin: 0;
+	}
+}

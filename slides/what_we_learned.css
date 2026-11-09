@@ -1,0 +1,53 @@
+/* What we learned slide (what_we_learned.md). Loaded into @layer features via /feature-styles.css. */
+.slide-what_we_learned {
+	/* The load test in one glance: the share of balloons that arrived, before and after the fix. */
+	.balloon-chart {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		max-inline-size: 36rem;
+		margin-top: var(--space-2);
+		font-size: var(--font-small);
+
+		@media (width >= 40rem) {
+			max-inline-size: 44rem;
+			font-size: 1.5rem;
+		}
+	}
+
+	.balloon-chart-title {
+		color: var(--color-text-soft);
+	}
+
+	.balloon-chart-row {
+		display: grid;
+		grid-template-columns: 4.5em 1fr 3.5em;
+		align-items: center;
+		gap: var(--space-1);
+
+		&.before {
+			--bar-colour: var(--color-team-orange);
+		}
+
+		&.after {
+			--bar-colour: var(--color-team-teal);
+		}
+	}
+
+	.balloon-chart-label {
+		color: var(--color-text-muted);
+	}
+
+	/* The bar is drawn as a share of its track; --share comes from the markup. */
+	.balloon-chart-bar {
+		block-size: 1.25em;
+		border-radius: var(--radius);
+		background: linear-gradient(to right, var(--bar-colour) var(--share), var(--color-surface) var(--share));
+	}
+
+	.balloon-chart-value {
+		font-weight: 700;
+		color: var(--color-text-strong);
+		text-align: end;
+	}
+}

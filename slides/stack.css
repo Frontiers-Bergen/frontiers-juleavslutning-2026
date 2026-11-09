@@ -1,0 +1,15 @@
+/* The stack slide (stack.md). Loaded into @layer features via /feature-styles.css. */
+.slide-stack {
+	/* The Go gopher stands in for an emoji: as tall as the emoji icons on the other lines. */
+	.stack-gopher {
+		block-size: 1.3em;
+		inline-size: auto;
+		vertical-align: middle;
+	}
+
+	/* The gopher's licence asks for credit where it is shown. */
+	.credit {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+}
