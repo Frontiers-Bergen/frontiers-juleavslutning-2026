@@ -64,7 +64,8 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] CI: `task check` and `task browser-check` on every PR (`.github/workflows/ci-cd.yml`)
 - [x] CD: a preview per PR at `juleavslutning-<PR>.lekeplassen.regncon.no`, main on the big screen at https://juleavslutning.lekeplassen.regncon.no, previews removed on close (`deploy/`); tested end to end
 - [ ] Workshop slides for Gerhard: the intro (under 15 minutes, 18:00) and show and tell (20:30), in `slides/`; text reviewed 8 Nov
-- [ ] Workshop slides: visual support once the text has passed review (icons, images; a diagram of the live update flow on "Redraw everything, on every smash")
+- [ ] Workshop slides: visual support once the text has passed review (icons, images). Done: a QR code to the repository on "Let's build!"; in review: an animated diagram of the live update flow on "Redraw everything, on every smash"
+- [ ] Maybe later: the live update diagram lights up for real whenever someone smashes (needs a templ slide instead of markdown)
 - [x] QR code with the invite link on the welcome slide (server-rendered SVG at `/{inviteKey}/qr.svg`, big screen only)
 - [x] Workshop contributions: attendees who want to push are added as collaborators with write access (forks get no preview: GitHub gives them no secrets). How: `deploy/README.md`
 - [x] Decided (7 Nov): no deploy approval or branch protection for workshop collaborators; trust and review instead ("Collaborators and trust" in `deploy/README.md`)
