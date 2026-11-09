@@ -56,6 +56,10 @@ When a step is big enough to deserve its own review, use stacked pull requests (
 Before merging the bottom PR of a stack with "delete branch", point the next PR at `main`: deleting the branch under an open PR closes that PR instead of retargeting it.
 Skip steps that are not needed; an empty tidy or refactor step is fine.
 
+Merge conflicts in the three shared lists are expected when several features land on the same day: the slide order
+(`pages/root/active_slide.templ`), the routes (`pages/root/root_index.templ`) and `schema.sql`. Such a conflict is
+almost always two additions in the same place: keep both, in a sensible order, and run `go tool task check`.
+
 Run `go tool task check` before opening a pull request: formatting, vet, `go fix`, golangci-lint and tests. Fix with `go tool task fmt` where it applies.
 For UI changes, run `go tool task screenshots` before and after the change and look at the result; for a pure refactor, the screenshots should be pixel-identical.
 For changes to interactions (Datastar attributes, SSE, buttons), run `go tool task browser-check`: it clicks real buttons in headless Chromium.
