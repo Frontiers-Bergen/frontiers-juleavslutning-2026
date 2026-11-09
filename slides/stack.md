@@ -1,14 +1,14 @@
 # The stack
 
-- 📄 **HTML** Plain HTML, server-side rendered
-- 🎨 **CSS** Plain .CSS files for styling
-- 🚀 **Rocket** Simple web component for when JavaScript is needed
-- <img class="stack-gopher" src="/static/go-gopher.svg" alt=""> **Go** Backend
-- 🧩 **templ** HTML templating language
-- 📡 **Datastar** Live updates
-- 🗄️ **SQLite** Storing state
+- <img class="stack-logo" src="/static/logos/html5.svg" alt=""> **HTML** Plain HTML, server-side rendered
+- <img class="stack-logo" src="/static/logos/css.svg" alt=""> **CSS** Plain .CSS files for styling
+- <span class="stack-logo">🚀</span> **Rocket** Simple web component for when JavaScript is needed
+- <img class="stack-logo" src="/static/logos/go.svg" alt=""> **Go** Backend
+- <img class="stack-logo" src="/static/logos/templ.svg" alt=""> **templ** HTML templating language
+- <img class="stack-logo" src="/static/logos/datastar.svg" alt=""> **Datastar** Live updates
+- <img class="stack-logo" src="/static/logos/sqlite.svg" alt=""> **SQLite** Storing state
 
-<p class="credit">Go gopher by Renée French, CC BY 4.0</p>
+<p class="credit">HTML5 logo by W3C, CC BY 3.0. SQLite is a registered trademark of Hipp, Wyrick &amp; Company, Inc.</p>
 
 
 Notes:
