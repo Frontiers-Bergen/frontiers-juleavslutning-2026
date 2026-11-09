@@ -1,0 +1,157 @@
+/* Redraw everything slide (live_updates.md). Loaded into @layer features via /feature-styles.css.
+   The diagram is HTML in the markdown file: one tap goes in, and every open page renders itself again.
+   Mobile first it stands vertically; on the big screen it reads left to right, with every screen at the end. */
+.slide-live_updates {
+	/* One run through the flow; each step lights up at its moment, and all the screens light up together. */
+	--flow-cycle: 8s;
+
+	.flow {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: var(--space-1);
+		margin: var(--space-1) 0 var(--space-3);
+
+		/* On the big screen, big enough for the back row: the text wraps inside the boxes so the flow fits one row. */
+		@media (width >= 40rem) {
+			flex-direction: row;
+			align-items: center;
+			gap: var(--space-2);
+			font-size: 1.5rem;
+		}
+	}
+
+	.flow-node {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		padding: var(--space-1) var(--space-2);
+		border: 2px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		animation: live-updates-glow var(--flow-cycle) ease-out infinite;
+
+		@media (width >= 40rem) {
+			flex-direction: column;
+			max-inline-size: 9em;
+			text-align: center;
+		}
+	}
+
+	.flow-icon {
+		font-size: 1.6em;
+		line-height: 1;
+	}
+
+	/* The Go gopher stands in for an emoji: as tall as the emoji icons beside it. */
+	.flow-gopher {
+		block-size: 1.6em;
+		inline-size: auto;
+	}
+
+	/* The gopher's licence asks for credit where it is shown. */
+	.credit {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+
+	.flow-text {
+		font-size: var(--font-small);
+		color: var(--color-text-soft);
+
+		@media (width >= 40rem) {
+			font-size: 1em;
+		}
+	}
+
+	.flow-arrow {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		color: var(--color-text-muted);
+
+		@media (width >= 40rem) {
+			max-inline-size: 7em;
+		}
+
+		animation: live-updates-arrow var(--flow-cycle) ease-out infinite;
+
+		&::after {
+			content: "↓";
+			font-size: 1.6em;
+			line-height: 1;
+
+			@media (width >= 40rem) {
+				content: "→";
+			}
+		}
+
+		.flow-text {
+			color: inherit;
+		}
+	}
+
+	.flow-screens {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+
+		/* Every screen on one line, icon beside the text, so the fan-out stays low on the big screen. */
+		.flow-node {
+			flex-direction: row;
+			max-inline-size: none;
+			text-align: start;
+		}
+	}
+
+	/* The chase: tap, POST, Go, "something changed", then every screen at once. */
+	.flow-post {
+		animation-delay: 1s;
+	}
+
+	.flow-server {
+		animation-delay: 2s;
+	}
+
+	.flow-changed {
+		animation-delay: 3s;
+	}
+
+	.flow-screen {
+		animation-delay: 4s;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.flow-node,
+		.flow-arrow {
+			animation: none;
+		}
+	}
+}
+
+@keyframes live-updates-glow {
+	0%,
+	15% {
+		border-color: var(--color-accent);
+		box-shadow: 0 0 1rem hsl(from var(--color-accent) h s l / 50%);
+	}
+
+	30%,
+	100% {
+		border-color: var(--color-border);
+		box-shadow: none;
+	}
+}
+
+@keyframes live-updates-arrow {
+	0%,
+	15% {
+		color: var(--color-accent);
+	}
+
+	30%,
+	100% {
+		color: var(--color-text-muted);
+	}
+}
