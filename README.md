@@ -78,6 +78,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [ ] Sound: Gerhard has a portable system (venue not confirmed yet)
 - [ ] Back up the production database afterwards; ideas and feedback are analysed from it
 - [ ] Remove the workshop collaborators when the project ends (`deploy/README.md`)
+- [ ] When the server is cleaned up before next Regncon: the previews of #77 and #78 were left running (GitHub's Actions outage on 9 Nov stopped their cleanup; such runs cannot be re-run)
 - [x] Slides written in markdown: one `.md` file per content slide in `slides/`, embedded and rendered at startup with gomarkdown (as in conorganizer)
 
 ### Code health

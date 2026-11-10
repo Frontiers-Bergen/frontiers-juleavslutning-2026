@@ -88,7 +88,7 @@ templ ActiveSlide(
 	sessionID SessionID,
 	isPresenter bool,
 ) {
-	{{ index, err := GetCurrentSlideIndex(db) }}
+	{{ index, err := currentSlideIndex(db) }}
 	if err != nil {
 		<div class="slide">
 			<p>Unable to load the slide.</p>
