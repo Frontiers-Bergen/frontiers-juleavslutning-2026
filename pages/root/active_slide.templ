@@ -88,12 +88,17 @@ templ ActiveSlide(
 	sessionID string,
 	isPresenter bool,
 ) {
-	{{ index, _ := GetCurrentSlideIndex(db) }}
-	{{ deckLocal := deck(db, inviteKey, sessionID, isPresenter) }}
-	{{ slideComponent := slideEntryAt(deckLocal, index) }}
-	<div data-slide-index={ fmt.Sprint(index) }>
-		@slideComponent.Render()
-	</div>
+	{{ index, err := GetCurrentSlideIndex(db) }}
+	if err != nil {
+		<div class="slide">
+			<p>Unable to load the slide.</p>
+		</div>
+	} else {
+		{{ slideComponent := slideEntryAt(deck(db, inviteKey, sessionID, isPresenter), index) }}
+		<div data-slide-index={ fmt.Sprint(index) }>
+			@slideComponent.Render()
+		</div>
+	}
 }
 
 templ UnknownSlide() {

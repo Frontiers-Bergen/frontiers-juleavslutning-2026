@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
@@ -94,6 +95,28 @@ func TestPollVoting_UnknownOption_IsRejected(t *testing.T) {
 	}
 	actualCounts := voteCounts(t, showPollResults(app, app.NewPresenter(), testPollKey))
 	assertVoteCounts(t, expectedCounts, actualCounts)
+}
+
+func TestPollVoting_YourVoteCannotBeRead_SaysSo(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the poll slide is shown and the votes cannot be read.",
+		When:  "When an attendee looks at the poll.",
+		Then:  "Then the poll asks them to tap their choice again, instead of quietly showing no vote.",
+	})
+
+	// Given
+	expectedHint := "Your vote could not be loaded"
+	app := apptest.Start(t)
+	app.ShowSlideWith(app.NewPresenter(), `class="slide poll"`)
+	app.ExecSQL(`DROP TABLE poll_votes`)
+
+	// When
+	page := app.DeckPage(app.NewAttendee())
+
+	// Then
+	if !strings.Contains(page, expectedHint) {
+		t.Fatalf("expected the poll to say %q:\n%s", expectedHint, apptest.Truncate(page, 800))
+	}
 }
 
 // --- Local helpers for the poll tests ---

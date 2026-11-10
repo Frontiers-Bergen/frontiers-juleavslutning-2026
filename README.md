@@ -85,7 +85,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] **Fix: emoji smashes could be lost — the very bug this app exists to fix.** Counts moved to SQLite (atomic increment), one NATS message per smash gives one balloon per smash, unknown emojis are rejected. (Datastar request cancellation was suspected too; `task browser-check` showed smashes are counted either way, so disabling it is only defensive.) Tests in `emoji_reactions_test.go`.
 
 - [x] Stop ignoring errors in `main.go`, the demo handler and the root/presenter pages (`http.Error` after SSE has started)
-- [ ] Stop ignoring errors in templates (`{{ x, _ := GetCurrentSlideIndex(db) }}`); needs data loaded before rendering — part of the architecture refactor
+- [x] Stop ignoring errors in templates: the slide, the presenter's navigation, the slide list and the poll each show what failed, and reading the current slide clamps it to the deck
 - [x] Clean up the emoji SSE handlers together with the emoji counting fix (the `services` package is gone)
 - [x] Read the session secret from `SESSION_SECRET` instead of the hardcoded `"session-secret"`
 - [x] Replace the Todo-example state and the `helpers` package that drove live updates: one `deck.changed` NATS message now re-renders every open page (`pages/root/live_updates.go`); the KV bucket is gone

@@ -164,13 +164,17 @@ func (theme pollOptionTheme) style() string {
 }
 
 templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinition) {
-	{{ selectedOptionKey, _ := getMyPollVote(db, poll.Key, sessionID) }}
+	{{ selectedOptionKey, voteErr := getMyPollVote(db, poll.Key, sessionID) }}
 	<div class="slide poll">
 		<div class="poll-question">
 			if poll.QuestionText != "" {
 				<h1>{ poll.QuestionText }</h1>
 			}
-			<p class="poll-hint">Pick one. You can change your vote anytime.</p>
+			if voteErr != nil {
+				<p class="poll-hint">Your vote could not be loaded; tap your choice again.</p>
+			} else {
+				<p class="poll-hint">Pick one. You can change your vote anytime.</p>
+			}
 		</div>
 		<div class="poll-options">
 			for i, opt := range poll.Options {
