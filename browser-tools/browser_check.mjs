@@ -103,7 +103,7 @@ async function presenterSession() {
 			await moveToSlide(index);
 			const html = await attendeeHTML();
 			if (pattern.test(html)) return html;
-			const shown = Number(/slideIndex:\s*(\d+)/.exec(html)?.[1]);
+			const shown = Number(/data-slide-index="(\d+)"/.exec(html)?.[1]);
 			if (shown < index) break;
 		}
 		throw new Error(`no slide matches ${pattern}`);
@@ -209,6 +209,17 @@ try {
 	})()`);
 	check(`${smashes} fast 👍 clicks are all shown`, afterSmashing.shown === smashes, afterSmashing);
 	check(`${smashes} fast 👍 clicks each give a balloon`, afterSmashing.balloons === smashes, afterSmashing);
+
+	// A tap between two buttons hits the bar, not a button: it must send nothing (the bar used to re-send the
+	// last emoji tapped).
+	const gapTap = await phone.run(`(async () => {
+		const total = () => [...document.querySelectorAll(".emoji-balloon-button")].reduce((sum, button) => sum + Number(button.dataset.count), 0);
+		const before = total();
+		document.querySelector(".reaction-bar").click();
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+		return { before, after: total() };
+	})()`);
+	check("a tap between the reaction buttons sends nothing", gapTap.after === gapTap.before, gapTap);
 
 	// Balloons fly, except for people who turned on "reduce motion": then a balloon appears at its button,
 	// stays still, and disappears, so every smash is still seen.

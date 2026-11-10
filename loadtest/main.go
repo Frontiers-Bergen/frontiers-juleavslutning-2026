@@ -18,7 +18,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -47,9 +46,8 @@ const (
 	presenterKey = "loadtest-key"
 	appPort      = "8098"
 
-	probeEmoji  = "❤️"
-	probeSignal = "HeartEmojiCount"
-	probeEvery  = 200 * time.Millisecond
+	probeEmoji = "❤️"
+	probeEvery = 200 * time.Millisecond
 
 	// Responses under 100 ms feel instant (Jakob Nielsen); the goal for smash-to-screen time at the 99th percentile.
 	instant = 100 * time.Millisecond
@@ -434,6 +432,8 @@ var (
 	tealPulls   = regexp.MustCompile(`data-teal-pulls="(\d+)"`)
 	orangePulls = regexp.MustCompile(`data-orange-pulls="(\d+)"`)
 	teamPattern = regexp.MustCompile(`data-team="([a-z]+)"`)
+	// A reaction button and its count, as the emoji stream sends them.
+	reactionButton = regexp.MustCompile(`data-emoji="([^"]+)"\s+data-count="(\d+)"`)
 )
 
 func pulls(page string) int64 {
@@ -594,33 +594,40 @@ func (s *screen) onPage(event, data string) {
 }
 
 func (s *screen) onEmoji(event, data string) {
-	switch event {
-	case "datastar-patch-elements":
-		s.stats.balloons.Add(int64(strings.Count(data, "<emoji-balloon")))
-	case "datastar-patch-signals":
-		var counts map[string]int64
-		if err := json.Unmarshal([]byte(strings.TrimPrefix(data, "signals ")), &counts); err != nil {
+	if event != "datastar-patch-elements" {
+		return
+	}
+	s.stats.balloons.Add(int64(strings.Count(data, "<emoji-balloon")))
+	// The emoji stream also replaces the reaction buttons on every smash; their data-count is what each screen shows.
+	if !strings.Contains(data, `id="reaction-buttons"`) {
+		return
+	}
+	counts := map[string]int64{}
+	for _, match := range reactionButton.FindAllStringSubmatch(data, -1) {
+		count, err := strconv.ParseInt(match[2], 10, 64)
+		if err != nil {
 			s.stats.broken.Add(1)
 			return
 		}
-		now := time.Now()
-		var others int64
-		for name, count := range counts {
-			if name != probeSignal {
-				others += count
-			}
-		}
-		s.smashCount.Store(others)
-		seen := s.probeSeen.Load()
-		for smash := seen + 1; smash <= counts[probeSignal]; smash++ {
-			if sent, ok := s.probe.sentTime(smash); ok {
-				s.stats.mu.Lock()
-				s.stats.screenTimes = append(s.stats.screenTimes, now.Sub(sent))
-				s.stats.mu.Unlock()
-			}
-		}
-		s.probeSeen.Store(max(seen, counts[probeSignal]))
+		counts[match[1]] = count
 	}
+	now := time.Now()
+	var others int64
+	for emoji, count := range counts {
+		if emoji != probeEmoji {
+			others += count
+		}
+	}
+	s.smashCount.Store(others)
+	seen := s.probeSeen.Load()
+	for smash := seen + 1; smash <= counts[probeEmoji]; smash++ {
+		if sent, ok := s.probe.sentTime(smash); ok {
+			s.stats.mu.Lock()
+			s.stats.screenTimes = append(s.stats.screenTimes, now.Sub(sent))
+			s.stats.mu.Unlock()
+		}
+	}
+	s.probeSeen.Store(max(seen, counts[probeEmoji]))
 }
 
 // follow reads a Brotli-compressed Datastar SSE stream, as a phone's browser does, until ctx ends.

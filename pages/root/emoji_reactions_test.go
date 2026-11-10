@@ -3,6 +3,8 @@ package root_test
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -35,10 +37,9 @@ func TestEmojiReactions_ConcurrentSmashes_EverySmashIsCounted(t *testing.T) {
 	smashes.Wait()
 
 	// Then
-	stream := openEmojiStream(app, app.NewAttendee())
-	actualCounts := nextEmojiCounts(stream)
-	if actualCounts.ThumbsUpEmojiCount != expectedThumbsUpCount {
-		t.Fatalf("expected 👍 count %d, got %d", expectedThumbsUpCount, actualCounts.ThumbsUpEmojiCount)
+	actualCounts := reactionCounts(t, app.DeckPage(app.NewAttendee()))
+	if actualCounts["👍"] != expectedThumbsUpCount {
+		t.Fatalf("expected 👍 count %d, got %d", expectedThumbsUpCount, actualCounts["👍"])
 	}
 }
 
@@ -53,7 +54,7 @@ func TestEmojiReactions_BurstOfSmashes_OneBalloonPerSmash(t *testing.T) {
 	expectedBalloonCount := 20
 	app := apptest.Start(t)
 	stream := openEmojiStream(app, app.NewAttendee())
-	nextEmojiCounts(stream) // initial counts on connect
+	nextReactionCounts(stream) // the buttons with their counts, on connect
 	smasher := app.NewAttendee()
 
 	// When
@@ -79,7 +80,7 @@ func TestEmojiReactions_UnknownEmoji_IsRejected(t *testing.T) {
 
 	// Given
 	expectedStatus := http.StatusBadRequest
-	expectedCounts := emojiCounts{}
+	expectedTotal := 0
 	app := apptest.Start(t)
 	attendee := app.NewAttendee()
 
@@ -90,21 +91,35 @@ func TestEmojiReactions_UnknownEmoji_IsRejected(t *testing.T) {
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	actualCounts := nextEmojiCounts(openEmojiStream(app, app.NewAttendee()))
-	if actualCounts != expectedCounts {
-		t.Fatalf("expected counts %+v, got %+v", expectedCounts, actualCounts)
+	actualCounts := reactionCounts(t, app.DeckPage(app.NewAttendee()))
+	actualTotal := 0
+	for _, count := range actualCounts {
+		actualTotal += count
+	}
+	if actualTotal != expectedTotal {
+		t.Fatalf("expected no counts to change, got %v", actualCounts)
 	}
 }
 
 // --- Local helpers for the emoji reaction tests ---
 
-// emojiCounts mirrors the Datastar signals the reaction bar reads ($ThumbsUpEmojiCount etc.).
-type emojiCounts struct {
-	ThumbsUpEmojiCount int
-	ConfettiEmojiCount int
-	CryLaughEmojiCount int
-	FireEmojiCount     int
-	HeartEmojiCount    int
+var reactionButton = regexp.MustCompile(`data-emoji="([^"]+)"\s+data-count="(\d+)"`)
+
+// reactionCounts reads each reaction button's count from its data-count, in a page or a buttons patch.
+func reactionCounts(t *testing.T, html string) map[string]int {
+	t.Helper()
+	counts := map[string]int{}
+	for _, match := range reactionButton.FindAllStringSubmatch(html, -1) {
+		count, err := strconv.Atoi(match[2])
+		if err != nil {
+			t.Fatalf("invalid count %q: %v", match[2], err)
+		}
+		counts[match[1]] = count
+	}
+	if len(counts) == 0 {
+		t.Fatalf("no reaction buttons found:\n%s", apptest.Truncate(html, 500))
+	}
+	return counts
 }
 
 func postEmoji(app *apptest.App, client *http.Client, emoji string) int {
@@ -136,26 +151,21 @@ func openEmojiStream(app *apptest.App, client *http.Client) *apptest.Stream {
 	return app.OpenStream(client, "/root/api/emoji/sse")
 }
 
-func nextEmojiCounts(stream *apptest.Stream) emojiCounts {
+// nextReactionCounts waits for the reaction buttons on the emoji stream and returns their counts.
+func nextReactionCounts(stream *apptest.Stream) map[string]int {
 	stream.T.Helper()
 	timeout := time.After(5 * time.Second)
 	for {
 		select {
 		case event, open := <-stream.Events:
 			if !open {
-				stream.T.Fatalf("emoji stream closed before sending counts")
+				stream.T.Fatalf("emoji stream closed before sending the buttons")
 			}
-			if event.Name != "datastar-patch-signals" {
-				continue
+			if html := strings.Join(event.Data, "\n"); event.Name == "datastar-patch-elements" && strings.Contains(html, `id="reaction-buttons"`) {
+				return reactionCounts(stream.T, html)
 			}
-			counts := emojiCounts{}
-			signals := strings.TrimPrefix(strings.Join(event.Data, ""), "signals ")
-			if err := json.Unmarshal([]byte(signals), &counts); err != nil {
-				stream.T.Fatalf("failed to decode emoji counts %q: %v", signals, err)
-			}
-			return counts
 		case <-timeout:
-			stream.T.Fatalf("no emoji counts within 5 seconds")
+			stream.T.Fatalf("no reaction buttons within 5 seconds")
 		}
 	}
 }
@@ -165,7 +175,7 @@ func nextEmojiCounts(stream *apptest.Stream) emojiCounts {
 // for a stream go out together.
 func countBalloonsUntilQuiet(stream *apptest.Stream, emoji string, quietPeriod time.Duration) int {
 	stream.T.Helper()
-	balloonMarkup := `emoji="` + emoji + `"`
+	balloonMarkup := `<emoji-balloon emoji="` + emoji + `"`
 	count := 0
 	for {
 		select {

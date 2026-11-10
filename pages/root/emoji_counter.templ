@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -17,34 +18,20 @@ import (
 // Emoji reactions: every button smash deserves to count (see the Why in README.md).
 //
 // Counts live in the SQLite table emoji_counter and are incremented in SQL, so concurrent smashes
-// cannot overwrite each other. Every smash is also published as its own NATS message on
-// emojiSmashedSubject; each connected reaction bar receives every message and shows one balloon
-// per smash. Do not replace this with a KV watcher: watchers deliver the latest value, which
+// cannot overwrite each other. They are rendered on the server, like all shared state: they arrive with the page,
+// and on every smash the reaction bar's stream replaces the buttons with their new counts. Every smash is also
+// published as its own NATS message on emojiSmashedSubject; each connected reaction bar receives every message and
+// shows one balloon per smash. Do not replace this with a KV watcher: watchers deliver the latest value, which
 // merges bursts of smashes into one update.
 
 const emojiSmashedSubject = "reactions.emoji.smashed"
 
-// reactionEmoji is one button in the reaction bar. SignalName is the Datastar signal holding its count.
-type reactionEmoji struct {
-	Emoji      string
-	SignalName string
-}
-
-var reactionEmojis = []reactionEmoji{
-	{Emoji: "👍", SignalName: "ThumbsUpEmojiCount"},
-	{Emoji: "🎉", SignalName: "ConfettiEmojiCount"},
-	{Emoji: "😂", SignalName: "CryLaughEmojiCount"},
-	{Emoji: "🔥", SignalName: "FireEmojiCount"},
-	{Emoji: "❤️", SignalName: "HeartEmojiCount"},
-}
+// reactionEmojis are the buttons in the reaction bar, in order. Adding an emoji here is all it takes: the bar,
+// the counting and the balloons follow from this list.
+var reactionEmojis = []string{"👍", "🎉", "😂", "🔥", "❤️"}
 
 func isReactionEmoji(emoji string) bool {
-	for _, reaction := range reactionEmojis {
-		if reaction.Emoji == emoji {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(reactionEmojis, emoji)
 }
 
 func incrementEmojiCount(db *sql.DB, emoji string) error {
@@ -58,15 +45,9 @@ func incrementEmojiCount(db *sql.DB, emoji string) error {
 	return nil
 }
 
-// emojiCountSignals returns every reaction's count keyed by its signal name, with 0 for emojis nobody has smashed yet.
-func emojiCountSignals(db *sql.DB) (signals map[string]int64, err error) {
-	signalNameByEmoji := map[string]string{}
-	signals = map[string]int64{}
-	for _, reaction := range reactionEmojis {
-		signalNameByEmoji[reaction.Emoji] = reaction.SignalName
-		signals[reaction.SignalName] = 0
-	}
-
+// emojiCounts returns every reaction's count, with 0 for emojis nobody has smashed yet.
+func emojiCounts(db *sql.DB) (counts map[string]int64, err error) {
+	counts = map[string]int64{}
 	rows, err := db.Query(`SELECT emoji, click_count FROM emoji_counter`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read emoji counts: %w", err)
@@ -83,22 +64,21 @@ func emojiCountSignals(db *sql.DB) (signals map[string]int64, err error) {
 		if err := rows.Scan(&emoji, &count); err != nil {
 			return nil, fmt.Errorf("failed to scan emoji count: %w", err)
 		}
-		if signalName, known := signalNameByEmoji[emoji]; known {
-			signals[signalName] = count
-		}
+		counts[emoji] = count
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to read emoji counts: %w", err)
 	}
-	return signals, nil
+	return counts, nil
 }
 
-func patchEmojiCounts(sse *datastar.ServerSentEventGenerator, db *sql.DB) error {
-	signals, err := emojiCountSignals(db)
+// patchReactionButtons sends the buttons with their current counts; Datastar morphs them into the bar.
+func patchReactionButtons(sse *datastar.ServerSentEventGenerator, db *sql.DB, inviteKey string) error {
+	counts, err := emojiCounts(db)
 	if err != nil {
 		return err
 	}
-	return sse.MarshalAndPatchSignals(signals)
+	return sse.PatchElementTempl(reactionButtons(inviteKey, counts))
 }
 
 // emojiBalloon is the balloon for one smash. The emoji was checked against reactionEmojis before it was published.
@@ -124,9 +104,11 @@ func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 			}
 		}()
 
+		inviteKey := chi.URLParam(r, "inviteKey")
+
 		// NewSSE sends the response headers; from here on, failures are logged (logStreamFailure) and end the stream.
 		sse := datastar.NewSSE(w, r, compressedStream())
-		if err := patchEmojiCounts(sse, db); err != nil {
+		if err := patchReactionButtons(sse, db, inviteKey); err != nil {
 			logStreamFailure(logger, r, "failed to send initial emoji counts", err)
 			return
 		}
@@ -143,7 +125,7 @@ func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 				for range len(smashes) {
 					balloons += emojiBalloon(<-smashes)
 				}
-				if err := patchEmojiCounts(sse, db); err != nil {
+				if err := patchReactionButtons(sse, db, inviteKey); err != nil {
 					logStreamFailure(logger, r, "failed to send emoji counts", err)
 					return
 				}
@@ -193,31 +175,40 @@ func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 	})
 }
 
-templ EmojiVoteWidget(inviteKey string) {
-	<div
-		class="reaction-bar"
-		data-init={ streamAction(inviteKey, "/root/api/emoji/sse") }
-		data-on:click__stop={ postAction(inviteKey, "/root/api/emoji/increment") }
-	>
-		<button class="emoji-balloon-button" data-on:click="$emoji='👍';">
-			<span data-text="$ThumbsUpEmojiCount"></span>
-			👍
-		</button>
-		<button class="emoji-balloon-button" data-on:click="$emoji='🎉';">
-			<span data-text="$ConfettiEmojiCount"></span>
-			🎉
-		</button>
-		<button class="emoji-balloon-button" data-on:click="$emoji='😂';">
-			<span data-text="$CryLaughEmojiCount"></span>
-			😂
-		</button>
-		<button class="emoji-balloon-button" data-on:click="$emoji='🔥';">
-			<span data-text="$FireEmojiCount"></span>
-			🔥
-		</button>
-		<button class="emoji-balloon-button" data-on:click="$emoji='❤️';">
-			<span data-text="$HeartEmojiCount"></span>
-			❤️
-		</button>
+// EmojiVoteWidget is the reaction bar. Its stream (data-init) keeps the counts current and brings the balloons.
+templ EmojiVoteWidget(db *sql.DB, inviteKey string) {
+	<div class="reaction-bar" data-init={ streamAction(inviteKey, "/root/api/emoji/sse") }>
+		{{ counts, err := emojiCounts(db) }}
+		if err != nil {
+			@reactionButtons(inviteKey, nil)
+		} else {
+			@reactionButtons(inviteKey, counts)
+		}
+	</div>
+}
+
+// reactionButtons are the buttons with their counts; nil counts (the database failed) show "?" until the next
+// update. Each button posts its own emoji, so a tap between two buttons sends nothing. data-emoji lets the balloons
+// (static/emoji-balloon.js) and the tests find a button; data-count is its count for the tests.
+templ reactionButtons(inviteKey string, counts map[string]int64) {
+	<div id="reaction-buttons" class="reaction-buttons">
+		for _, emoji := range reactionEmojis {
+			<button
+				type="button"
+				class="emoji-balloon-button"
+				data-emoji={ emoji }
+				data-count={ fmt.Sprint(counts[emoji]) }
+				data-on:click={ fmt.Sprintf("$emoji='%s'; %s", emoji, postAction(inviteKey, "/root/api/emoji/increment")) }
+			>
+				<span>
+					if counts == nil {
+						?
+					} else {
+						{ fmt.Sprint(counts[emoji]) }
+					}
+				</span>
+				{ emoji }
+			</button>
+		}
 	</div>
 }

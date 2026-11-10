@@ -8,6 +8,11 @@
 	gap: var(--space-1);
 	padding: 4px;
 
+	/* The buttons' own wrapper is only there to be replaced by the stream; for the layout it does not exist. */
+	.reaction-buttons {
+		display: contents;
+	}
+
 	.emoji-balloon-button {
 		flex: 1;
 		min-height: 3rem;

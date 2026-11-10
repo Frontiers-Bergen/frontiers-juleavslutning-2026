@@ -179,19 +179,19 @@ func (a *App) LoadDeckPage(client *http.Client) (string, error) {
 	return string(body), nil
 }
 
-var slideIndexSignal = regexp.MustCompile(`slideIndex:\s*(\d+)`)
+var slideIndexAttribute = regexp.MustCompile(`data-slide-index="(\d+)"`)
 
-// ShownSlideIndex reads which slide the page shows, from the slideIndex Datastar signal rendered by
+// ShownSlideIndex reads which slide the page shows, from the data-slide-index attribute rendered by
 // ActiveSlide. Using the index instead of slide text keeps tests independent of content.
 func ShownSlideIndex(t *testing.T, page string) int {
 	t.Helper()
-	match := slideIndexSignal.FindStringSubmatch(page)
+	match := slideIndexAttribute.FindStringSubmatch(page)
 	if match == nil {
-		t.Fatalf("page has no slideIndex signal:\n%s", Truncate(page, 500))
+		t.Fatalf("page has no data-slide-index:\n%s", Truncate(page, 500))
 	}
 	index, err := strconv.Atoi(match[1])
 	if err != nil {
-		t.Fatalf("invalid slideIndex %q: %v", match[1], err)
+		t.Fatalf("invalid data-slide-index %q: %v", match[1], err)
 	}
 	return index
 }
