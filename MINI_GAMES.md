@@ -3,9 +3,9 @@
 A mini-game is a slide that everyone plays from their phone while the big screen shows the result.
 Two finished games show the way; copy the one closest to your idea:
 
-- **Tug of war** (`pages/root/tug_of_war.*`, `tug_of_war_test.go`): only Go, SQLite and Datastar, no JavaScript.
+- **Tug of war** (`pages/root/tug_of_war.*`, including `tug_of_war_test.go`): only Go, SQLite and Datastar, no JavaScript.
   Two random, even teams; the emoji reaction buttons are the pulls. Start here: most games need nothing more.
-- **Shake the snow globe** (`static/snow-globe.js`, `pages/root/snow_globe.*`, `snow_globe_test.go`): a small
+- **Shake the snow globe** (`static/snow-globe.js`, `pages/root/snow_globe.*`, including `snow_globe_test.go`): a small
   Rocket web component reads the phone's motion sensor; the snowfall on every other screen is server-rendered HTML and CSS.
 
 Read "Page life cycle" in `AGENTS.md` first. In short: the server holds the state, every tap is a short POST,
@@ -15,7 +15,7 @@ Ideas waiting for someone: "Mini-game ideas" in `README.md`.
 
 ## A game without JavaScript (like tug of war)
 
-1. **Files.** Create `pages/root/<game>.templ`, `<game>.css` next to it and `<game>_test.go` in the repo root.
+1. **Files.** Create `pages/root/<game>.templ`, with `<game>.css` and `<game>_test.go` next to it: a game's files stay together.
    The CSS is picked up automatically; nest all of it under the game's root class (`.my-game { ... }`).
 2. **State in SQLite.** Add your tables to `schema.sql`. It runs on every startup, so use `CREATE TABLE IF NOT EXISTS`
    and `INSERT OR IGNORE`. Changed a table you already created? Delete your local `presentation.db`.
@@ -31,8 +31,8 @@ Ideas waiting for someone: "Mini-game ideas" in `README.md`.
    Or reuse the emoji reaction buttons, which are always on screen: tug of war hooks into `IncrementEmojiRoute`
    through `countSmashForTugOfWar`.
 6. **Time.** Only things that change with time alone need a timer (a countdown); see `tickTugOfWarClock`.
-7. **Tests.** HTTP tests with `startTestApp` (`app_test.go`): phones are `app.newAttendee()`, the presenter is
-   `app.newPresenter()`. Put semantic `data-` attributes on the slide (`data-tug-of-war-phase`) and read them in tests.
+7. **Tests.** HTTP tests in `<game>_test.go` (`package root_test`) start the app with `apptest.Start(t)`: phones are
+   `app.NewAttendee()`, the presenter is `app.NewPresenter()`. Put semantic `data-` attributes on the slide (`data-tug-of-war-phase`) and read them in tests.
    If the game matters on the evening, add it to `browser-tools/browser_check.mjs`.
 
 ## A game that needs the browser (like the snow globe)

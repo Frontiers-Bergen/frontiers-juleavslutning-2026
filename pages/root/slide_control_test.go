@@ -1,4 +1,4 @@
-package app
+package root_test
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
@@ -20,18 +21,18 @@ func TestSlideControl_Attendee_CannotChangeTheSlide(t *testing.T) {
 	// Given
 	expectedStatus := http.StatusForbidden
 	expectedSlideIndex := 0
-	app := startTestApp(t)
-	attendee := app.newAttendee()
-	app.deckPage(attendee)
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
+	app.DeckPage(attendee)
 
 	// When
-	actualStatus := app.post(attendee, "/root/api/slides/set?index=1")
+	actualStatus := app.Post(attendee, "/root/api/slides/set?index=1")
 
 	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	actualSlideIndex := shownSlideIndex(t, app.deckPage(attendee))
+	actualSlideIndex := apptest.ShownSlideIndex(t, app.DeckPage(attendee))
 	if actualSlideIndex != expectedSlideIndex {
 		t.Fatalf("expected slide %d, got %d", expectedSlideIndex, actualSlideIndex)
 	}
@@ -47,20 +48,20 @@ func TestSlideControl_Presenter_ChangesTheSlideForEveryone(t *testing.T) {
 	// Given
 	expectedStatus := http.StatusNoContent
 	expectedSlideIndex := 1
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	attendee := app.newAttendee()
-	app.deckPage(presenter)
-	app.deckPage(attendee)
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	attendee := app.NewAttendee()
+	app.DeckPage(presenter)
+	app.DeckPage(attendee)
 
 	// When
-	actualStatus := app.post(presenter, "/root/api/slides/set?index=1")
+	actualStatus := app.Post(presenter, "/root/api/slides/set?index=1")
 
 	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	actualSlideIndex := shownSlideIndex(t, app.deckPage(attendee))
+	actualSlideIndex := apptest.ShownSlideIndex(t, app.DeckPage(attendee))
 	if actualSlideIndex != expectedSlideIndex {
 		t.Fatalf("expected slide %d, got %d", expectedSlideIndex, actualSlideIndex)
 	}
@@ -76,17 +77,17 @@ func TestSlideControl_NobodyHasOpenedTheDeck_PresenterCanStillChangeTheSlide(t *
 	// Given
 	expectedStatus := http.StatusNoContent
 	expectedSlideIndex := 1
-	app := startTestApp(t)
-	presenter := app.newPresenter()
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
 
 	// When
-	actualStatus := app.post(presenter, "/root/api/slides/set?index=1")
+	actualStatus := app.Post(presenter, "/root/api/slides/set?index=1")
 
 	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	actualSlideIndex := shownSlideIndex(t, app.deckPage(presenter))
+	actualSlideIndex := apptest.ShownSlideIndex(t, app.DeckPage(presenter))
 	if actualSlideIndex != expectedSlideIndex {
 		t.Fatalf("expected slide %d, got %d", expectedSlideIndex, actualSlideIndex)
 	}
@@ -101,15 +102,15 @@ func TestPresenterNavigation_ShowsTheSlidesSourceFile(t *testing.T) {
 
 	// Given
 	expectedSource := regexp.MustCompile(`class="presenter-nav-source">slides/[a-z_]+\.md<`)
-	app := startTestApp(t)
-	presenter := app.newPresenter()
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
 
 	// When
-	page := app.deckPage(presenter)
+	page := app.DeckPage(presenter)
 
 	// Then
 	if !expectedSource.MatchString(page) {
-		t.Fatalf("the presenter controls do not name the slide's markdown file:\n%s", truncate(page, 1500))
+		t.Fatalf("the presenter controls do not name the slide's markdown file:\n%s", apptest.Truncate(page, 1500))
 	}
 }
 
@@ -122,10 +123,10 @@ func TestPresenterNavigation_Attendee_SeesNoSourceFile(t *testing.T) {
 
 	// Given
 	hiddenSource := `class="presenter-nav-source"`
-	app := startTestApp(t)
+	app := apptest.Start(t)
 
 	// When
-	page := app.deckPage(app.newAttendee())
+	page := app.DeckPage(app.NewAttendee())
 
 	// Then
 	if strings.Contains(page, hiddenSource) {
@@ -143,11 +144,11 @@ func TestPresenterNavigation_FirstSlide_OffersNoPreviousSlide(t *testing.T) {
 	// Given
 	expectedNextAction := slideSetAction(1)
 	missingPreviousAction := slideSetAction(-1)
-	app := startTestApp(t)
-	presenter := app.newPresenter()
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
 
 	// When
-	page := app.deckPage(presenter)
+	page := app.DeckPage(presenter)
 
 	// Then
 	if strings.Contains(page, missingPreviousAction) {
@@ -166,14 +167,14 @@ func TestPresenterNavigation_LastSlide_OffersNoNextSlide(t *testing.T) {
 	})
 
 	// Given
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	lastIndex := app.moveToLastSlide(presenter)
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	lastIndex := moveToLastSlide(app, presenter)
 	expectedPreviousAction := slideSetAction(lastIndex - 1)
 	missingNextAction := slideSetAction(lastIndex + 1)
 
 	// When
-	page := app.deckPage(presenter)
+	page := app.DeckPage(presenter)
 
 	// Then
 	if strings.Contains(page, missingNextAction) {
@@ -190,11 +191,11 @@ func slideSetAction(index int) string {
 }
 
 // moveToLastSlide steps the presenter forward until the deck stops advancing and returns the last index.
-func (app *testApp) moveToLastSlide(presenter *http.Client) int {
-	app.t.Helper()
+func moveToLastSlide(app *apptest.App, presenter *http.Client) int {
+	app.T.Helper()
 	for index := 1; ; index++ {
-		app.post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index))
-		if shown := shownSlideIndex(app.t, app.deckPage(presenter)); shown < index {
+		app.Post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index))
+		if shown := apptest.ShownSlideIndex(app.T, app.DeckPage(presenter)); shown < index {
 			return shown
 		}
 	}
@@ -209,13 +210,13 @@ func TestPresenterNotes_OnlyThePresenterSeesThem(t *testing.T) {
 
 	// Given
 	notesMarker := `class="presenter-notes"`
-	app := startTestApp(t)
-	attendee := app.newAttendee()
-	presenter := app.newPresenter()
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
+	presenter := app.NewPresenter()
 
 	// When
-	attendeePage := app.deckPage(attendee)
-	presenterPage := app.deckPage(presenter)
+	attendeePage := app.DeckPage(attendee)
+	presenterPage := app.DeckPage(presenter)
 
 	// Then
 	if strings.Contains(attendeePage, notesMarker) {

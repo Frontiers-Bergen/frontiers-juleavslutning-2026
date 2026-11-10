@@ -1,4 +1,4 @@
-package app
+package root_test
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
@@ -20,13 +21,13 @@ func TestTugOfWar_Teams_AreEven(t *testing.T) {
 
 	// Given
 	maximumDifference := 1
-	app := startTestApp(t)
-	firstViewerPage := app.showSlideWith(app.newPresenter(), "data-tug-of-war-phase")
+	app := apptest.Start(t)
+	firstViewerPage := app.ShowSlideWith(app.NewPresenter(), "data-tug-of-war-phase")
 	teamSizes := map[string]int{tugOfWarState(t, firstViewerPage).team: 1}
 
 	// When
 	for range 6 {
-		teamSizes[tugOfWarState(t, app.deckPage(app.newAttendee())).team]++
+		teamSizes[tugOfWarState(t, app.DeckPage(app.NewAttendee())).team]++
 	}
 
 	// Then
@@ -45,8 +46,8 @@ func TestTugOfWar_PhonesJoiningAtOnce_TeamsAreEven(t *testing.T) {
 
 	// Given
 	expectedTeamSize := 20
-	app := startTestApp(t)
-	firstPhonePage := app.showSlideWith(app.newPresenter(), "data-tug-of-war-phase")
+	app := apptest.Start(t)
+	firstPhonePage := app.ShowSlideWith(app.NewPresenter(), "data-tug-of-war-phase")
 	teamSizes := map[string]int{tugOfWarState(t, firstPhonePage).team: 1}
 	var mu sync.Mutex
 
@@ -54,7 +55,7 @@ func TestTugOfWar_PhonesJoiningAtOnce_TeamsAreEven(t *testing.T) {
 	var phones sync.WaitGroup
 	for range 2*expectedTeamSize - 1 {
 		phones.Go(func() {
-			team := tugOfWarState(t, app.deckPage(app.newAttendee())).team
+			team := tugOfWarState(t, app.DeckPage(app.NewAttendee())).team
 			mu.Lock()
 			defer mu.Unlock()
 			teamSizes[team]++
@@ -77,16 +78,16 @@ func TestTugOfWar_StartingARound_DrawsNewTeams(t *testing.T) {
 
 	// Given
 	expectedTeamSizes := map[string]int{"teal": 1, "orange": 1}
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	app.showSlideWith(presenter, "data-tug-of-war-phase")
-	stillWatching := app.twoPhonesOnTheSameTeam()
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ShowSlideWith(presenter, "data-tug-of-war-phase")
+	stillWatching := twoPhonesOnTheSameTeam(app)
 
 	// When
-	app.startTugOfWar(presenter)
+	startTugOfWar(app, presenter)
 	teamSizes := map[string]int{}
 	for _, phone := range stillWatching {
-		teamSizes[tugOfWarState(t, app.deckPage(phone)).team]++
+		teamSizes[tugOfWarState(t, app.DeckPage(phone)).team]++
 	}
 
 	// Then
@@ -105,18 +106,18 @@ func TestTugOfWar_OnlyThePresenter_CanStartARound(t *testing.T) {
 	// Given
 	expectedStatus := http.StatusForbidden
 	expectedPhase := "waiting"
-	app := startTestApp(t)
-	app.showSlideWith(app.newPresenter(), "data-tug-of-war-phase")
-	attendee := app.newAttendee()
+	app := apptest.Start(t)
+	app.ShowSlideWith(app.NewPresenter(), "data-tug-of-war-phase")
+	attendee := app.NewAttendee()
 
 	// When
-	actualStatus := app.post(attendee, "/root/api/tug-of-war/start")
+	actualStatus := app.Post(attendee, "/root/api/tug-of-war/start")
 
 	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	if phase := tugOfWarState(t, app.deckPage(attendee)).phase; phase != expectedPhase {
+	if phase := tugOfWarState(t, app.DeckPage(attendee)).phase; phase != expectedPhase {
 		t.Fatalf("expected phase %q, got %q", expectedPhase, phase)
 	}
 }
@@ -130,18 +131,18 @@ func TestTugOfWar_SmashBeforeTheCountdownEnds_DoesNotPull(t *testing.T) {
 
 	// Given
 	expectedPulls := 0
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	app.showSlideWith(presenter, "data-tug-of-war-phase")
-	attendee := app.newAttendee()
-	app.deckPage(attendee)
-	app.startTugOfWar(presenter)
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ShowSlideWith(presenter, "data-tug-of-war-phase")
+	attendee := app.NewAttendee()
+	app.DeckPage(attendee)
+	startTugOfWar(app, presenter)
 
 	// When
-	app.smash(attendee)
+	smash(app, attendee)
 
 	// Then
-	state := tugOfWarState(t, app.deckPage(attendee))
+	state := tugOfWarState(t, app.DeckPage(attendee))
 	if state.tealPulls != expectedPulls || state.orangePulls != expectedPulls {
 		t.Fatalf("expected no pulls, got teal %d, orange %d", state.tealPulls, state.orangePulls)
 	}
@@ -156,21 +157,21 @@ func TestTugOfWar_SmashesDuringTheRound_PullForYourTeam(t *testing.T) {
 
 	// Given
 	expectedOwnPulls, expectedOtherPulls := 3, 0
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	app.showSlideWith(presenter, "data-tug-of-war-phase")
-	attendee := app.newAttendee()
-	app.startTugOfWar(presenter)
-	time.Sleep(testTugOfWarRules.Countdown + 50*time.Millisecond)
-	team := tugOfWarState(t, app.deckPage(attendee)).team
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ShowSlideWith(presenter, "data-tug-of-war-phase")
+	attendee := app.NewAttendee()
+	startTugOfWar(app, presenter)
+	time.Sleep(apptest.TugOfWarRules.Countdown + 50*time.Millisecond)
+	team := tugOfWarState(t, app.DeckPage(attendee)).team
 
 	// When
 	for range expectedOwnPulls {
-		app.smash(attendee)
+		smash(app, attendee)
 	}
 
 	// Then
-	state := tugOfWarState(t, app.deckPage(attendee))
+	state := tugOfWarState(t, app.DeckPage(attendee))
 	ownPulls, otherPulls := state.tealPulls, state.orangePulls
 	if team == "orange" {
 		ownPulls, otherPulls = state.orangePulls, state.tealPulls
@@ -190,22 +191,22 @@ func TestTugOfWar_WinningLead_EndsTheRoundEarly(t *testing.T) {
 
 	// Given
 	expectedPhase := "finished"
-	expectedPulls := testTugOfWarRules.WinningLead
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	app.showSlideWith(presenter, "data-tug-of-war-phase")
-	attendee := app.newAttendee()
-	app.startTugOfWar(presenter)
-	time.Sleep(testTugOfWarRules.Countdown + 50*time.Millisecond)
-	team := tugOfWarState(t, app.deckPage(attendee)).team
+	expectedPulls := apptest.TugOfWarRules.WinningLead
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ShowSlideWith(presenter, "data-tug-of-war-phase")
+	attendee := app.NewAttendee()
+	startTugOfWar(app, presenter)
+	time.Sleep(apptest.TugOfWarRules.Countdown + 50*time.Millisecond)
+	team := tugOfWarState(t, app.DeckPage(attendee)).team
 
 	// When
-	for range testTugOfWarRules.WinningLead + 2 {
-		app.smash(attendee)
+	for range apptest.TugOfWarRules.WinningLead + 2 {
+		smash(app, attendee)
 	}
 
 	// Then
-	state := tugOfWarState(t, app.deckPage(attendee))
+	state := tugOfWarState(t, app.DeckPage(attendee))
 	if state.phase != expectedPhase || state.winner != team {
 		t.Fatalf("expected phase %q won by %s, got phase %q won by %q", expectedPhase, team, state.phase, state.winner)
 	}
@@ -224,19 +225,19 @@ func TestTugOfWar_AfterTheRoundEnds_SmashesDoNotPull(t *testing.T) {
 	// Given
 	expectedPulls := 0
 	expectedPhase := "finished"
-	app := startTestApp(t)
-	presenter := app.newPresenter()
-	app.showSlideWith(presenter, "data-tug-of-war-phase")
-	attendee := app.newAttendee()
-	app.deckPage(attendee)
-	app.startTugOfWar(presenter)
-	time.Sleep(testTugOfWarRules.Countdown + testTugOfWarRules.Round + 100*time.Millisecond)
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ShowSlideWith(presenter, "data-tug-of-war-phase")
+	attendee := app.NewAttendee()
+	app.DeckPage(attendee)
+	startTugOfWar(app, presenter)
+	time.Sleep(apptest.TugOfWarRules.Countdown + apptest.TugOfWarRules.Round + 100*time.Millisecond)
 
 	// When
-	app.smash(attendee)
+	smash(app, attendee)
 
 	// Then
-	state := tugOfWarState(t, app.deckPage(attendee))
+	state := tugOfWarState(t, app.DeckPage(attendee))
 	if state.phase != expectedPhase {
 		t.Fatalf("expected phase %q, got %q", expectedPhase, state.phase)
 	}
@@ -247,35 +248,35 @@ func TestTugOfWar_AfterTheRoundEnds_SmashesDoNotPull(t *testing.T) {
 
 // --- Local helpers for the tug of war tests ---
 
-func (app *testApp) startTugOfWar(presenter *http.Client) {
-	app.t.Helper()
-	if status := app.post(presenter, "/root/api/tug-of-war/start"); status != http.StatusNoContent {
-		app.t.Fatalf("presenter could not start the tug of war: status %d", status)
+func startTugOfWar(app *apptest.App, presenter *http.Client) {
+	app.T.Helper()
+	if status := app.Post(presenter, "/root/api/tug-of-war/start"); status != http.StatusNoContent {
+		app.T.Fatalf("presenter could not start the tug of war: status %d", status)
 	}
 }
 
 // twoPhonesOnTheSameTeam opens the slide on new phones until two of them are on the same team; the other
 // phones leave (they never load the page again).
-func (app *testApp) twoPhonesOnTheSameTeam() []*http.Client {
-	app.t.Helper()
+func twoPhonesOnTheSameTeam(app *apptest.App) []*http.Client {
+	app.T.Helper()
 	phonesByTeam := map[string][]*http.Client{}
 	for range 3 {
-		phone := app.newAttendee()
-		team := tugOfWarState(app.t, app.deckPage(phone)).team
+		phone := app.NewAttendee()
+		team := tugOfWarState(app.T, app.DeckPage(phone)).team
 		phonesByTeam[team] = append(phonesByTeam[team], phone)
 		if len(phonesByTeam[team]) == 2 {
 			return phonesByTeam[team]
 		}
 	}
-	app.t.Fatalf("three phones on two teams, yet no two on the same team: %v", phonesByTeam)
+	app.T.Fatalf("three phones on two teams, yet no two on the same team: %v", phonesByTeam)
 	return nil
 }
 
 // smash taps an emoji reaction button, which also pulls for the attendee's team during a round.
-func (app *testApp) smash(attendee *http.Client) {
-	app.t.Helper()
-	if status := app.postEmoji(attendee, "🔥"); status != http.StatusNoContent {
-		app.t.Fatalf("a smash got status %d", status)
+func smash(app *apptest.App, attendee *http.Client) {
+	app.T.Helper()
+	if status := postEmoji(app, attendee, "🔥"); status != http.StatusNoContent {
+		app.T.Fatalf("a smash got status %d", status)
 	}
 }
 
@@ -302,7 +303,7 @@ func tugOfWarState(t *testing.T, page string) tugOfWarPage {
 		match := pattern.FindStringSubmatch(page)
 		if match == nil {
 			if required {
-				t.Fatalf("tug of war slide has no %s:\n%s", pattern, truncate(page, 500))
+				t.Fatalf("tug of war slide has no %s:\n%s", pattern, apptest.Truncate(page, 500))
 			}
 			return ""
 		}

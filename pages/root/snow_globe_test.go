@@ -1,4 +1,4 @@
-package app
+package root_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
@@ -22,15 +23,15 @@ func TestSnowGlobe_Shaking_LetsItSnowOnOtherScreens(t *testing.T) {
 	// Given
 	expectedEnergy := 5
 	expectedFlakes := 15
-	app := startTestApp(t)
-	bigScreen := app.openStream(app.newAttendee(), "/root/api/snow/sse")
-	shaker := app.newAttendee()
+	app := apptest.Start(t)
+	bigScreen := app.OpenStream(app.NewAttendee(), "/root/api/snow/sse")
+	shaker := app.NewAttendee()
 
 	// When
-	app.shake(shaker, 5)
+	shake(app, shaker, 5)
 
 	// Then
-	snowfall, found := bigScreen.nextSnowfall(time.Second)
+	snowfall, found := nextSnowfall(bigScreen, time.Second)
 	if !found {
 		t.Fatalf("expected a snowfall on the big screen, got none")
 	}
@@ -48,15 +49,15 @@ func TestSnowGlobe_TheShakingPhone_DoesNotGetItsOwnSnowTwice(t *testing.T) {
 	})
 
 	// Given
-	app := startTestApp(t)
-	shaker := app.newAttendee()
-	ownScreen := app.openStream(shaker, "/root/api/snow/sse")
+	app := apptest.Start(t)
+	shaker := app.NewAttendee()
+	ownScreen := app.OpenStream(shaker, "/root/api/snow/sse")
 
 	// When
-	app.shake(shaker, 3)
+	shake(app, shaker, 3)
 
 	// Then
-	if _, found := ownScreen.nextSnowfall(500 * time.Millisecond); found {
+	if _, found := nextSnowfall(ownScreen, 500*time.Millisecond); found {
 		t.Fatalf("the shaking phone got its own snow from the server")
 	}
 }
@@ -71,14 +72,14 @@ func TestSnowGlobe_HugeNumberOfShakes_IsCapped(t *testing.T) {
 	// Given
 	expectedEnergy := 20
 	expectedFlakes := 24
-	app := startTestApp(t)
-	bigScreen := app.openStream(app.newAttendee(), "/root/api/snow/sse")
+	app := apptest.Start(t)
+	bigScreen := app.OpenStream(app.NewAttendee(), "/root/api/snow/sse")
 
 	// When
-	app.shake(app.newAttendee(), 1000)
+	shake(app, app.NewAttendee(), 1000)
 
 	// Then
-	snowfall, found := bigScreen.nextSnowfall(time.Second)
+	snowfall, found := nextSnowfall(bigScreen, time.Second)
 	if !found || snowfall.energy != expectedEnergy || snowfall.flakes != expectedFlakes {
 		t.Fatalf("expected a capped snowfall (energy %d, %d flakes), got %+v (found: %t)",
 			expectedEnergy, expectedFlakes, snowfall, found)
@@ -94,10 +95,10 @@ func TestSnowGlobe_NoShakes_IsRejected(t *testing.T) {
 
 	// Given
 	expectedStatus := http.StatusBadRequest
-	app := startTestApp(t)
+	app := apptest.Start(t)
 
 	// When
-	actualStatus := app.postShakes(app.newAttendee(), 0)
+	actualStatus := postShakes(app, app.NewAttendee(), 0)
 
 	// Then
 	if actualStatus != expectedStatus {
@@ -108,24 +109,24 @@ func TestSnowGlobe_NoShakes_IsRejected(t *testing.T) {
 // --- Local helpers for the snow globe tests ---
 
 // shake sends a burst of shakes the way <snow-globe> does when the shaking stops.
-func (app *testApp) shake(phone *http.Client, shakes int) {
-	app.t.Helper()
-	if status := app.postShakes(phone, shakes); status != http.StatusNoContent {
-		app.t.Fatalf("sending %d shakes got status %d", shakes, status)
+func shake(app *apptest.App, phone *http.Client, shakes int) {
+	app.T.Helper()
+	if status := postShakes(app, phone, shakes); status != http.StatusNoContent {
+		app.T.Fatalf("sending %d shakes got status %d", shakes, status)
 	}
 }
 
-func (app *testApp) postShakes(phone *http.Client, shakes int) int {
-	app.t.Helper()
+func postShakes(app *apptest.App, phone *http.Client, shakes int) int {
+	app.T.Helper()
 	body, err := json.Marshal(map[string]int{"shakes": shakes})
 	if err != nil {
-		app.t.Fatalf("failed to marshal shakes: %v", err)
+		app.T.Fatalf("failed to marshal shakes: %v", err)
 	}
-	response, err := phone.Post(app.server.URL+"/"+testInviteKey+"/root/api/snow/shake", "application/json", strings.NewReader(string(body)))
+	response, err := phone.Post(app.URL()+"/"+apptest.InviteKey+"/root/api/snow/shake", "application/json", strings.NewReader(string(body)))
 	if err != nil {
-		app.t.Fatalf("POST shakes failed: %v", err)
+		app.T.Fatalf("POST shakes failed: %v", err)
 	}
-	closeBody(app.t, response)
+	apptest.CloseBody(app.T, response)
 	return response.StatusCode
 }
 
@@ -137,23 +138,23 @@ type snowfallPatch struct {
 var snowfallEnergy = regexp.MustCompile(`class="snowfall" style="--energy: (\d+);"`)
 
 // nextSnowfall waits up to timeout for a snowfall appended to the page.
-func (stream *sseStream) nextSnowfall(timeout time.Duration) (snowfallPatch, bool) {
-	stream.t.Helper()
+func nextSnowfall(stream *apptest.Stream, timeout time.Duration) (snowfallPatch, bool) {
+	stream.T.Helper()
 	deadline := time.After(timeout)
 	for {
 		select {
-		case event, open := <-stream.events:
+		case event, open := <-stream.Events:
 			if !open {
 				return snowfallPatch{}, false
 			}
-			elements := strings.Join(event.data, "\n")
+			elements := strings.Join(event.Data, "\n")
 			match := snowfallEnergy.FindStringSubmatch(elements)
-			if event.name != "datastar-patch-elements" || match == nil {
+			if event.Name != "datastar-patch-elements" || match == nil {
 				continue
 			}
 			energy, err := strconv.Atoi(match[1])
 			if err != nil {
-				stream.t.Fatalf("invalid snowfall energy %q: %v", match[1], err)
+				stream.T.Fatalf("invalid snowfall energy %q: %v", match[1], err)
 			}
 			return snowfallPatch{energy: energy, flakes: strings.Count(elements, `class="snowflake"`)}, true
 		case <-deadline:

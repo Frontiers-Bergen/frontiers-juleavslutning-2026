@@ -1,4 +1,4 @@
-package app
+package root_test
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
@@ -28,15 +29,15 @@ func TestPollVoting_ChangingYourVote_ReplacesThePreviousVote(t *testing.T) {
 		"its-tiiime":                0,
 		"smash-the-halls":           0,
 	}
-	app := startTestApp(t)
-	attendee := app.newAttendee()
-	app.vote(attendee, "smash-the-halls")
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
+	vote(app, attendee, "smash-the-halls")
 
 	// When
-	app.vote(attendee, "rage-against-the-debounce")
+	vote(app, attendee, "rage-against-the-debounce")
 
 	// Then
-	actualCounts := voteCounts(t, app.showPollResults(app.newPresenter(), testPollKey))
+	actualCounts := voteCounts(t, showPollResults(app, app.NewPresenter(), testPollKey))
 	assertVoteCounts(t, expectedCounts, actualCounts)
 }
 
@@ -54,16 +55,16 @@ func TestPollResults_EveryPersonCountsOnce(t *testing.T) {
 		"its-tiiime":                3,
 		"smash-the-halls":           1,
 	}
-	app := startTestApp(t)
+	app := apptest.Start(t)
 
 	// When
-	app.vote(app.newAttendee(), "its-tiiime")
-	app.vote(app.newAttendee(), "its-tiiime")
-	app.vote(app.newAttendee(), "its-tiiime")
-	app.vote(app.newAttendee(), "smash-the-halls")
+	vote(app, app.NewAttendee(), "its-tiiime")
+	vote(app, app.NewAttendee(), "its-tiiime")
+	vote(app, app.NewAttendee(), "its-tiiime")
+	vote(app, app.NewAttendee(), "smash-the-halls")
 
 	// Then
-	actualCounts := voteCounts(t, app.showPollResults(app.newPresenter(), testPollKey))
+	actualCounts := voteCounts(t, showPollResults(app, app.NewPresenter(), testPollKey))
 	assertVoteCounts(t, expectedCounts, actualCounts)
 }
 
@@ -82,33 +83,33 @@ func TestPollVoting_UnknownOption_IsRejected(t *testing.T) {
 		"its-tiiime":                0,
 		"smash-the-halls":           0,
 	}
-	app := startTestApp(t)
+	app := apptest.Start(t)
 
 	// When
-	actualStatus := app.post(app.newAttendee(), "/root/api/poll/vote?poll="+testPollKey+"&option=jingle-bugs")
+	actualStatus := app.Post(app.NewAttendee(), "/root/api/poll/vote?poll="+testPollKey+"&option=jingle-bugs")
 
 	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}
-	actualCounts := voteCounts(t, app.showPollResults(app.newPresenter(), testPollKey))
+	actualCounts := voteCounts(t, showPollResults(app, app.NewPresenter(), testPollKey))
 	assertVoteCounts(t, expectedCounts, actualCounts)
 }
 
 // --- Local helpers for the poll tests ---
 
-func (app *testApp) vote(client *http.Client, optionKey string) {
-	app.t.Helper()
+func vote(app *apptest.App, client *http.Client, optionKey string) {
+	app.T.Helper()
 	path := fmt.Sprintf("/root/api/poll/vote?poll=%s&option=%s", testPollKey, optionKey)
-	if status := app.post(client, path); status >= 300 {
-		app.t.Fatalf("voting for %s returned status %d", optionKey, status)
+	if status := app.Post(client, path); status >= 300 {
+		app.T.Fatalf("voting for %s returned status %d", optionKey, status)
 	}
 }
 
 // showPollResults moves the deck to the results slide for pollKey and returns the page an attendee sees.
-func (app *testApp) showPollResults(presenter *http.Client, pollKey string) string {
-	app.t.Helper()
-	return app.showSlideWith(presenter, fmt.Sprintf(`data-poll-results="%s"`, pollKey))
+func showPollResults(app *apptest.App, presenter *http.Client, pollKey string) string {
+	app.T.Helper()
+	return app.ShowSlideWith(presenter, fmt.Sprintf(`data-poll-results="%s"`, pollKey))
 }
 
 var pollOptionResult = regexp.MustCompile(`data-option-key="([^"]+)"\s+data-vote-count="(\d+)"`)
@@ -125,7 +126,7 @@ func voteCounts(t *testing.T, resultsPage string) map[string]int {
 		counts[match[1]] = count
 	}
 	if len(counts) == 0 {
-		t.Fatalf("results page shows no options:\n%s", truncate(resultsPage, 500))
+		t.Fatalf("results page shows no options:\n%s", apptest.Truncate(resultsPage, 500))
 	}
 	return counts
 }

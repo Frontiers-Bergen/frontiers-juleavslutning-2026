@@ -1,4 +1,4 @@
-package app
+package root_test
 
 import (
 	"image"
@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 	"github.com/makiuchi-d/gozxing"
 	zxingqr "github.com/makiuchi-d/gozxing/qrcode"
@@ -22,12 +23,12 @@ func TestInviteQRCode_Scanning_OpensTheDeck(t *testing.T) {
 	})
 
 	// Given
-	app := startTestApp(t)
-	expectedLink := app.server.URL + "/" + testInviteKey + "/"
-	bigScreen := app.newAttendee()
+	app := apptest.Start(t)
+	expectedLink := app.URL() + "/" + apptest.InviteKey + "/"
+	bigScreen := app.NewAttendee()
 
 	// When
-	status, contentType, svg := app.get(bigScreen, "/"+testInviteKey+"/qr.svg")
+	status, contentType, svg := app.Get(bigScreen, "/"+apptest.InviteKey+"/qr.svg")
 	actualLink := scanQRCodeSVG(t, svg)
 
 	// Then
@@ -48,11 +49,11 @@ func TestRepositoryQRCode_Scanning_OpensTheRepository(t *testing.T) {
 
 	// Given
 	expectedLink := "https://github.com/frontiers-bergen/frontiers-juleavslutning-2026"
-	app := startTestApp(t)
-	bigScreen := app.newAttendee()
+	app := apptest.Start(t)
+	bigScreen := app.NewAttendee()
 
 	// When
-	status, contentType, svg := app.get(bigScreen, "/"+testInviteKey+"/repo-qr.svg")
+	status, contentType, svg := app.Get(bigScreen, "/"+apptest.InviteKey+"/repo-qr.svg")
 	actualLink := scanQRCodeSVG(t, svg)
 
 	// Then
@@ -72,21 +73,21 @@ func TestInviteQRCode_BehindHTTPSProxy_LinksToHTTPS(t *testing.T) {
 	})
 
 	// Given
-	app := startTestApp(t)
-	request, err := http.NewRequest(http.MethodGet, app.server.URL+"/"+testInviteKey+"/qr.svg", nil)
+	app := apptest.Start(t)
+	request, err := http.NewRequest(http.MethodGet, app.URL()+"/"+apptest.InviteKey+"/qr.svg", nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
 	request.Host = "juleavslutning.example"
 	request.Header.Set("X-Forwarded-Proto", "https")
-	expectedLink := "https://juleavslutning.example/" + testInviteKey + "/"
+	expectedLink := "https://juleavslutning.example/" + apptest.InviteKey + "/"
 
 	// When
-	response, err := app.newAttendee().Do(request)
+	response, err := app.NewAttendee().Do(request)
 	if err != nil {
 		t.Fatalf("GET qr.svg failed: %v", err)
 	}
-	defer closeBody(t, response)
+	defer apptest.CloseBody(t, response)
 	svg, err := io.ReadAll(response.Body)
 	if err != nil {
 		t.Fatalf("failed to read qr.svg: %v", err)
