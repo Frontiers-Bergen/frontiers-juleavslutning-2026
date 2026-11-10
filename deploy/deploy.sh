@@ -61,6 +61,18 @@ sleep 2
 if ! systemctl is-active --quiet "$SERVICE_NAME"; then
   echo "[deploy] ERROR: $SERVICE_NAME failed to start" >&2
   journalctl -u "$SERVICE_NAME" -n 50 --no-pager || true
+  # Put the previous binary back, so a broken deploy does not leave the big screen down. The deploy still fails.
+  if [[ -f "$CUR_BIN.old" ]]; then
+    echo "[deploy] Rolling back to the previous binary" >&2
+    mv "$CUR_BIN.old" "$CUR_BIN"
+    systemctl restart "$SERVICE_NAME"
+    sleep 2
+    if systemctl is-active --quiet "$SERVICE_NAME"; then
+      echo "[deploy] The previous version is running again." >&2
+    else
+      echo "[deploy] ERROR: the previous version does not start either" >&2
+    fi
+  fi
   exit 1
 fi
 echo "[deploy] Done: $SERVICE_NAME is running."
