@@ -1,4 +1,4 @@
--- Applied on every startup (main.go), so every statement must be idempotent.
+-- Applied on every startup (openDatabase in database.go), so every statement must be idempotent.
 -- There are no migrations: changing an existing table means deleting the database file and starting fresh.
 -- That is fine until the juleavslutning; freeze schema changes on the evening itself.
 

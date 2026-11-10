@@ -132,7 +132,7 @@ func buildApp(work string) (string, error) {
 	}
 	for _, command := range [][]string{
 		{"go", "tool", "templ", "generate", "-log-level", "error"},
-		{"go", "build", "-o", binary, "."},
+		{"go", "build", "-o", binary, "./cmd/juleavslutning"},
 	} {
 		cmd := exec.Command(command[0], command[1:]...)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr

@@ -28,7 +28,7 @@ if [ -z "$browser" ]; then
 fi
 
 work="$(mktemp -d)"
-(cd "$repo" && go tool templ generate -log-level error && go build -o "$work/app" .)
+(cd "$repo" && go tool templ generate -log-level error && go build -o "$work/app" ./cmd/juleavslutning)
 cp -r "$repo/static" "$work/"
 cd "$work"
 PORT="$port" PRESENTER_KEY=screenshot-key ./app >server.log 2>&1 &

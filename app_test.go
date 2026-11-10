@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 )
 
-// Test harness for HTTP-level tests: the real router from newApp, with a fresh SQLite file
+// Test harness for HTTP-level tests: the real router from New, with a fresh SQLite file
 // and JetStream store per test. Each person (attendee, presenter) is an http.Client with
 // its own cookie jar, like a separate phone.
 
@@ -47,7 +47,7 @@ func startTestApp(t *testing.T) *testApp {
 	t.Cleanup(cancel)
 
 	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	app, closeApp, err := newApp(ctx, silentLogger, appConfig{
+	app, closeApp, err := New(ctx, silentLogger, Config{
 		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
 		NATSStoreDir:  t.TempDir(),
 		InviteKey:     testInviteKey,
@@ -175,14 +175,14 @@ func TestNewApp_WithoutNATSStoreDir_RefusesToStart(t *testing.T) {
 
 	// Given
 	expectedErrorText := "NATSStoreDir is required"
-	config := appConfig{
+	config := Config{
 		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
 		InviteKey:     testInviteKey,
 		SessionSecret: "test-session-secret",
 	}
 
 	// When
-	_, _, err := newApp(t.Context(), slog.New(slog.NewTextHandler(io.Discard, nil)), config)
+	_, _, err := New(t.Context(), slog.New(slog.NewTextHandler(io.Discard, nil)), config)
 
 	// Then
 	if err == nil || !strings.Contains(err.Error(), expectedErrorText) {

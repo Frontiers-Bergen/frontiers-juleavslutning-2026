@@ -168,7 +168,7 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 
 try {
 	execFileSync("go", ["tool", "templ", "generate", "-log-level", "error"], { cwd: repo, stdio: "inherit" });
-	execFileSync("go", ["build", "-o", join(work, appBinary), "."], { cwd: repo, stdio: "inherit" });
+	execFileSync("go", ["build", "-o", join(work, appBinary), "./cmd/juleavslutning"], { cwd: repo, stdio: "inherit" });
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
 	processes.push(spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
