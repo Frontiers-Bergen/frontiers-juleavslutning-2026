@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS slide_state (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   current_index INTEGER NOT NULL DEFAULT 0,
+  -- Never updated since the template this started from; kept, because removing a column means deleting the database.
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 

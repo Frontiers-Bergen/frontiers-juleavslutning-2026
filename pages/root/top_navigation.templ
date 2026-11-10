@@ -16,10 +16,10 @@ import (
 
 // --- DB helpers (owned by TopNavigation) ---
 
-// GetCurrentSlideIndex is the slide everyone sees, always within the deck. The stored index can point past the
+// currentSlideIndex is the slide everyone sees, always within the deck. The stored index can point past the
 // end when the deck got shorter while the database kept the old index; showing the last slide then is better
 // than a broken page.
-func GetCurrentSlideIndex(db *sql.DB) (int, error) {
+func currentSlideIndex(db *sql.DB) (int, error) {
 	var index int
 	err := db.QueryRow(`SELECT current_index FROM slide_state WHERE id = 1`).Scan(&index)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -31,7 +31,7 @@ func GetCurrentSlideIndex(db *sql.DB) (int, error) {
 	return clampSlideIndex(index), nil
 }
 
-func SetCurrentSlideIndex(db *sql.DB, index int) error {
+func setCurrentSlideIndex(db *sql.DB, index int) error {
 	_, err := db.Exec(
 		`UPDATE slide_state
 		 SET current_index = ?
@@ -60,7 +60,7 @@ func TopNavigationRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 
 		index = clampSlideIndex(index)
 
-		if err := SetCurrentSlideIndex(db, index); err != nil {
+		if err := setCurrentSlideIndex(db, index); err != nil {
 			logger.Error("failed to set slide index", slog.String("error", err.Error()))
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
@@ -83,7 +83,7 @@ func slideSetAction(inviteKey InviteKey, index int) string {
 }
 
 templ TopNavigation(db *sql.DB, inviteKey InviteKey, sessionID SessionID) {
-	{{ current, err := GetCurrentSlideIndex(db) }}
+	{{ current, err := currentSlideIndex(db) }}
 	if err != nil {
 		<nav class="presenter-nav">
 			<p class="presenter-nav-count">Unable to load the current slide.</p>
@@ -157,7 +157,7 @@ templ presenterNavEdge(label string, message string, isNext bool) {
 // currentSlideOrNone is the current slide for the slide list, or -1 when it cannot be read: the list still works
 // for moving the deck, only the highlight of the current slide is missing.
 func currentSlideOrNone(db *sql.DB) int {
-	current, err := GetCurrentSlideIndex(db)
+	current, err := currentSlideIndex(db)
 	if err != nil {
 		return -1
 	}

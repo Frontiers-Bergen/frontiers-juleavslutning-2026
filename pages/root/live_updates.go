@@ -1,12 +1,10 @@
 package root
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
 	"github.com/starfederation/datastar-go/datastar"
 )
@@ -44,28 +42,4 @@ func logStreamFailure(logger *slog.Logger, r *http.Request, message string, err 
 		return
 	}
 	logger.Error(message, slog.String("error", err.Error()))
-}
-
-// attendeeSessionCookie identifies one phone (browser) across requests, so a poll vote can be changed
-// instead of counted twice. There are no accounts; clearing cookies makes a new attendee.
-const attendeeSessionCookie = "attendee-session"
-
-// attendeeSessionID returns this browser's session ID, creating it on the first visit.
-// Call it before an SSE stream starts: it may need to set the cookie.
-func attendeeSessionID(store sessions.Store, w http.ResponseWriter, r *http.Request) (SessionID, error) {
-	session, err := store.Get(r, attendeeSessionCookie)
-	if err != nil {
-		return "", fmt.Errorf("failed to read attendee session: %w", err)
-	}
-	if stored, ok := session.Values["id"].(string); ok && stored != "" {
-		return SessionID(stored), nil
-	}
-	// crypto/rand: unguessable, and safe when many phones join at the same moment. toolbelt's id generator,
-	// used before, shared a counter without a lock, so two phones joining at once could get the same ID.
-	sessionID := rand.Text()
-	session.Values["id"] = sessionID
-	if err := session.Save(r, w); err != nil {
-		return "", fmt.Errorf("failed to save attendee session: %w", err)
-	}
-	return SessionID(sessionID), nil
 }
