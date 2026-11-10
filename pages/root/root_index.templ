@@ -31,7 +31,7 @@ func RootLayoutRoute(
 			return
 		}
 
-		inviteKey := chi.URLParam(r, "inviteKey")
+		inviteKey := inviteKeyOf(r)
 
 		dataInit := streamAction(inviteKey, "/root/api")
 
@@ -72,7 +72,7 @@ func RootLayoutRoute(
 					}
 				}()
 
-				inviteKey := chi.URLParam(r, "inviteKey")
+				inviteKey := inviteKeyOf(r)
 				isPresenter := pages.IsPresenter(r, store)
 
 				// NewSSE sends the response headers immediately. From here on, failures can only be
@@ -114,10 +114,10 @@ func RootLayoutRoute(
 
 templ rootPageFirstLoad(
 	db *sql.DB,
-	inviteKey string,
+	inviteKey InviteKey,
 	dataInit string,
 	isPresenter bool,
-	sessionID string,
+	sessionID SessionID,
 ) {
 	<div id="root-page-wrapper" data-init={ dataInit }>
 		@rootPageContent(db, inviteKey, isPresenter, sessionID)
@@ -127,9 +127,9 @@ templ rootPageFirstLoad(
 
 templ rootPage(
 	db *sql.DB,
-	inviteKey string,
+	inviteKey InviteKey,
 	isPresenter bool,
-	sessionID string,
+	sessionID SessionID,
 ) {
 	<div id="root-page-wrapper">
 		@rootPageContent(db, inviteKey, isPresenter, sessionID)
@@ -138,9 +138,9 @@ templ rootPage(
 
 templ rootPageContent(
 	db *sql.DB,
-	inviteKey string,
+	inviteKey InviteKey,
 	isPresenter bool,
-	sessionID string,
+	sessionID SessionID,
 ) {
 	<div class="app">
 		if isPresenter {

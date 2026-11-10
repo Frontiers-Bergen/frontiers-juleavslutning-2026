@@ -52,21 +52,20 @@ const attendeeSessionCookie = "attendee-session"
 
 // attendeeSessionID returns this browser's session ID, creating it on the first visit.
 // Call it before an SSE stream starts: it may need to set the cookie.
-func attendeeSessionID(store sessions.Store, w http.ResponseWriter, r *http.Request) (string, error) {
+func attendeeSessionID(store sessions.Store, w http.ResponseWriter, r *http.Request) (SessionID, error) {
 	session, err := store.Get(r, attendeeSessionCookie)
 	if err != nil {
 		return "", fmt.Errorf("failed to read attendee session: %w", err)
 	}
-	sessionID, ok := session.Values["id"].(string)
-	if ok && sessionID != "" {
-		return sessionID, nil
+	if stored, ok := session.Values["id"].(string); ok && stored != "" {
+		return SessionID(stored), nil
 	}
 	// crypto/rand: unguessable, and safe when many phones join at the same moment. toolbelt's id generator,
 	// used before, shared a counter without a lock, so two phones joining at once could get the same ID.
-	sessionID = rand.Text()
+	sessionID := rand.Text()
 	session.Values["id"] = sessionID
 	if err := session.Save(r, w); err != nil {
 		return "", fmt.Errorf("failed to save attendee session: %w", err)
 	}
-	return sessionID, nil
+	return SessionID(sessionID), nil
 }

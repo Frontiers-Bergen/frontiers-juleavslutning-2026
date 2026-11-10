@@ -13,18 +13,24 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+// PollKey names a poll; PollOptionKey names one of its options. Both are keys in the poll_votes table.
+type (
+	PollKey       string
+	PollOptionKey string
+)
+
 type PollOption struct {
-	Key  string
+	Key  PollOptionKey
 	Text string
 }
 
 type PollDefinition struct {
-	Key          string
+	Key          PollKey
 	QuestionText string
 	Options      []PollOption
 }
 
-var pollDefinitions = map[string]PollDefinition{
+var pollDefinitions = map[PollKey]PollDefinition{
 	// The app name vote. Not part of the workshop talk any more; the deck keeps it after the last slide.
 	"app-name": {
 		Key:          "app-name",
@@ -38,15 +44,15 @@ var pollDefinitions = map[string]PollDefinition{
 	},
 }
 
-func MustPoll(key string) PollDefinition {
+func MustPoll(key PollKey) PollDefinition {
 	p, ok := pollDefinitions[key]
 	if !ok {
-		panic("unknown poll key: " + key)
+		panic("unknown poll key: " + string(key))
 	}
 	return p
 }
 
-func pollHasOption(poll PollDefinition, optionKey string) bool {
+func pollHasOption(poll PollDefinition, optionKey PollOptionKey) bool {
 	for _, opt := range poll.Options {
 		if opt.Key == optionKey {
 			return true
@@ -55,8 +61,8 @@ func pollHasOption(poll PollDefinition, optionKey string) bool {
 	return false
 }
 
-func getMyPollVote(db *sql.DB, pollKey, sessionID string) (string, error) {
-	var optionKey string
+func getMyPollVote(db *sql.DB, pollKey PollKey, sessionID SessionID) (PollOptionKey, error) {
+	var optionKey PollOptionKey
 	err := db.QueryRow(
 		`SELECT option_key FROM poll_votes WHERE poll_key = ? AND session_id = ?`,
 		pollKey, sessionID,
@@ -72,7 +78,7 @@ func getMyPollVote(db *sql.DB, pollKey, sessionID string) (string, error) {
 	return optionKey, nil
 }
 
-func upsertPollVote(db *sql.DB, pollKey, sessionID, optionKey string) error {
+func upsertPollVote(db *sql.DB, pollKey PollKey, sessionID SessionID, optionKey PollOptionKey) error {
 	nowUnix := time.Now().Unix()
 	_, err := db.Exec(`
 		INSERT INTO poll_votes (poll_key, session_id, option_key, voted_at_unix)
@@ -85,8 +91,8 @@ func upsertPollVote(db *sql.DB, pollKey, sessionID, optionKey string) error {
 
 func PollVoteRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Post("/poll/vote", func(w http.ResponseWriter, r *http.Request) {
-		pollKey := r.URL.Query().Get("poll")
-		optionKey := r.URL.Query().Get("option")
+		pollKey := PollKey(r.URL.Query().Get("poll"))
+		optionKey := PollOptionKey(r.URL.Query().Get("option"))
 
 		if pollKey == "" {
 			http.Error(w, "missing poll", http.StatusBadRequest)
@@ -130,8 +136,8 @@ func PollVoteRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions
 	})
 }
 
-func pollVoteAction(inviteKey, pollKey, optionKey string) string {
-	return postAction(inviteKey, fmt.Sprintf("/root/api/poll/vote?poll=%s&option=%s", url.QueryEscape(pollKey), url.QueryEscape(optionKey)))
+func pollVoteAction(inviteKey InviteKey, pollKey PollKey, optionKey PollOptionKey) string {
+	return postAction(inviteKey, fmt.Sprintf("/root/api/poll/vote?poll=%s&option=%s", url.QueryEscape(string(pollKey)), url.QueryEscape(string(optionKey))))
 }
 
 // pollOptionTheme is how an option looks, Kahoot style: a colour, the text colour that is readable on it,
@@ -163,7 +169,7 @@ func (theme pollOptionTheme) style() string {
 	return fmt.Sprintf("--option-color: %s; --option-text: %s;", theme.Color, theme.TextColor)
 }
 
-templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinition) {
+templ PollSlide(db *sql.DB, inviteKey InviteKey, sessionID SessionID, poll PollDefinition) {
 	{{ selectedOptionKey, voteErr := getMyPollVote(db, poll.Key, sessionID) }}
 	<div class="slide poll">
 		<div class="poll-question">

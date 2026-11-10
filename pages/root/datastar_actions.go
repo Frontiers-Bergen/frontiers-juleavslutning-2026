@@ -11,11 +11,11 @@ import "fmt"
 
 // postAction is the expression that POSTs to a route under the invite key, for example
 // postAction(inviteKey, "/root/api/tug-of-war/start").
-func postAction(inviteKey, path string) string {
+func postAction(inviteKey InviteKey, path string) string {
 	return fmt.Sprintf("@post('/%s%s',{requestCancellation: 'disabled'})", inviteKey, path)
 }
 
 // streamAction is the expression that opens a live stream (server-sent events) under the invite key.
-func streamAction(inviteKey, path string) string {
+func streamAction(inviteKey InviteKey, path string) string {
 	return fmt.Sprintf("@get('/%s%s',{requestCancellation: 'disabled'})", inviteKey, path)
 }

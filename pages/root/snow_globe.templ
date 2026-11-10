@@ -83,7 +83,7 @@ func SnowGlobeRoutes(router chi.Router, nc *nats.Conn, store sessions.Store, log
 				return
 			case burst := <-bursts:
 				shakesText, senderSessionID, found := strings.Cut(string(burst.Data), " ")
-				if found && senderSessionID == sessionID {
+				if found && SessionID(senderSessionID) == sessionID {
 					continue
 				}
 				shakes, err := strconv.Atoi(shakesText)
@@ -159,7 +159,7 @@ templ Snowfall(shakes int) {
 // SnowGlobe is placed next to #root-page-wrapper, not inside it, so page updates never morph it (or the iOS
 // permission button the component adds) away. The Datastar attributes sit on a wrapper, not on <snow-globe>:
 // Rocket rewrites Datastar actions on its own element into calls to the component's own actions.
-templ SnowGlobe(inviteKey string) {
+templ SnowGlobe(inviteKey InviteKey) {
 	<div
 		class="snow-globe"
 		data-signals="{ shakes: 0 }"
