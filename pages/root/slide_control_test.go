@@ -134,6 +134,29 @@ func TestPresenterNavigation_Attendee_SeesNoSourceFile(t *testing.T) {
 	}
 }
 
+func TestPresenterNavigation_StoredSlideBeyondTheDeck_ShowsTheLastSlide(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the database remembers a slide beyond the end of the deck, because the deck got shorter since.",
+		When:  "When the presenter opens the deck.",
+		Then:  "Then the presenter sees the last slide instead of a broken page.",
+	})
+
+	// Given
+	slideCount := regexp.MustCompile(`Slide (\d+) / (\d+)`)
+	app := apptest.Start(t)
+	presenter := app.NewPresenter()
+	app.ExecSQL(`UPDATE slide_state SET current_index = 999 WHERE id = 1`)
+
+	// When
+	status, _, page := app.Get(presenter, "/"+apptest.InviteKey+"/")
+
+	// Then
+	match := slideCount.FindStringSubmatch(page)
+	if status != http.StatusOK || match == nil || match[1] != match[2] {
+		t.Fatalf("expected the presenter to see the last slide, got status %d and %v", status, match)
+	}
+}
+
 func TestPresenterNavigation_FirstSlide_OffersNoPreviousSlide(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the presenter is on the first slide.",

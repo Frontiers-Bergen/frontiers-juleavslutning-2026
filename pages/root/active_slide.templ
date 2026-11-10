@@ -90,7 +90,6 @@ templ ActiveSlide(
 ) {
 	{{ index, _ := GetCurrentSlideIndex(db) }}
 	{{ deckLocal := deck(db, inviteKey, sessionID, isPresenter) }}
-	{{ index = clampSlideIndex(index) }}
 	{{ slideComponent := slideEntryAt(deckLocal, index) }}
 	<div data-signals={ fmt.Sprintf("{ slideIndex: %d }", index) }>
 		@slideComponent.Render()
