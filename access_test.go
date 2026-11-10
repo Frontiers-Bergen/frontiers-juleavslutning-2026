@@ -13,7 +13,7 @@ func TestAccess_WrongInviteKey_IsSentToTheNeedAKeyPage(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given someone on the internet who guesses a URL.",
 		When:  "When they open the deck with an invite key that is not ours.",
-		Then:  "Then they are redirected to the start page that says they need a key, without seeing the deck.",
+		Then:  "Then they are redirected to the start page that says they need a key.",
 	})
 
 	// Given
@@ -50,27 +50,44 @@ func TestAccess_InviteKey_OpensTheDeck(t *testing.T) {
 	}
 }
 
-func TestPresenterLogin_WrongKey_DoesNotGivePresenterControl(t *testing.T) {
+func TestPresenterLogin_WrongKey_IsRejected(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given an attendee who tries to log in as presenter with a guessed key.",
-		When:  "When they then try to move the deck.",
-		Then:  "Then the login is rejected and they cannot change the slide.",
+		Given: "Given an attendee who guesses the presenter key.",
+		When:  "When they log in as presenter with the guessed key.",
+		Then:  "Then the login page says the key is wrong.",
 	})
 
 	// Given
 	expectedLoginError := "invalid_key"
-	expectedStatus := http.StatusForbidden
 	app := apptest.Start(t)
 	attendee := app.NewAttendee()
 
 	// When
 	actualLoginError := presenterLogin(app, attendee, "guessed-key")
-	actualStatus := app.Post(attendee, "/root/api/slides/set?index=1")
 
 	// Then
 	if actualLoginError != expectedLoginError {
 		t.Fatalf("expected login error %q, got %q", expectedLoginError, actualLoginError)
 	}
+}
+
+func TestPresenterLogin_WrongKey_DoesNotGivePresenterControl(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an attendee whose presenter login with a guessed key was rejected.",
+		When:  "When they try to move the deck.",
+		Then:  "Then they cannot change the slide.",
+	})
+
+	// Given
+	expectedStatus := http.StatusForbidden
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
+	presenterLogin(app, attendee, "guessed-key")
+
+	// When
+	actualStatus := app.Post(attendee, "/root/api/slides/set?index=1")
+
+	// Then
 	if actualStatus != expectedStatus {
 		t.Fatalf("expected status %d, got %d", expectedStatus, actualStatus)
 	}

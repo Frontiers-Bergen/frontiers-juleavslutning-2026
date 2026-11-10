@@ -111,7 +111,8 @@ func postEmoji(app *apptest.App, client *http.Client, emoji string) int {
 	app.T.Helper()
 	body, err := json.Marshal(map[string]string{"emoji": emoji})
 	if err != nil {
-		app.T.Fatalf("failed to marshal emoji signals: %v", err)
+		app.T.Errorf("failed to marshal emoji signals: %v", err)
+		return 0
 	}
 	response, err := client.Post(app.URL()+"/"+apptest.InviteKey+"/root/api/emoji/increment", "application/json", strings.NewReader(string(body)))
 	if err != nil {
@@ -122,7 +123,7 @@ func postEmoji(app *apptest.App, client *http.Client, emoji string) int {
 	return response.StatusCode
 }
 
-// smashEmoji is safe to call from many goroutines; it reports failures with t.Errorf.
+// smashEmoji is safe to call from many goroutines: it and postEmoji report failures with t.Errorf, never t.Fatalf.
 func smashEmoji(app *apptest.App, client *http.Client, emoji string) {
 	if status := postEmoji(app, client, emoji); status >= 300 {
 		app.T.Errorf("smashing %s returned status %d", emoji, status)

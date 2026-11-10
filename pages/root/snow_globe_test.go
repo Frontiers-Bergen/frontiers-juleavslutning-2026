@@ -52,12 +52,17 @@ func TestSnowGlobe_TheShakingPhone_DoesNotGetItsOwnSnowTwice(t *testing.T) {
 	app := apptest.Start(t)
 	shaker := app.NewAttendee()
 	ownScreen := app.OpenStream(shaker, "/root/api/snow/sse")
+	// Another screen proves the snow was sent at all, so "none on the shaker" means something.
+	bigScreen := app.OpenStream(app.NewAttendee(), "/root/api/snow/sse")
 
 	// When
 	shake(app, shaker, 3)
 
 	// Then
-	if _, found := nextSnowfall(ownScreen, 500*time.Millisecond); found {
+	if _, found := nextSnowfall(bigScreen, time.Second); !found {
+		t.Fatalf("the big screen got no snow, so the test proves nothing")
+	}
+	if _, found := nextSnowfall(ownScreen, 200*time.Millisecond); found {
 		t.Fatalf("the shaking phone got its own snow from the server")
 	}
 }
