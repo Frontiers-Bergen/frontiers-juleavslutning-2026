@@ -2,6 +2,7 @@ package root
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,13 +14,19 @@ import (
 
 // --- DB helpers (owned by TopNavigation) ---
 
+// GetCurrentSlideIndex is the slide everyone sees, always within the deck. The stored index can point past the
+// end when the deck got shorter while the database kept the old index; showing the last slide then is better
+// than a broken page.
 func GetCurrentSlideIndex(db *sql.DB) (int, error) {
 	var index int
 	err := db.QueryRow(`SELECT current_index FROM slide_state WHERE id = 1`).Scan(&index)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
 	}
-	return index, err
+	if err != nil {
+		return 0, fmt.Errorf("failed to read the current slide: %w", err)
+	}
+	return clampSlideIndex(index), nil
 }
 
 func SetCurrentSlideIndex(db *sql.DB, index int) error {

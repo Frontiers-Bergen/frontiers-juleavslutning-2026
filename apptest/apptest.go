@@ -7,6 +7,7 @@ package apptest
 import (
 	"bufio"
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
@@ -35,8 +36,9 @@ var TugOfWarRules = root.TugOfWarRules{Countdown: 100 * time.Millisecond, Round:
 
 // App is one running copy of the app, for one test.
 type App struct {
-	T      *testing.T
-	server *httptest.Server
+	T            *testing.T
+	server       *httptest.Server
+	databasePath string
 }
 
 // Start runs the app with a fresh database and NATS store; everything is stopped when the test ends.
@@ -50,8 +52,9 @@ func Start(t *testing.T) *App {
 	t.Cleanup(cancel)
 
 	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	databasePath := filepath.Join(t.TempDir(), "presentation.db")
 	handler, closeApp, err := app.New(ctx, silentLogger, app.Config{
-		DatabasePath:  filepath.Join(t.TempDir(), "presentation.db"),
+		DatabasePath:  databasePath,
 		NATSStoreDir:  t.TempDir(),
 		InviteKey:     InviteKey,
 		SessionSecret: "test-session-secret",
@@ -65,7 +68,25 @@ func Start(t *testing.T) *App {
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	return &App{T: t, server: server}
+	return &App{T: t, server: server, databasePath: databasePath}
+}
+
+// ExecSQL changes the app's database directly, for states the app's own routes cannot reach (a deck that got
+// shorter while the database kept the old slide index). Prefer the routes: they are what people use.
+func (a *App) ExecSQL(query string, args ...any) {
+	a.T.Helper()
+	db, err := sql.Open("sqlite", a.databasePath)
+	if err != nil {
+		a.T.Fatalf("failed to open the app's database: %v", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			a.T.Errorf("failed to close the app's database: %v", err)
+		}
+	}()
+	if _, err := db.Exec(query, args...); err != nil {
+		a.T.Fatalf("failed to run %q: %v", query, err)
+	}
 }
 
 // URL is the address of the running app, without a trailing slash.
