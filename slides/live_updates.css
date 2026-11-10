@@ -21,14 +21,13 @@
 		}
 	}
 
+	/* A step is an icon and a short text, without a box: on a slide next to real buttons, anything boxed looks like
+	   something to tap. The light running through the flow is a glow on the icon and the text. */
 	.flow-node {
 		display: flex;
 		align-items: center;
 		gap: var(--space-1);
-		padding: var(--space-1) var(--space-2);
-		border: 2px solid var(--color-border);
-		border-radius: var(--radius);
-		background: var(--color-surface);
+		color: var(--color-text-soft);
 		animation: live-updates-glow var(--flow-cycle) ease-out infinite;
 
 		@media (width >= 40rem) {
@@ -57,22 +56,26 @@
 
 	.flow-text {
 		font-size: var(--font-small);
-		color: var(--color-text-soft);
+		color: inherit;
 
 		@media (width >= 40rem) {
 			font-size: 1em;
 		}
 	}
 
+	/* On a phone the arrows stand under the icons, so the flow reads straight down; on the big screen they sit between the steps. */
 	.flow-arrow {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		text-align: center;
+		align-items: flex-start;
+		padding-inline-start: 0.4em;
 		color: var(--color-text-muted);
 
 		@media (width >= 40rem) {
+			align-items: center;
 			max-inline-size: 7em;
+			padding-inline-start: 0;
+			text-align: center;
 		}
 
 		animation: live-updates-arrow var(--flow-cycle) ease-out infinite;
@@ -92,10 +95,13 @@
 		}
 	}
 
+	/* Every screen together, held by a line: they all render at the same moment. */
 	.flow-screens {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-1);
+		padding-inline-start: var(--space-2);
+		border-inline-start: 2px solid var(--color-border);
 
 		/* Every screen on one line, icon beside the text, so the fan-out stays low on the big screen. */
 		.flow-node {
@@ -133,14 +139,14 @@
 @keyframes live-updates-glow {
 	0%,
 	15% {
-		border-color: var(--color-accent);
-		box-shadow: 0 0 1rem hsl(from var(--color-accent) h s l / 50%);
+		color: var(--color-accent);
+		filter: drop-shadow(0 0 0.6rem hsl(from var(--color-accent) h s l / 70%));
 	}
 
 	30%,
 	100% {
-		border-color: var(--color-border);
-		box-shadow: none;
+		color: var(--color-text-soft);
+		filter: none;
 	}
 }
 

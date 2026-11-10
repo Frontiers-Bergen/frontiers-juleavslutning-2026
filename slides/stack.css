@@ -1,0 +1,21 @@
+/* The stack slide (stack.md). Loaded into @layer features via /feature-styles.css. */
+.slide-stack {
+	/* Each technology's own logo, in a box of the same size on every line, so the text lines up whatever the
+	   logo's shape: square (CSS, Datastar), tall (HTML5) or wide (Go, templ, SQLite). Logos: static/logos/. */
+	.stack-logo {
+		display: inline-block;
+		inline-size: 4.8em;
+		block-size: 1.7em;
+		margin-inline-end: 0.4em;
+		object-fit: contain;
+		object-position: center;
+		text-align: center;
+		vertical-align: middle;
+	}
+
+	/* Some licences ask for credit where the logo is shown. */
+	.credit {
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+}

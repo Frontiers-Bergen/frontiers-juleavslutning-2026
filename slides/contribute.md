@@ -1,5 +1,7 @@
 # How to contribute
 
+<img class="grump" src="/static/green-grump.svg" alt="">
+
 - **Complexity is the enemy:** KISS 💋 keep it simple s*
 - **Cohesion:** what changes together stays together; your feature keeps its files side by side
 - **Low coupling:** your change should not break anyone else's
