@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
+	"log/slog"
 	"net/http"
 	"strconv"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
@@ -42,7 +43,7 @@ func SetCurrentSlideIndex(db *sql.DB, index int) error {
 
 // --- Routing (owned by TopNavigation) ---
 
-func TopNavigationRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
+func TopNavigationRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Post("/slides/set", func(w http.ResponseWriter, r *http.Request) {
 		// Attendees share the same invite URL as the presenter, so the URL alone proves nothing.
 		if !pages.IsPresenter(r, store) {
@@ -60,7 +61,8 @@ func TopNavigationRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store ses
 		index = clampSlideIndex(index)
 
 		if err := SetCurrentSlideIndex(db, index); err != nil {
-			http.Error(w, "failed to set slide index: "+err.Error(), http.StatusInternalServerError)
+			logger.Error("failed to set slide index", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
@@ -75,8 +77,9 @@ func TopNavigationRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store ses
 
 // --- Templ helper ---
 
-func slideSetPostURL(inviteKey string, index int) string {
-	return fmt.Sprintf("@post('/%s/root/api/slides/set?index=%d')", inviteKey, index)
+// slideSetAction moves the deck to index; only the presenter's taps are accepted.
+func slideSetAction(inviteKey string, index int) string {
+	return postAction(inviteKey, fmt.Sprintf("/root/api/slides/set?index=%d", index))
 }
 
 templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
@@ -85,7 +88,7 @@ templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
 	<nav class="presenter-nav">
 		<button
 			class="presenter-nav-button"
-			data-on:click={ templ.URL(slideSetPostURL(inviteKey, 0)) }
+			data-on:click={ slideSetAction(inviteKey, 0) }
 			aria-label="Home"
 		>
 			<img src="/static/house-regular-full.svg" alt="" class="presenter-nav-home-icon"/>
@@ -115,7 +118,7 @@ templ presenterNavPreview(label string, inviteKey string, targetIndex int, targe
 		class={ "presenter-nav-preview", templ.KV("presenter-nav-preview-next", isNext) }
 		role="button"
 		tabindex="0"
-		data-on:click={ templ.URL(slideSetPostURL(inviteKey, targetIndex)) }
+		data-on:click={ slideSetAction(inviteKey, targetIndex) }
 	>
 		<div class="presenter-nav-preview-meta">
 			<span class="presenter-nav-preview-label">{ label }</span>
@@ -151,7 +154,7 @@ templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string) {
 				role="button"
 				tabindex="0"
 				data-active={ fmt.Sprintf("%t", current == i) }
-				data-on:click={ templ.URL(slideSetPostURL(inviteKey, i)) }
+				data-on:click={ slideSetAction(inviteKey, i) }
 				aria-current={ fmt.Sprintf("%t", current == i) }
 			>
 				<div class="slide-preview-frame">

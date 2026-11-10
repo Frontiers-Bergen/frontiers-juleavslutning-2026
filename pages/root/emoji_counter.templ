@@ -106,7 +106,7 @@ func emojiBalloon(smash *nats.Msg) string {
 	return fmt.Sprintf(`<emoji-balloon emoji="%s"></emoji-balloon>`, string(smash.Data))
 }
 
-func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
+func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Get("/emoji/sse", func(w http.ResponseWriter, r *http.Request) {
 		// Subscribe before sending the initial counts, so no smash falls between the two.
 		// The buffer absorbs bursts; if a phone still falls behind, NATS drops its oldest
@@ -193,22 +193,11 @@ func IncrementEmojiRoute(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 	})
 }
 
-func emojiIncrementPostURL(inviteKey string) string {
-	// Defensive: Datastar's default cancellation aborts an in-flight request with the same method and URL
-	// when the next one starts. There is no reason to cancel a smash, so it is disabled. The browser check
-	// (200 ms latency, 20 taps per second) counted every smash even with the default, so this is not a known bug.
-	return fmt.Sprintf("@post('/%s/root/api/emoji/increment',{requestCancellation: 'disabled'})", inviteKey)
-}
-
-func emojiVoteSSEGetURL(inviteKey string) string {
-	return fmt.Sprintf("@get('/%s/root/api/emoji/sse',{requestCancellation: 'disabled'})", inviteKey)
-}
-
 templ EmojiVoteWidget(inviteKey string) {
 	<div
 		class="reaction-bar"
-		data-init={ emojiVoteSSEGetURL(inviteKey) }
-		data-on:click__stop={ emojiIncrementPostURL(inviteKey) }
+		data-init={ streamAction(inviteKey, "/root/api/emoji/sse") }
+		data-on:click__stop={ postAction(inviteKey, "/root/api/emoji/increment") }
 	>
 		<button class="emoji-balloon-button" data-on:click="$emoji='👍';">
 			<span data-text="$ThumbsUpEmojiCount"></span>

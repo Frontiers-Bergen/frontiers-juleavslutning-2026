@@ -87,9 +87,6 @@ templ PollResultsSlide(db *sql.DB, poll PollDefinition) {
 								</div>
 							</div>
 						</div>
-						if opt.ImageURL != "" {
-							<img class="poll-result-image" src={ opt.ImageURL } alt=""/>
-						}
 						<div class="poll-result-share">
 							<span class="poll-result-percent">{ fmt.Sprintf("%.0f%%", share) }</span>
 							<div class="poll-result-bar">

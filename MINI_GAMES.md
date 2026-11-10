@@ -27,8 +27,9 @@ Ideas waiting for someone: "Mini-game ideas" in `README.md`.
    and renders it. Add it to the deck in `pages/root/active_slide.templ`. The same page is the phone controller and
    the big screen: start mobile first, one-handed, tap targets at least 3rem tall, and use `@media (width >= 40rem)`
    for the big screen.
-5. **Input.** Buttons use `data-on:click="@post('/<invite key>/root/api/<game>/<action>',{requestCancellation: 'disabled'})"`.
-   Or reuse the emoji reaction buttons, which are always on screen: tug of war hooks into `IncrementEmojiRoute`
+5. **Input.** Buttons use `data-on:click={ postAction(inviteKey, "/root/api/<game>/<action>") }` (`datastar_actions.go`);
+   pass Datastar expressions as plain strings, never through `templ.URL`.
+   Or reuse the emoji reaction buttons, which are always on screen: tug of war hooks into `EmojiReactionRoutes`
    through `countSmashForTugOfWar`.
 6. **Time.** Only things that change with time alone need a timer (a countdown); see `tickTugOfWarClock`.
 7. **Tests.** HTTP tests in `<game>_test.go` (`package root_test`) start the app with `apptest.Start(t)`: phones are

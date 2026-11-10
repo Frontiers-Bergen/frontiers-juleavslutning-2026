@@ -3,6 +3,7 @@ package root
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,20 +14,18 @@ import (
 )
 
 type PollOption struct {
-	Key      string
-	Text     string
-	ImageURL string
+	Key  string
+	Text string
 }
 
 type PollDefinition struct {
-	Key              string
-	QuestionText     string
-	QuestionImageURL string
-	Options          []PollOption
+	Key          string
+	QuestionText string
+	Options      []PollOption
 }
 
 var pollDefinitions = map[string]PollDefinition{
-	// The app name vote at the workshop (see README). The winner becomes the name on the big screen.
+	// The app name vote. Not part of the workshop talk any more; the deck keeps it after the last slide.
 	"app-name": {
 		Key:          "app-name",
 		QuestionText: "What should we call this app?",
@@ -84,7 +83,7 @@ func upsertPollVote(db *sql.DB, pollKey, sessionID, optionKey string) error {
 	return err
 }
 
-func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
+func PollVoteRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger) {
 	router.Post("/poll/vote", func(w http.ResponseWriter, r *http.Request) {
 		pollKey := r.URL.Query().Get("poll")
 		optionKey := r.URL.Query().Get("option")
@@ -110,17 +109,20 @@ func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions
 
 		sessionID, err := attendeeSessionID(store, w, r)
 		if err != nil {
-			http.Error(w, "failed to get attendee session: "+err.Error(), http.StatusInternalServerError)
+			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		if err := upsertPollVote(db, pollKey, sessionID, optionKey); err != nil {
-			http.Error(w, "failed to save vote: "+err.Error(), http.StatusInternalServerError)
+			logger.Error("failed to save vote", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		if err := publishDeckChanged(nc); err != nil {
-			http.Error(w, "unable to broadcast update", http.StatusInternalServerError)
+			logger.Error("failed to publish vote", slog.String("error", err.Error()))
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
@@ -128,10 +130,8 @@ func PollVoteRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions
 	})
 }
 
-func pollVotePostURL(inviteKey, pollKey, optionKey string) string {
-	escapedPoll := url.QueryEscape(pollKey)
-	escapedOption := url.QueryEscape(optionKey)
-	return fmt.Sprintf("@post('/%s/root/api/poll/vote?poll=%s&option=%s')", inviteKey, escapedPoll, escapedOption)
+func pollVoteAction(inviteKey, pollKey, optionKey string) string {
+	return postAction(inviteKey, fmt.Sprintf("/root/api/poll/vote?poll=%s&option=%s", url.QueryEscape(pollKey), url.QueryEscape(optionKey)))
 }
 
 // pollOptionTheme is how an option looks, Kahoot style: a colour, the text colour that is readable on it,
@@ -170,9 +170,6 @@ templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinit
 			if poll.QuestionText != "" {
 				<h1>{ poll.QuestionText }</h1>
 			}
-			if poll.QuestionImageURL != "" {
-				<img class="poll-question-image" src={ poll.QuestionImageURL } alt="Poll question image"/>
-			}
 			<p class="poll-hint">Pick one. You can change your vote anytime.</p>
 		</div>
 		<div class="poll-options">
@@ -182,14 +179,11 @@ templ PollSlide(db *sql.DB, inviteKey string, sessionID string, poll PollDefinit
 					type="button"
 					class="poll-option"
 					style={ theme.style() }
-					data-on:click={ templ.URL(pollVotePostURL(inviteKey, poll.Key, opt.Key)) }
+					data-on:click={ pollVoteAction(inviteKey, poll.Key, opt.Key) }
 					aria-pressed={ fmt.Sprintf("%t", opt.Key == selectedOptionKey) }
 				>
 					<div class="poll-option-badge">{ theme.Badge }</div>
 					<div class="poll-option-body">
-						if opt.ImageURL != "" {
-							<img class="poll-option-image" src={ opt.ImageURL } alt=""/>
-						}
 						if opt.Text != "" {
 							<div class="poll-option-text">{ opt.Text }</div>
 						}
