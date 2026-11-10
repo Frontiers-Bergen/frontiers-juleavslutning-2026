@@ -51,7 +51,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] One-command setup for attendees (`go tool task start`), documented under Getting started
 - [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
 - [ ] Someone tries a fresh clone on macOS and on Windows before the workshop (Gerhard, weekend of 7–8 Nov); update `SETUP.md` with the findings
-- [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi, toolbelt) and tools (task, air, dlv)
+- [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi) and tools (task, air, dlv)
 - [x] Datastar v1.0.4 with Rocket (`static/datastar-rocket.js`, with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
 - [x] Add `domain_dictionary.md` with the project's domain terms
@@ -199,7 +199,7 @@ The commands below are `go tool task <name>`; with Task installed globally, plai
 - Requires [golangci-lint](https://golangci-lint.run) v2 on your PATH, built with your Go version (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`)
 - `*_templ.go` files are generated and not in git; `task build` and `task start` generate them. Plain `go build` needs `go tool templ generate` first.
 - Open `/dev-key/` to see the deck; `/` only shows "you need a key"
-- Runtime data: `presentation.db` (SQLite, ignored by git; delete it to start fresh). Embedded NATS keeps nothing between runs: a temp directory per run, or `NATS_STORE_DIR` on the server
+- Runtime data: `presentation.db` (SQLite, ignored by git; delete it to start fresh). Embedded NATS runs inside the app, without a port, and keeps nothing between runs
 
 Environment variables (put them in `.env`, which is not in git). All except `PRESENTER_KEY` fall back to dev values with a warning:
 
@@ -208,4 +208,3 @@ Environment variables (put them in `.env`, which is not in git). All except `PRE
 - `SESSION_SECRET` — signs the session cookies
 - `PORT` — HTTP port, default 8080
 - `HOST` — address to listen on; default empty (all interfaces, so phones on the LAN can connect). The server uses `127.0.0.1` behind Caddy
-- `NATS_STORE_DIR` — where embedded NATS keeps its data while running; default a temp directory removed on exit (the server uses a systemd runtime directory)

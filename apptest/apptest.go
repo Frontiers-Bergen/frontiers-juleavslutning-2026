@@ -1,5 +1,5 @@
 // Package apptest is the harness for HTTP-level tests: the real router from app.New, with a fresh SQLite file and
-// JetStream store per test. Each person (attendee, presenter) is an http.Client with its own cookie jar, like a
+// NATS per test. Each person (attendee, presenter) is an http.Client with its own cookie jar, like a
 // separate phone. Feature tests live next to their code (pages/root/tug_of_war_test.go next to tug_of_war.templ)
 // and start the app through Start; their own helpers (smash, shake, vote) stay in their test files.
 package apptest
@@ -42,7 +42,7 @@ type App struct {
 	databasePath string
 }
 
-// Start runs the app with a fresh database and NATS store; everything is stopped when the test ends.
+// Start runs the app with a fresh database and its own NATS; everything is stopped when the test ends.
 func Start(t *testing.T) *App {
 	t.Helper()
 	return StartWith(t, func(*app.Config) {})
@@ -53,21 +53,17 @@ func Start(t *testing.T) *App {
 func StartWith(t *testing.T, configure func(config *app.Config)) *App {
 	t.Helper()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
 	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	databasePath := filepath.Join(t.TempDir(), "presentation.db")
 	config := app.Config{
 		DatabasePath:  databasePath,
-		NATSStoreDir:  t.TempDir(),
 		InviteKey:     InviteKey,
 		PresenterKey:  PresenterKey,
 		SessionSecret: "test-session-secret",
 		TugOfWarRules: TugOfWarRules,
 	}
 	configure(&config)
-	handler, closeApp, err := app.New(ctx, silentLogger, config)
+	handler, closeApp, err := app.New(silentLogger, config)
 	if err != nil {
 		t.Fatalf("failed to start app: %v", err)
 	}

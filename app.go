@@ -1,21 +1,19 @@
 package app
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/delaneyj/toolbelt"
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	"github.com/nats-io/nats.go"
 )
 
 // Package app wires the whole application: database, embedded NATS, sessions and routes. It lives in the
@@ -24,10 +22,6 @@ import (
 
 type Config struct {
 	DatabasePath string
-	// NATSStoreDir is where JetStream keeps its data. Required: the NATS default is one shared temp dir,
-	// and two app instances on the same machine (dev server, tests, task screenshots) corrupted each other's
-	// JetStream data, which showed up as "context deadline exceeded" when loading the deck.
-	NATSStoreDir string
 	// InviteKey is the secret first path segment of every deck URL (/<InviteKey>/). Everyone at the venue
 	// uses the same link; there is no remote audience.
 	InviteKey string
@@ -40,12 +34,8 @@ type Config struct {
 
 // New wires the whole application: database, embedded NATS, sessions and routes.
 // main and the HTTP tests both use it, so tests exercise the real router.
-// The embedded NATS server shuts down when ctx is cancelled; closeApp closes the database.
-func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Handler, closeApp func(), err error) {
-	if config.NATSStoreDir == "" {
-		return nil, nil, errors.New("Config.NATSStoreDir is required; the NATS default store dir is shared by every instance on the machine")
-	}
-
+// closeApp stops NATS and closes the database.
+func New(logger *slog.Logger, config Config) (app http.Handler, closeApp func(), err error) {
 	db, err := openDatabase(config.DatabasePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)
@@ -71,11 +61,6 @@ func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Hand
 		HttpOnly: true,
 	}
 
-	natsPort, err := toolbelt.FreePort()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get free port for nats: %w", err)
-	}
-
 	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	if err := featureStylesRoutes(router); err != nil {
 		return nil, nil, err
@@ -91,22 +76,15 @@ func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Hand
 		}
 	})
 
-	ns, err := embeddednats.New(ctx, embeddednats.WithNATSServerOptions(&natsserver.Options{
-		JetStream: true,
-		Port:      natsPort,
-		StoreDir:  config.NATSStoreDir,
-		// The NATS server would otherwise catch Ctrl+C/SIGTERM itself and exit the whole process at once,
-		// skipping main's shutdown (closing the database, removing the temp store directory).
-		NoSigs: true,
-	}))
+	ns, nc, err := startNATS()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to start embedded nats server: %w", err)
+		return nil, nil, err
 	}
-
-	nc, err := ns.Client()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create nats client: %w", err)
-	}
+	defer func() {
+		if err != nil {
+			stopNATS(ns, nc)
+		}
+	}()
 
 	tugOfWarRules := config.TugOfWarRules
 	if tugOfWarRules == (root.TugOfWarRules{}) {
@@ -122,12 +100,43 @@ func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Hand
 	})
 
 	closeApp = func() {
-		// Wait for NATS to stop before returning: the caller removes its store directory afterwards.
-		ns.NatsServer.Shutdown()
-		ns.NatsServer.WaitForShutdown()
+		stopNATS(ns, nc)
 		closeDatabase()
 	}
 	return router, closeApp, nil
+}
+
+// startNATS runs the NATS server inside this process, without a network port: nothing outside the app can reach
+// it (with a port it listened on every address, unprotected, and the server's firewall does not block high ports).
+// Only core messages are used, so there is no JetStream and no store directory: NATS only says that something
+// changed, and state lives in SQLite.
+func startNATS() (*natsserver.Server, *nats.Conn, error) {
+	ns, err := natsserver.NewServer(&natsserver.Options{
+		DontListen: true,
+		// The NATS server would otherwise catch Ctrl+C/SIGTERM itself and exit the whole process at once,
+		// skipping main's shutdown (closing the database).
+		NoSigs: true,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create the embedded NATS server: %w", err)
+	}
+	ns.Start()
+	if !ns.ReadyForConnections(10 * time.Second) {
+		ns.Shutdown()
+		return nil, nil, errors.New("the embedded NATS server did not start within 10 s")
+	}
+	nc, err := nats.Connect("", nats.InProcessServer(ns))
+	if err != nil {
+		ns.Shutdown()
+		return nil, nil, fmt.Errorf("failed to connect to the embedded NATS server: %w", err)
+	}
+	return ns, nc, nil
+}
+
+func stopNATS(ns *natsserver.Server, nc *nats.Conn) {
+	nc.Close()
+	ns.Shutdown()
+	ns.WaitForShutdown()
 }
 
 // inviteKeyMiddleware lets only requests with the invite key through; anything else goes to the

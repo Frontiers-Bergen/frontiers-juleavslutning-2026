@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -24,16 +23,8 @@ func main() {
 		logger.Info("no .env file loaded (this is fine in prod)", slog.String("error", err.Error()))
 	}
 
-	natsStoreDir, removeNATSStoreDir, err := natsStoreDirectory(logger)
-	if err != nil {
-		logger.Error("failed to prepare NATS store directory", slog.String("error", err.Error()))
-		return
-	}
-	defer removeNATSStoreDir()
-
 	config := app.Config{
 		DatabasePath:  "presentation.db",
-		NATSStoreDir:  natsStoreDir,
 		InviteKey:     readEnvOrDefault(logger, "INVITE_KEY", "dev-key"),
 		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
 		// No fallback on purpose: without PRESENTER_KEY nobody can be presenter.
@@ -45,7 +36,7 @@ func main() {
 	ctx, stopListeningForSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopListeningForSignals()
 
-	handler, closeApp, err := app.New(ctx, logger, config)
+	handler, closeApp, err := app.New(logger, config)
 	if err != nil {
 		logger.Error("failed to start app", slog.String("error", err.Error()))
 		return
@@ -75,27 +66,6 @@ func main() {
 			}
 		}
 	}
-}
-
-// natsStoreDirectory returns where embedded NATS keeps its JetStream data. NATS state never has to survive a
-// restart: anything that must is stored in SQLite. On the server, NATS_STORE_DIR points into the service's
-// systemd RuntimeDirectory (/run/..., in memory, wiped on restart), like conorganizer. Locally, a fresh temp
-// directory is created per run and removed on exit.
-func natsStoreDirectory(logger *slog.Logger) (dir string, remove func(), err error) {
-	if dir := strings.TrimSpace(os.Getenv("NATS_STORE_DIR")); dir != "" {
-		return dir, func() {}, nil
-	}
-	dir, err = os.MkdirTemp("", "juleavslutning-nats-")
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to create temp NATS store directory: %w", err)
-	}
-	return dir, func() {
-		if err := os.RemoveAll(dir); err != nil {
-			logger.Error("failed to remove temp NATS store directory", slog.String("dir", dir), slog.String("error", err.Error()))
-			return
-		}
-		logger.Info("removed temp NATS store directory", slog.String("dir", dir))
-	}, nil
 }
 
 func readEnvOrDefault(logger *slog.Logger, name, fallback string) string {
