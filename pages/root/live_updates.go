@@ -1,11 +1,11 @@
 package root
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/delaneyj/toolbelt/id"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
 	"github.com/starfederation/datastar-go/datastar"
@@ -61,7 +61,9 @@ func attendeeSessionID(store sessions.Store, w http.ResponseWriter, r *http.Requ
 	if ok && sessionID != "" {
 		return sessionID, nil
 	}
-	sessionID = id.NextEncodedID()
+	// crypto/rand: unguessable, and safe when many phones join at the same moment. toolbelt's id generator,
+	// used before, shared a counter without a lock, so two phones joining at once could get the same ID.
+	sessionID = rand.Text()
 	session.Values["id"] = sessionID
 	if err := session.Save(r, w); err != nil {
 		return "", fmt.Errorf("failed to save attendee session: %w", err)
