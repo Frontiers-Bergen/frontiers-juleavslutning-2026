@@ -22,7 +22,7 @@ Ideas waiting for someone: "Mini-game ideas" in `README.md`.
 3. **Writes.** Add `<Game>Routes(router, ...)` in your `.templ` file and register it in `RootLayoutRoute`
    (`pages/root/root_index.templ`), next to `TugOfWarRoutes`. A route validates, writes SQLite, calls
    `publishDeckChanged(nc)` and answers `204`. It never returns HTML: every open page re-renders on its own.
-   Presenter-only actions (start, reset) check `isPresenterFromSession` and answer `403` otherwise.
+   Presenter-only actions (start, reset) check `pages.IsPresenter` and answer `403` otherwise.
 4. **The slide.** A templ component `<Game>Slide(db, inviteKey, sessionID, isPresenter)` loads its state from SQLite
    and renders it. Add it to the deck in `pages/root/active_slide.templ`. The same page is the phone controller and
    the big screen: start mobile first, one-handed, tap targets at least 3rem tall, and use `@media (width >= 40rem)`

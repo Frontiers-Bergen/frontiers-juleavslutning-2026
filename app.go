@@ -30,7 +30,9 @@ type Config struct {
 	NATSStoreDir string
 	// InviteKey is the secret first path segment of every deck URL (/<InviteKey>/). Everyone at the venue
 	// uses the same link; there is no remote audience.
-	InviteKey     string
+	InviteKey string
+	// PresenterKey unlocks presenter mode at /presenter; empty means nobody can be presenter.
+	PresenterKey  string
 	SessionSecret string
 	// TugOfWarRules sets the tug of war's countdown, round length and winning lead; zero means the defaults.
 	TugOfWarRules root.TugOfWarRules
@@ -111,7 +113,7 @@ func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Hand
 		tugOfWarRules = root.DefaultTugOfWarRules
 	}
 
-	pages.PresenterRoutes(router, sessionStore, logger)
+	pages.PresenterRoutes(router, sessionStore, logger, config.PresenterKey)
 
 	// Keyed access: /<key>/...
 	router.Route("/{inviteKey}", func(inviteRouter chi.Router) {

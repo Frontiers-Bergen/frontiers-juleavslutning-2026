@@ -3,7 +3,6 @@ package pages
 import (
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/components"
@@ -11,11 +10,11 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-const presenterSessionName = "presenter-auth"
-
+// Presenter mode: the device that knows the presenter key moves the deck and starts the games. Logging in sets a
+// flag in this session cookie; IsPresenter is the one place that checks it, for every page and route.
 const (
-	presenterFlagKey = "presenter"
-	presenterEnvKey  = "PRESENTER_KEY"
+	presenterSessionName = "presenter-auth"
+	presenterFlagKey     = "presenter"
 )
 
 const (
@@ -26,12 +25,13 @@ const (
 	errLogoutFailed = "logout_failed"
 )
 
-func PresenterRoutes(router chi.Router, store sessions.Store, logger *slog.Logger) {
+// PresenterRoutes serves the login page. presenterKey is the key to log in with; empty means nobody can.
+func PresenterRoutes(router chi.Router, store sessions.Store, logger *slog.Logger, presenterKey string) {
 	router.Route("/presenter", func(presenterRouter chi.Router) {
 		presenterRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			isPresenter := presenterEnabled(r, store, logger)
+			isPresenter := IsPresenter(r, store)
 			errorMessage := presenterErrorMessage(r)
 
 			renderErr := components.BaseLayout(
@@ -49,7 +49,7 @@ func PresenterRoutes(router chi.Router, store sessions.Store, logger *slog.Logge
 				return
 			}
 
-			if !presenterKeyMatches(r.FormValue("key")) {
+			if !presenterKeyMatches(r.FormValue("key"), presenterKey) {
 				http.Redirect(w, r, "/presenter/?err="+errInvalidKey, http.StatusSeeOther)
 				return
 			}
@@ -75,25 +75,26 @@ func PresenterRoutes(router chi.Router, store sessions.Store, logger *slog.Logge
 	})
 }
 
-func presenterKeyMatches(enteredRaw string) bool {
+// presenterKeyMatches compares the entered key with the configured one; an empty key never matches, so a server
+// started without a presenter key has no presenter at all instead of letting everyone in.
+func presenterKeyMatches(enteredRaw, presenterKey string) bool {
 	entered := strings.TrimSpace(enteredRaw)
-	expected := strings.TrimSpace(os.Getenv(presenterEnvKey))
-
+	expected := strings.TrimSpace(presenterKey)
 	if entered == "" || expected == "" {
 		return false
 	}
 	return entered == expected
 }
 
-func presenterEnabled(r *http.Request, store sessions.Store, logger *slog.Logger) bool {
+// IsPresenter reports whether this device is logged in as presenter. A cookie that cannot be read (after
+// SESSION_SECRET changed, or a tampered one) simply means "not presenter": that is an ordinary answer, not an error.
+func IsPresenter(r *http.Request, store sessions.Store) bool {
 	sess, err := store.Get(r, presenterSessionName)
 	if err != nil {
-		logger.Error("failed to read presenter session", slog.String("error", err.Error()))
 		return false
 	}
-
-	v, ok := sess.Values[presenterFlagKey].(bool)
-	return ok && v
+	enabled, ok := sess.Values[presenterFlagKey].(bool)
+	return ok && enabled
 }
 
 func presenterFlagSet(w http.ResponseWriter, r *http.Request, store sessions.Store, enabled bool) error {
@@ -134,7 +135,7 @@ templ PresenterPage(isPresenter bool, errorMessage string) {
 		if !isPresenter {
 			<p>Enter the presenter key to enable presenter controls on this device.</p>
 			<form class="presenter-login-form" method="post" action="/presenter/login">
-				<input type="password" name="key" placeholder="Presenter key" autocomplete="current-password"/>
+				<input type="password" name="key" placeholder="Presenter key" aria-label="Presenter key" autocomplete="current-password"/>
 				<button type="submit">Unlock</button>
 			</form>
 		} else {

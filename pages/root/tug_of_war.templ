@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	"log/slog"
 	"math"
 	"math/rand/v2"
@@ -257,7 +258,7 @@ func tickTugOfWarClock(nc *nats.Conn, logger *slog.Logger, rules TugOfWarRules, 
 
 func TugOfWarRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions.Store, logger *slog.Logger, rules TugOfWarRules) {
 	router.Post("/tug-of-war/start", func(w http.ResponseWriter, r *http.Request) {
-		if !isPresenterFromSession(r, store) {
+		if !pages.IsPresenter(r, store) {
 			http.Error(w, "only the presenter can start the tug of war", http.StatusForbidden)
 			return
 		}

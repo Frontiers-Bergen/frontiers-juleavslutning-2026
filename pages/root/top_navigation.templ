@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	"net/http"
 	"strconv"
 
@@ -44,7 +45,7 @@ func SetCurrentSlideIndex(db *sql.DB, index int) error {
 func TopNavigationRoutes(db *sql.DB, router chi.Router, nc *nats.Conn, store sessions.Store) {
 	router.Post("/slides/set", func(w http.ResponseWriter, r *http.Request) {
 		// Attendees share the same invite URL as the presenter, so the URL alone proves nothing.
-		if !isPresenterFromSession(r, store) {
+		if !pages.IsPresenter(r, store) {
 			http.Error(w, "only the presenter can change slides", http.StatusForbidden)
 			return
 		}

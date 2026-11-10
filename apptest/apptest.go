@@ -45,22 +45,29 @@ type App struct {
 // Start runs the app with a fresh database and NATS store; everything is stopped when the test ends.
 func Start(t *testing.T) *App {
 	t.Helper()
+	return StartWith(t, func(*app.Config) {})
+}
 
-	// pages/presenter.templ reads PRESENTER_KEY from the environment on every login.
-	t.Setenv("PRESENTER_KEY", PresenterKey)
+// StartWith is Start with a change to the test configuration, for tests about the configuration itself
+// (a server without a presenter key).
+func StartWith(t *testing.T, configure func(config *app.Config)) *App {
+	t.Helper()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	databasePath := filepath.Join(t.TempDir(), "presentation.db")
-	handler, closeApp, err := app.New(ctx, silentLogger, app.Config{
+	config := app.Config{
 		DatabasePath:  databasePath,
 		NATSStoreDir:  t.TempDir(),
 		InviteKey:     InviteKey,
+		PresenterKey:  PresenterKey,
 		SessionSecret: "test-session-secret",
 		TugOfWarRules: TugOfWarRules,
-	})
+	}
+	configure(&config)
+	handler, closeApp, err := app.New(ctx, silentLogger, config)
 	if err != nil {
 		t.Fatalf("failed to start app: %v", err)
 	}
