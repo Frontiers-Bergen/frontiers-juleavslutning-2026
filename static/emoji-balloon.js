@@ -25,7 +25,7 @@ const buttonPositions = new Map();
 function buttonPosition(emoji) {
 	if (!buttonPositions.has(emoji)) {
 		if (buttonPositions.size === 0) requestAnimationFrame(() => buttonPositions.clear());
-		const button = [...document.querySelectorAll(".emoji-balloon-button")].find((candidate) => candidate.textContent.includes(emoji));
+		const button = document.querySelector(`.emoji-balloon-button[data-emoji="${CSS.escape(emoji)}"]`);
 		buttonPositions.set(emoji, button?.getBoundingClientRect());
 	}
 	return buttonPositions.get(emoji);

@@ -50,7 +50,7 @@ vote d smash-the-halls
 vote e rage-against-the-debounce
 
 move_to_slide() { curl -s -b presenter.jar -o /dev/null -X POST "$base/dev-key/root/api/slides/set?index=$1"; }
-shown_slide() { curl -s -b presenter.jar "$base/dev-key/" | grep -oE 'slideIndex: [0-9]+' | head -1 | grep -oE '[0-9]+'; }
+shown_slide() { curl -s -b presenter.jar "$base/dev-key/" | grep -oE 'data-slide-index="[0-9]+"' | head -1 | grep -oE '[0-9]+'; }
 
 shot() { # name url width height
 	"$browser" --headless=new --disable-gpu --hide-scrollbars --user-data-dir="$work/profile" \

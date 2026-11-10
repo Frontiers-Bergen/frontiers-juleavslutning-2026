@@ -156,7 +156,7 @@ templ rootPageContent(
 						@ActiveSlide(db, inviteKey, sessionID, isPresenter)
 					</main>
 					<footer class="reactions" aria-label="Reactions">
-						@EmojiVoteWidget(inviteKey)
+						@EmojiVoteWidget(db, inviteKey)
 					</footer>
 				</div>
 			</div>
@@ -165,7 +165,7 @@ templ rootPageContent(
 				@ActiveSlide(db, inviteKey, sessionID, isPresenter)
 			</main>
 			<footer class="reactions" aria-label="Reactions">
-				@EmojiVoteWidget(inviteKey)
+				@EmojiVoteWidget(db, inviteKey)
 			</footer>
 		}
 	</div>
