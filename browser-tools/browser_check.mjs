@@ -37,6 +37,13 @@ function cleanUp() {
 		console.warn(`could not remove ${work}: ${error.message}`);
 	}
 }
+// A hung step fails the check with a clear message instead of waiting until CI gives up.
+const timeLimit = setTimeout(() => {
+	console.error("browser check timed out after 5 minutes");
+	cleanUp();
+	process.exit(1);
+}, 5 * 60 * 1000);
+
 process.on("SIGINT", () => {
 	cleanUp();
 	process.exit(130);
@@ -189,6 +196,8 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 			});
 			return response.result?.result?.value === true;
 		},
+		// navigate opens url in this tab; Chrome answers once the new page has started loading.
+		navigate: (url) => send("Page.navigate", { url }),
 		close: () => socket.close(),
 	};
 }
@@ -444,7 +453,9 @@ try {
 	// The presenter's slide list works from the keyboard: Enter on a slide moves the deck there, like a click.
 	// The previews are pictures: nothing inside them can be focused.
 	const presenterTab = await openTab(deckURL);
-	await presenterTab.run(`fetch("/presenter/login", { method: "POST", body: new URLSearchParams({ key: "${presenterKey}" }) }).then(() => location.reload())`);
+	// Log in, then load the deck again as presenter: two steps, so no answer is awaited from a page being replaced.
+	await presenterTab.run(`fetch("/presenter/login", { method: "POST", body: new URLSearchParams({ key: "${presenterKey}" }) }).then((response) => response.ok)`);
+	await presenterTab.navigate(deckURL);
 	await presenterTab.waitUntil(`document.querySelectorAll(".presenter-slide-item").length > 2`, 15000);
 	const keyboard = await presenterTab.run(`(async () => {
 		const item = document.querySelectorAll(".presenter-slide-item")[2];
@@ -471,5 +482,6 @@ try {
 	cleanUp();
 }
 
+clearTimeout(timeLimit);
 console.log(failures === 0 ? "browser check passed" : `browser check failed: ${failures} problem(s)`);
 process.exit(failures === 0 ? 0 : 1);
