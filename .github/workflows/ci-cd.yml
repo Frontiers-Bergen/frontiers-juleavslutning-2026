@@ -44,6 +44,9 @@ jobs:
                   version: v2.15.0
                   install-only: true
             - run: go tool task check
+            # The race detector needs cgo (a C compiler), which many developers' machines, especially on Windows,
+            # do not have; so it runs here, not in task check.
+            - run: go test -race ./...
 
     browser-check:
         name: task browser-check

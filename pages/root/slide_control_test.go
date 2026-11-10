@@ -217,7 +217,9 @@ func slideSetAction(index int) string {
 func moveToLastSlide(app *apptest.App, presenter *http.Client) int {
 	app.T.Helper()
 	for index := 1; ; index++ {
-		app.Post(presenter, fmt.Sprintf("/root/api/slides/set?index=%d", index))
+		if status := app.Post(presenter, slideSetAction(index)); status != http.StatusNoContent {
+			app.T.Fatalf("presenter could not move to slide %d: status %d", index, status)
+		}
 		if shown := apptest.ShownSlideIndex(app.T, app.DeckPage(presenter)); shown < index {
 			return shown
 		}
@@ -231,7 +233,7 @@ func TestPresenterNotes_OnlyThePresenterSeesThem(t *testing.T) {
 		Then:  "Then only the presenter sees the notes.",
 	})
 
-	// Given
+	// Given: the first slide, the welcome slide, has presenter notes.
 	notesMarker := `class="presenter-notes"`
 	app := apptest.Start(t)
 	attendee := app.NewAttendee()

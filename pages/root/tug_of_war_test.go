@@ -48,22 +48,28 @@ func TestTugOfWar_PhonesJoiningAtOnce_TeamsAreEven(t *testing.T) {
 	expectedTeamSize := 20
 	app := apptest.Start(t)
 	firstPhonePage := app.ShowSlideWith(app.NewPresenter(), "data-tug-of-war-phase")
-	teamSizes := map[string]int{tugOfWarState(t, firstPhonePage).team: 1}
-	var mu sync.Mutex
+	phones := make([]*http.Client, 2*expectedTeamSize-1)
+	for i := range phones {
+		phones[i] = app.NewAttendee()
+	}
+	pages := make([]string, len(phones))
+	errs := make([]error, len(phones))
 
 	// When
-	var phones sync.WaitGroup
-	for range 2*expectedTeamSize - 1 {
-		phones.Go(func() {
-			team := tugOfWarState(t, app.DeckPage(app.NewAttendee())).team
-			mu.Lock()
-			defer mu.Unlock()
-			teamSizes[team]++
-		})
+	var opening sync.WaitGroup
+	for i, phone := range phones {
+		opening.Go(func() { pages[i], errs[i] = app.LoadDeckPage(phone) })
 	}
-	phones.Wait()
+	opening.Wait()
 
 	// Then
+	teamSizes := map[string]int{tugOfWarState(t, firstPhonePage).team: 1}
+	for i, page := range pages {
+		if errs[i] != nil {
+			t.Fatal(errs[i])
+		}
+		teamSizes[tugOfWarState(t, page).team]++
+	}
 	if teamSizes["teal"] != expectedTeamSize || teamSizes["orange"] != expectedTeamSize {
 		t.Fatalf("expected two teams of %d, got %v", expectedTeamSize, teamSizes)
 	}

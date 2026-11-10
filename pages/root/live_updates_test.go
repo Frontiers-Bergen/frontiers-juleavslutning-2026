@@ -22,7 +22,7 @@ func TestLiveStream_PhoneLeft_FailedSendIsNotAnError(t *testing.T) {
 	// Given
 	expectedErrors := 0
 	logs, logger := capturingLogger()
-	ctx, phoneLeaves := context.WithCancel(context.Background())
+	ctx, phoneLeaves := context.WithCancel(t.Context())
 	request := httptest.NewRequest("GET", "/dev-key/root/api/", nil).WithContext(ctx)
 	phoneLeaves()
 

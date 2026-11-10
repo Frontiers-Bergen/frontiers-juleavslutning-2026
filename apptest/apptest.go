@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -146,8 +147,29 @@ func (a *App) Get(client *http.Client, path string) (status int, contentType str
 // DeckPage returns the HTML of the deck as this person sees it.
 func (a *App) DeckPage(client *http.Client) string {
 	a.T.Helper()
-	_, _, page := a.Get(client, "/"+InviteKey+"/")
+	page, err := a.LoadDeckPage(client)
+	if err != nil {
+		a.T.Fatal(err)
+	}
 	return page
+}
+
+// LoadDeckPage is DeckPage for goroutines: it returns the error instead of failing the test, because only the
+// test's own goroutine may call t.Fatal. Check the errors after the goroutines are done.
+func (a *App) LoadDeckPage(client *http.Client) (string, error) {
+	response, err := client.Get(a.server.URL + "/" + InviteKey + "/")
+	if err != nil {
+		return "", fmt.Errorf("GET deck failed: %w", err)
+	}
+	body, readErr := io.ReadAll(response.Body)
+	closeErr := response.Body.Close()
+	if readErr != nil || closeErr != nil {
+		return "", fmt.Errorf("failed to read the deck page: %w", errors.Join(readErr, closeErr))
+	}
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GET deck returned status %d", response.StatusCode)
+	}
+	return string(body), nil
 }
 
 var slideIndexSignal = regexp.MustCompile(`slideIndex:\s*(\d+)`)
@@ -215,6 +237,9 @@ func (a *App) OpenStream(client *http.Client, path string) *Stream {
 		a.T.Fatalf("failed to open stream %s: %v", path, err)
 	}
 	a.T.Cleanup(func() { _ = response.Body.Close() }) // closing an aborted stream reports the abort
+	if response.StatusCode != http.StatusOK || !strings.HasPrefix(response.Header.Get("Content-Type"), "text/event-stream") {
+		a.T.Fatalf("stream %s did not open: status %d, content type %q", path, response.StatusCode, response.Header.Get("Content-Type"))
+	}
 
 	stream := &Stream{T: a.T, Events: make(chan Event, 1000)}
 	go func() {

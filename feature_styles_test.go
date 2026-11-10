@@ -60,13 +60,15 @@ func TestFeatureStyles_SourceFiles_AreNotServed(t *testing.T) {
 	stranger := app.NewAttendee()
 
 	for _, sourcePath := range []string{"pages/root/poll.templ", "pages/root/poll_templ.go", "app.go", ".env", "schema.sql"} {
-		// When
-		actualStatus, _, _ := app.Get(stranger, featureStylesURL+sourcePath)
+		t.Run(sourcePath, func(t *testing.T) {
+			// When
+			actualStatus, _, _ := app.Get(stranger, featureStylesURL+sourcePath)
 
-		// Then
-		if actualStatus != expectedStatus {
-			t.Errorf("%s: expected status %d, got %d", sourcePath, expectedStatus, actualStatus)
-		}
+			// Then
+			if actualStatus != expectedStatus {
+				t.Errorf("expected status %d, got %d", expectedStatus, actualStatus)
+			}
+		})
 	}
 }
 
