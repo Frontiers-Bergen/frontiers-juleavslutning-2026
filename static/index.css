@@ -66,6 +66,8 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		--font-body: clamp(1.2rem, 1vw + 1rem, 2.1rem);
 		--font-h1: clamp(2.4rem, 2.4vw + 1.4rem, 4.6rem);
 		--font-small: clamp(1.05rem, 0.4vw + 1rem, 1.35rem);
+		/* Diagrams, charts and tiles on the big screen: big enough for the back row, small enough to fit one row. */
+		--font-visual: 1.5rem;
 
 		/* Surfaces */
 		--surface-presenter: var(--color-surface);
@@ -102,6 +104,27 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 	select,
 	textarea {
 		font: inherit;
+	}
+
+	/* The style guide's button. Features restyle their own buttons in the features layer, which always wins. */
+	button {
+		min-height: 3rem;
+		padding: 0 var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		color: var(--color-text-strong);
+		cursor: pointer;
+	}
+
+	/* Text fields sit on the background like a code block: the presenter key, and later ideas and feedback. */
+	input {
+		min-height: 3rem;
+		padding: 0 var(--space-2);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius);
+		background: var(--color-bg-base);
+		color: var(--color-text-strong);
 	}
 
 	body {
@@ -164,7 +187,7 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 
 			min-height: 0;
 			overflow-y: auto;
-			padding-bottom: clamp(1rem, 3vw, 2rem);
+			padding-bottom: var(--stage-padding);
 		}
 	}
 
@@ -185,8 +208,9 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		display: flex;
 		flex-direction: column;
 
-		padding: clamp(1rem, 3vw, 2rem);
-		padding-bottom: calc(clamp(1rem, 3vw, 2rem) + var(--reactions-min-height) + env(safe-area-inset-bottom));
+		--stage-padding: clamp(1rem, 3vw, 2rem);
+		padding: var(--stage-padding);
+		padding-bottom: calc(var(--stage-padding) + var(--reactions-min-height) + env(safe-area-inset-bottom));
 
 		& > * {
 			flex: 1;

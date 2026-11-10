@@ -27,6 +27,12 @@ the same purple, the same monospace font, the same markdown-style headings, with
 | `--color-link-hover` | `#fad000` | Links on hover |
 | `--color-team-teal` | `#07d9b2` | Team colour in team games (the logo's teal); near-black text on it |
 | `--color-team-orange` | `#ff9200` | Team colour in team games (the logo's orange); near-black text on it |
+| `--color-primary-text` | `--color-text-soft` | The page's default text colour |
+| `--surface-presenter` | `--color-surface` | The presenter's bar and sidebar |
+| `--surface-backstage` | `--color-surface` | Presenter notes |
+| `--surface-glass` | `--color-bg-base` at 90% | The reaction bar over the stage |
+| `--border-subtle` | 1px `--color-border` | Borders on surfaces |
+| `--font-visual` | `1.5rem` | Diagrams, charts and tiles on the big screen |
 
 Rules:
 - Use the tokens, never raw colour values, in feature CSS.

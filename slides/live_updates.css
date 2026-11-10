@@ -17,7 +17,7 @@
 			flex-direction: row;
 			align-items: center;
 			gap: var(--space-2);
-			font-size: 1.5rem;
+			font-size: var(--font-visual);
 		}
 	}
 
@@ -70,6 +70,7 @@
 		align-items: flex-start;
 		padding-inline-start: 0.4em;
 		color: var(--color-text-muted);
+		animation: live-updates-arrow var(--flow-cycle) ease-out infinite;
 
 		@media (width >= 40rem) {
 			align-items: center;
@@ -77,8 +78,6 @@
 			padding-inline-start: 0;
 			text-align: center;
 		}
-
-		animation: live-updates-arrow var(--flow-cycle) ease-out infinite;
 
 		&::after {
 			content: "↓";

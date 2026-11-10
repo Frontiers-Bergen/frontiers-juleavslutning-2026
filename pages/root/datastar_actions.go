@@ -19,3 +19,9 @@ func postAction(inviteKey InviteKey, path string) string {
 func streamAction(inviteKey InviteKey, path string) string {
 	return fmt.Sprintf("@get('/%s%s',{requestCancellation: 'disabled'})", inviteKey, path)
 }
+
+// activatedByKeyboard runs action on Enter or Space, as a real button does. For an element with role="button"
+// that cannot be a <button>, such as a slide preview, which itself contains buttons.
+func activatedByKeyboard(action string) string {
+	return fmt.Sprintf("if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); %s }", action)
+}

@@ -440,6 +440,30 @@ try {
 	check("with reduce motion, a balloon stays still and disappears", reducedMotion.moved === false && reducedMotion.stillThereAfterTwoSeconds === false, reducedMotion);
 	check("no console errors or exceptions in the reduce-motion tab", calmPhone.problems.length === 0, calmPhone.problems);
 	calmPhone.close();
+
+	// The presenter's slide list works from the keyboard: Enter on a slide moves the deck there, like a click.
+	// The previews are pictures: nothing inside them can be focused.
+	const presenterTab = await openTab(deckURL);
+	await presenterTab.run(`fetch("/presenter/login", { method: "POST", body: new URLSearchParams({ key: "${presenterKey}" }) }).then(() => location.reload())`);
+	await presenterTab.waitUntil(`document.querySelectorAll(".presenter-slide-item").length > 2`, 15000);
+	const keyboard = await presenterTab.run(`(async () => {
+		const item = document.querySelectorAll(".presenter-slide-item")[2];
+		item.focus();
+		// Press Enter until the deck moves: right after the page loads, Datastar may not listen to the item yet.
+		const until = Date.now() + 10000;
+		while (document.querySelector("[data-slide-index]")?.dataset.slideIndex !== "2" && Date.now() < until) {
+			item.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+			await new Promise((resolve) => setTimeout(resolve, 500));
+		}
+		return {
+			shownSlide: document.querySelector("[data-slide-index]")?.dataset.slideIndex,
+			previewsInert: [...document.querySelectorAll(".slide-preview-inner")].every((preview) => preview.inert),
+		};
+	})()`);
+	check("Enter on a slide in the presenter's list moves the deck there", keyboard.shownSlide === "2", keyboard);
+	check("nothing inside the slide previews can be focused", keyboard.previewsInert === true, keyboard);
+	check("no console errors or exceptions in the presenter tab", presenterTab.problems.length === 0, presenterTab.problems);
+	presenterTab.close();
 } catch (error) {
 	console.error(`browser check could not run: ${error.message}`);
 	failures++;
