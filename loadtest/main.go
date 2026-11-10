@@ -39,6 +39,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	root "github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages/root"
 )
 
 const (
@@ -51,8 +52,6 @@ const (
 
 	// Responses under 100 ms feel instant (Jakob Nielsen); the goal for smash-to-screen time at the 99th percentile.
 	instant = 100 * time.Millisecond
-	// DefaultTugOfWarRules in pages/root/tug_of_war.templ.
-	tugOfWarCountdown = 5 * time.Second
 )
 
 // The simulated phones smash these; ❤️ is the probe's alone.
@@ -311,7 +310,7 @@ func runRound(binary, work string, s settings) (result roundResult, err error) {
 	if status, err := post(presenter, "/root/api/tug-of-war/start", ""); err != nil || status != http.StatusNoContent {
 		return result, fmt.Errorf("starting the tug of war: status %d, %w", status, err)
 	}
-	time.Sleep(tugOfWarCountdown + 100*time.Millisecond)
+	time.Sleep(root.DefaultTugOfWarRules.Countdown + 100*time.Millisecond)
 
 	// Smash.
 	cpuBefore, smashStart := app.cpuTime(), time.Now()

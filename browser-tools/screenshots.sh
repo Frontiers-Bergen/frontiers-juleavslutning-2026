@@ -34,7 +34,13 @@ cd "$work"
 PORT="$port" PRESENTER_KEY=screenshot-key ./app >server.log 2>&1 &
 app_pid=$!
 trap 'kill $app_pid 2>/dev/null; wait $app_pid 2>/dev/null; rm -rf "$work"' EXIT
-for _ in $(seq 1 40); do curl -s -o /dev/null "$base/" && break; sleep 0.25; done
+started=""
+for _ in $(seq 1 40); do curl -s -o /dev/null "$base/" && started=yes && break; sleep 0.25; done
+if [ -z "$started" ]; then
+	echo "screenshots: the app did not start; it said:" >&2
+	tail -20 server.log >&2
+	exit 1
+fi
 
 curl -s -c presenter.jar -o /dev/null -d key=screenshot-key "$base/presenter/login"
 

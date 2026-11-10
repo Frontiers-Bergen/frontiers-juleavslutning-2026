@@ -22,6 +22,8 @@ const presenterKey = "browser-check-key";
 const appBinary = process.platform === "win32" ? "app.exe" : "app";
 
 const work = mkdtempSync(join(tmpdir(), "browser-check-"));
+// What the app wrote, shown when the check cannot run (a crash used to show only as "did not come up").
+let appOutput = "";
 const processes = [];
 let failures = 0;
 
@@ -47,8 +49,9 @@ function check(name, passed, details) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function waitFor(url) {
-	for (let attempt = 0; attempt < 80; attempt++) {
+// waitFor polls url until it answers. Chrome on CI machines sometimes needs more than 20 s to start, so allow 60.
+async function waitFor(url, seconds = 60) {
+	for (let attempt = 0; attempt < seconds * 4; attempt++) {
 		try {
 			await fetch(url);
 			return;
@@ -92,8 +95,16 @@ async function presenterSession() {
 		body: new URLSearchParams({ key: presenterKey }),
 		redirect: "manual",
 	});
+	if (login.status !== 303 || (login.headers.get("location") ?? "").includes("err=")) {
+		throw new Error(`presenter login failed: status ${login.status}, location ${login.headers.get("location")}`);
+	}
 	const cookie = login.headers.getSetCookie().map((header) => header.split(";")[0]).join("; ");
-	const moveToSlide = (index) => fetch(`${api}/slides/set?index=${index}`, { method: "POST", headers: { cookie } });
+	// postOrFail sends a presenter action and fails the check at once if the app refuses it.
+	const postOrFail = async (path) => {
+		const response = await fetch(`${api}${path}`, { method: "POST", headers: { cookie } });
+		if (response.status !== 204) throw new Error(`POST ${path}: status ${response.status}`);
+	};
+	const moveToSlide = (index) => postOrFail(`/slides/set?index=${index}`);
 	// What an attendee sees: only the active slide. (The presenter's page also previews every slide.)
 	const attendeeHTML = async () => (await fetch(deckURL)).text();
 	// Steps through the deck until a slide matching the pattern is shown, like a presenter clicking "next",
@@ -108,7 +119,7 @@ async function presenterSession() {
 		}
 		throw new Error(`no slide matches ${pattern}`);
 	};
-	const startTugOfWar = () => fetch(`${api}/tug-of-war/start`, { method: "POST", headers: { cookie } });
+	const startTugOfWar = () => postOrFail("/tug-of-war/start");
 	return { moveToSlideWith, startTugOfWar };
 }
 
@@ -162,6 +173,22 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 			if (response.result?.exceptionDetails) throw new Error(response.result.exceptionDetails.exception?.description);
 			return response.result.result.value;
 		},
+		// waitUntil polls a JavaScript condition in the tab, so the check waits as long as needed and no longer.
+		waitUntil: async (condition, timeoutMs = 10000) => {
+			const response = await send("Runtime.evaluate", {
+				expression: `(async () => {
+					const until = Date.now() + ${timeoutMs};
+					while (Date.now() < until) {
+						if (${condition}) return true;
+						await new Promise((resolve) => setTimeout(resolve, 100));
+					}
+					return false;
+				})()`,
+				awaitPromise: true,
+				returnByValue: true,
+			});
+			return response.result?.result?.value === true;
+		},
 		close: () => socket.close(),
 	};
 }
@@ -171,7 +198,10 @@ try {
 	execFileSync("go", ["build", "-o", join(work, appBinary), "./cmd/juleavslutning"], { cwd: repo, stdio: "inherit" });
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
-	processes.push(spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: "ignore" }));
+	const app = spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: ["ignore", "pipe", "pipe"] });
+	app.stdout.on("data", (chunk) => (appOutput += chunk));
+	app.stderr.on("data", (chunk) => (appOutput += chunk));
+	processes.push(app);
 	const browserArguments = ["--headless=new", "--disable-gpu", `--user-data-dir=${join(work, "profile")}`, `--remote-debugging-port=${devtoolsPort}`];
 	// GitHub's Ubuntu runners block Chrome's sandbox (AppArmor), and Chrome exits at once. Only on CI.
 	if (process.env.CI) browserArguments.push("--no-sandbox");
@@ -181,7 +211,11 @@ try {
 	let browserErrors = "";
 	browser.stderr.on("data", (chunk) => (browserErrors += chunk));
 	processes.push(browser);
-	await waitFor(deckURL);
+	try {
+		await waitFor(deckURL);
+	} catch (error) {
+		throw new Error(`${error.message}; the app said:\n${appOutput.slice(-2000)}`);
+	}
 	try {
 		await waitFor(`http://127.0.0.1:${devtoolsPort}/json/version`);
 	} catch (error) {
@@ -285,15 +319,17 @@ try {
 
 	// Live update: the presenter moves the deck and the open phone follows without a reload.
 	await presenter.moveToSlideWith(/class="slide poll"/);
-	await sleep(1500);
-	const showsPoll = await phone.run(`document.querySelector(".poll-option") !== null`);
+	const showsPoll = await phone.waitUntil(`document.querySelector(".poll-option") !== null`);
 	check("an open phone follows the presenter to the poll slide", showsPoll === true);
 
 	// Voting by tapping an option.
 	const afterVoting = await phone.run(`(async () => {
 		const option = () => [...document.querySelectorAll(".poll-option")].find((button) => button.textContent.includes("Smash the Halls"));
 		option().click();
-		await new Promise((resolve) => setTimeout(resolve, 2500));
+		const until = Date.now() + 10000;
+		while (option().getAttribute("aria-pressed") !== "true" && Date.now() < until) {
+			await new Promise((resolve) => setTimeout(resolve, 100));
+		}
 		return { pressed: option().getAttribute("aria-pressed") };
 	})()`);
 	check("a tapped poll option shows as selected", afterVoting.pressed === "true", afterVoting);
@@ -304,9 +340,10 @@ try {
 	// Tug of war: the presenter starts a round; after the 5 second countdown, emoji smashes pull for the
 	// phone's team and the rope moves through the live updates.
 	await presenter.moveToSlideWith(/data-tug-of-war-phase/);
-	await sleep(1500);
+	await phone.waitUntil(`document.querySelector(".tug-of-war") !== null`);
 	await presenter.startTugOfWar();
-	await sleep(5500);
+	// The countdown (5 s) runs on the server; smash once the phone shows the rope being pulled.
+	await phone.waitUntil(`document.querySelector(".tug-of-war")?.dataset.tugOfWarPhase === "pulling"`, 15000);
 	const tugOfWar = await phone.run(`(async () => {
 		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 		const smashButton = document.querySelector(".emoji-balloon-button");
@@ -314,7 +351,11 @@ try {
 			smashButton.click();
 			await sleep(50);
 		}
-		await sleep(1500);
+		const ownPullsShown = () => {
+			const slide = document.querySelector(".tug-of-war");
+			return Number(slide.dataset.team === "teal" ? slide.dataset.tealPulls : slide.dataset.orangePulls);
+		};
+		for (let waited = 0; ownPullsShown() < 10 && waited < 10000; waited += 100) await sleep(100);
 		const slide = document.querySelector(".tug-of-war");
 		const ownPulls = Number(slide.dataset.team === "teal" ? slide.dataset.tealPulls : slide.dataset.orangePulls);
 		return { phase: slide.dataset.tugOfWarPhase, team: slide.dataset.team, ownPulls, rope: slide.style.getPropertyValue("--rope").trim() };
@@ -331,7 +372,8 @@ try {
 			if (node.classList?.contains("snowfall")) { observer.disconnect(); resolve({ node, at: performance.now() }); }
 		}
 	}).observe(document.body, { childList: true })); true`);
-	await fetch(`${api}/snow/shake`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shakes: 3 }) });
+	const shook = await fetch(`${api}/snow/shake`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ shakes: 3 }) });
+	check("someone else's shakes are accepted", shook.status === 204, { status: shook.status });
 	const snowHere = await phone.run(`(async () => {
 		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 		const arrived = await window.snowArrived;
