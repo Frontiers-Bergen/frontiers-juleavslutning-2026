@@ -2,10 +2,11 @@ package root
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
-func getPollOptionCounts(db *sql.DB, pollKey string) (map[string]int64, error) {
+func getPollOptionCounts(db *sql.DB, pollKey string) (counts map[string]int64, err error) {
 	rows, err := db.Query(`
 		SELECT option_key, COUNT(*) as c
 		FROM poll_votes
@@ -13,23 +14,26 @@ func getPollOptionCounts(db *sql.DB, pollKey string) (map[string]int64, error) {
 		GROUP BY option_key
 	`, pollKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to count votes: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close vote rows: %w", closeErr))
+		}
+	}()
 
-	counts := make(map[string]int64, 8)
+	counts = make(map[string]int64, 8)
 	for rows.Next() {
 		var optionKey string
 		var c int64
 		if err := rows.Scan(&optionKey, &c); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read a vote count: %w", err)
 		}
 		counts[optionKey] = c
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to count votes: %w", err)
 	}
-
 	return counts, nil
 }
 

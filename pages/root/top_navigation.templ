@@ -83,8 +83,17 @@ func slideSetAction(inviteKey string, index int) string {
 }
 
 templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
-	{{ current, _ := GetCurrentSlideIndex(db) }}
-	{{ deckEntries := deck(db, inviteKey, sessionID, false) }}
+	{{ current, err := GetCurrentSlideIndex(db) }}
+	if err != nil {
+		<nav class="presenter-nav">
+			<p class="presenter-nav-count">Unable to load the current slide.</p>
+		</nav>
+	} else {
+		@topNavigation(inviteKey, current, deck(db, inviteKey, sessionID, false))
+	}
+}
+
+templ topNavigation(inviteKey string, current int, deckEntries []slideEntry) {
 	<nav class="presenter-nav">
 		<button
 			class="presenter-nav-button"
@@ -144,8 +153,18 @@ templ presenterNavEdge(label string, message string, isNext bool) {
 	</div>
 }
 
+// currentSlideOrNone is the current slide for the slide list, or -1 when it cannot be read: the list still works
+// for moving the deck, only the highlight of the current slide is missing.
+func currentSlideOrNone(db *sql.DB) int {
+	current, err := GetCurrentSlideIndex(db)
+	if err != nil {
+		return -1
+	}
+	return current
+}
+
 templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string) {
-	{{ current, _ := GetCurrentSlideIndex(db) }}
+	{{ current := currentSlideOrNone(db) }}
 	{{ deckEntries := deck(db, inviteKey, sessionID, false) }}
 	<div class="presenter-slide-list">
 		for i, entry := range deckEntries {

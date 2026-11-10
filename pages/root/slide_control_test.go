@@ -157,6 +157,34 @@ func TestPresenterNavigation_StoredSlideBeyondTheDeck_ShowsTheLastSlide(t *testi
 	}
 }
 
+func TestActiveSlide_CurrentSlideCannotBeRead_SaysSo(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a database where the current slide cannot be read.",
+		When:  "When an attendee and the presenter open the deck.",
+		Then:  "Then both pages say the slide could not be loaded, instead of quietly showing the first slide.",
+	})
+
+	// Given
+	expectedMessage := "Unable to load the slide."
+	expectedPresenterMessage := "Unable to load the current slide."
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
+	presenter := app.NewPresenter()
+	app.ExecSQL(`DROP TABLE slide_state`)
+
+	// When
+	attendeePage := app.DeckPage(attendee)
+	presenterPage := app.DeckPage(presenter)
+
+	// Then
+	if !strings.Contains(attendeePage, expectedMessage) {
+		t.Fatalf("expected the attendee's page to say %q:\n%s", expectedMessage, apptest.Truncate(attendeePage, 800))
+	}
+	if !strings.Contains(presenterPage, expectedPresenterMessage) {
+		t.Fatalf("expected the presenter's page to say %q", expectedPresenterMessage)
+	}
+}
+
 func TestPresenterNavigation_FirstSlide_OffersNoPreviousSlide(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the presenter is on the first slide.",
