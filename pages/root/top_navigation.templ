@@ -128,13 +128,14 @@ templ presenterNavPreview(label string, inviteKey InviteKey, targetIndex int, ta
 		role="button"
 		tabindex="0"
 		data-on:click={ slideSetAction(inviteKey, targetIndex) }
+		data-on:keydown={ activatedByKeyboard(slideSetAction(inviteKey, targetIndex)) }
 	>
 		<div class="presenter-nav-preview-meta">
 			<span class="presenter-nav-preview-label">{ label }</span>
 			<span class="presenter-nav-preview-title">{ target.Title }</span>
 		</div>
 		<div class="slide-preview-frame">
-			<div class="slide-preview-inner">
+			<div class="slide-preview-inner" inert>
 				@target.Render()
 			</div>
 		</div>
@@ -174,10 +175,11 @@ templ PresenterSlideList(db *sql.DB, inviteKey InviteKey, sessionID SessionID) {
 				tabindex="0"
 				data-active={ fmt.Sprintf("%t", current == i) }
 				data-on:click={ slideSetAction(inviteKey, i) }
+				data-on:keydown={ activatedByKeyboard(slideSetAction(inviteKey, i)) }
 				aria-current={ fmt.Sprintf("%t", current == i) }
 			>
 				<div class="slide-preview-frame">
-					<div class="slide-preview-inner">
+					<div class="slide-preview-inner" inert>
 						@entry.Render()
 					</div>
 				</div>

@@ -15,7 +15,7 @@
 
 	.poll-hint {
 		margin: 0;
-		opacity: 0.85;
+		color: var(--color-text-soft);
 	}
 
 	/* Mobile first: one option per row on a phone, so option texts are not squeezed;
@@ -41,7 +41,7 @@
 		width: 100%;
 		min-height: 4rem;
 		padding: 1rem;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		border: 2px solid rgba(255, 255, 255, 0.25);
 		background: var(--option-color);
 		color: var(--option-text);
@@ -65,9 +65,9 @@
 		width: 3rem;
 		min-width: 3rem;
 		font-size: 1.75rem;
-		font-weight: 900;
+		font-weight: 700;
 		background: rgba(0, 0, 0, 0.18);
-		border-radius: 14px;
+		border-radius: var(--radius);
 	}
 
 	.poll-option-body {
@@ -80,7 +80,7 @@
 
 	.poll-option-text {
 		font-size: 1.25rem;
-		font-weight: 800;
+		font-weight: 700;
 		line-height: 1.15;
 		/* Break inside a word only when the word alone does not fit (word-break: break-word split any word). */
 		overflow-wrap: break-word;
@@ -90,6 +90,5 @@
 	.poll-option-selected {
 		font-size: 0.95rem;
 		font-weight: 700;
-		opacity: 0.95;
 	}
 }

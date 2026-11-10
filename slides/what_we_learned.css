@@ -11,7 +11,7 @@
 
 		@media (width >= 40rem) {
 			max-inline-size: 44rem;
-			font-size: 1.5rem;
+			font-size: var(--font-visual);
 		}
 	}
 

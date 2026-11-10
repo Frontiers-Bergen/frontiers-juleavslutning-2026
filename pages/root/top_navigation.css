@@ -11,10 +11,6 @@
 
 	.presenter-nav-button {
 		padding: 0.5rem 0.75rem;
-		border-radius: 10px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		cursor: pointer;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -80,11 +76,11 @@
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
-		opacity: 0.75;
+		color: var(--color-text-muted);
 	}
 
 	.presenter-nav-preview-title {
-		font-weight: 650;
+		font-weight: 700;
 		line-height: 1.2;
 		max-width: 13rem;
 		white-space: nowrap;
@@ -93,8 +89,8 @@
 	}
 
 	.presenter-nav-count {
-		font-weight: 650;
-		opacity: 0.8;
+		font-weight: 700;
+		color: var(--color-text-soft);
 		font-size: 2rem;
 		text-align: center;
 	}
@@ -169,11 +165,11 @@
 
 	.presenter-slide-index {
 		font-weight: 700;
-		opacity: 0.65;
+		color: var(--color-text-muted);
 	}
 
 	.presenter-slide-title {
-		font-weight: 650;
+		font-weight: 700;
 		line-height: 1.2;
 		overflow: hidden;
 		text-overflow: ellipsis;

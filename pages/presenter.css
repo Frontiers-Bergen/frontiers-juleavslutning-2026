@@ -10,13 +10,12 @@
 	}
 
 	& p {
-		opacity: 0.85;
+		color: var(--color-text-soft);
 		margin-bottom: 1rem;
 	}
 
 	& button {
-		padding: 0.65rem 0.9rem;
-		border-radius: 10px;
+		padding: 0 var(--space-2);
 	}
 
 	.presenter-login-error {
@@ -35,8 +34,6 @@
 		& input {
 			flex: 1;
 			min-width: 16rem;
-			padding: 0.65rem 0.75rem;
-			border-radius: 10px;
 		}
 	}
 }

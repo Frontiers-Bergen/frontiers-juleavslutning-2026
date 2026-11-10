@@ -23,7 +23,7 @@
 		left: var(--x);
 		font-size: calc(var(--size) * 1rem);
 		line-height: 1;
-		color: #fff;
+		color: var(--color-text-strong);
 		text-shadow: 0 0 4px rgb(255 255 255 / 60%);
 		opacity: 0;
 		animation: snow-globe-swirl var(--swirl-duration) ease-out var(--delay) forwards;
@@ -96,11 +96,5 @@
 		left: var(--space-2);
 		bottom: calc(var(--reactions-min-height) + var(--space-1));
 		z-index: 10;
-		min-height: 3rem;
-		padding: 0 var(--space-2);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius);
-		background: var(--color-surface);
-		color: var(--color-text-strong);
 	}
 }

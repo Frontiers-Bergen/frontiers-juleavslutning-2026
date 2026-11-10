@@ -17,6 +17,6 @@
 	}
 
 	.need-key-hint {
-		opacity: 0.8;
+		color: var(--color-text-muted);
 	}
 }
