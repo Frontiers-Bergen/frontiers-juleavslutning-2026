@@ -36,6 +36,8 @@ func main() {
 		NATSStoreDir:  natsStoreDir,
 		InviteKey:     readEnvOrDefault(logger, "INVITE_KEY", "dev-key"),
 		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
+		// No fallback on purpose: without PRESENTER_KEY nobody can be presenter.
+		PresenterKey: strings.TrimSpace(os.Getenv("PRESENTER_KEY")),
 	}
 
 	// Ctrl+C (dev) and SIGTERM (systemctl stop on the server) end the context, so the deferred cleanup

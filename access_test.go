@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	app "github.com/frontiers-bergen/frontiers-juleavslutning-2026"
 	"net/http"
 	"net/url"
 	"testing"
@@ -95,15 +96,14 @@ func TestPresenterLogin_WrongKey_DoesNotGivePresenterControl(t *testing.T) {
 
 func TestPresenterLogin_NoPresenterKeyConfigured_NobodyCanLogIn(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a server started without PRESENTER_KEY.",
+		Given: "Given a server started without a presenter key.",
 		When:  "When someone logs in as presenter with an empty key.",
 		Then:  "Then the login is rejected; a missing key never means everyone is presenter.",
 	})
 
 	// Given
 	expectedLoginError := "invalid_key"
-	app := apptest.Start(t)
-	t.Setenv("PRESENTER_KEY", "")
+	app := apptest.StartWith(t, func(config *app.Config) { config.PresenterKey = "" })
 	attendee := app.NewAttendee()
 
 	// When
