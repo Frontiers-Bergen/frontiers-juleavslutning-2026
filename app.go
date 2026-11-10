@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 	"time"
 
 	"github.com/delaneyj/toolbelt"
@@ -19,69 +15,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+// Package app wires the whole application: database, embedded NATS, sessions and routes. It lives in the
+// repository root because it embeds schema.sql and the feature CSS files (go:embed only reaches files in its own
+// folder and below). The program itself is cmd/juleavslutning; the HTTP tests start the same app through New.
 
-	if err := godotenv.Load(); err != nil {
-		logger.Info("no .env file loaded (this is fine in prod)", slog.String("error", err.Error()))
-	}
-
-	natsStoreDir, removeNATSStoreDir, err := natsStoreDirectory(logger)
-	if err != nil {
-		logger.Error("failed to prepare NATS store directory", slog.String("error", err.Error()))
-		return
-	}
-	defer removeNATSStoreDir()
-
-	config := appConfig{
-		DatabasePath:  "presentation.db",
-		NATSStoreDir:  natsStoreDir,
-		InviteKey:     readEnvOrDefault(logger, "INVITE_KEY", "dev-key"),
-		SessionSecret: readEnvOrDefault(logger, "SESSION_SECRET", "local-dev-session-secret"),
-	}
-
-	// Ctrl+C (dev) and SIGTERM (systemctl stop on the server) end the context, so the deferred cleanup
-	// runs: the database is closed and the temp NATS directory removed.
-	ctx, stopListeningForSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stopListeningForSignals()
-
-	app, closeApp, err := newApp(ctx, logger, config)
-	if err != nil {
-		logger.Error("failed to start app", slog.String("error", err.Error()))
-		return
-	}
-	defer closeApp()
-
-	// HOST is empty locally, so phones on the LAN can reach the app. On the server it is 127.0.0.1:
-	// Caddy is the only way in, with TLS (deploy/juleavslutning.service.tmpl).
-	address := strings.TrimSpace(os.Getenv("HOST")) + ":" + readEnvOrDefault(logger, "PORT", "8080")
-	server := &http.Server{Addr: address, Handler: app}
-	serverStopped := make(chan error, 1)
-	go func() { serverStopped <- server.ListenAndServe() }()
-	logger.Info("starting HTTP server", slog.String("address", address))
-
-	select {
-	case err := <-serverStopped:
-		logger.Error("HTTP server error", slog.String("error", err.Error()))
-	case <-ctx.Done():
-		logger.Info("shutting down")
-		// Live-update streams stay open until the phone leaves, so a graceful shutdown would wait for them
-		// forever; after a short grace period the remaining connections are closed.
-		gracePeriod, cancelGracePeriod := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancelGracePeriod()
-		if err := server.Shutdown(gracePeriod); err != nil {
-			if closeErr := server.Close(); closeErr != nil {
-				logger.Error("failed to close HTTP server", slog.String("error", closeErr.Error()))
-			}
-		}
-	}
-}
-
-type appConfig struct {
+type Config struct {
 	DatabasePath string
 	// NATSStoreDir is where JetStream keeps its data. Required: the NATS default is one shared temp dir,
 	// and two app instances on the same machine (dev server, tests, task screenshots) corrupted each other's
@@ -95,12 +36,12 @@ type appConfig struct {
 	TugOfWarRules root.TugOfWarRules
 }
 
-// newApp wires the whole application: database, embedded NATS, sessions and routes.
+// New wires the whole application: database, embedded NATS, sessions and routes.
 // main and the HTTP tests both use it, so tests exercise the real router.
 // The embedded NATS server shuts down when ctx is cancelled; closeApp closes the database.
-func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app http.Handler, closeApp func(), err error) {
+func New(ctx context.Context, logger *slog.Logger, config Config) (app http.Handler, closeApp func(), err error) {
 	if config.NATSStoreDir == "" {
-		return nil, nil, errors.New("appConfig.NATSStoreDir is required; the NATS default store dir is shared by every instance on the machine")
+		return nil, nil, errors.New("Config.NATSStoreDir is required; the NATS default store dir is shared by every instance on the machine")
 	}
 
 	db, err := openDatabase(config.DatabasePath)
@@ -185,36 +126,6 @@ func newApp(ctx context.Context, logger *slog.Logger, config appConfig) (app htt
 		closeDatabase()
 	}
 	return router, closeApp, nil
-}
-
-// natsStoreDirectory returns where embedded NATS keeps its JetStream data. NATS state never has to survive a
-// restart: anything that must is stored in SQLite. On the server, NATS_STORE_DIR points into the service's
-// systemd RuntimeDirectory (/run/..., in memory, wiped on restart), like conorganizer. Locally, a fresh temp
-// directory is created per run and removed on exit.
-func natsStoreDirectory(logger *slog.Logger) (dir string, remove func(), err error) {
-	if dir := strings.TrimSpace(os.Getenv("NATS_STORE_DIR")); dir != "" {
-		return dir, func() {}, nil
-	}
-	dir, err = os.MkdirTemp("", "juleavslutning-nats-")
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to create temp NATS store directory: %w", err)
-	}
-	return dir, func() {
-		if err := os.RemoveAll(dir); err != nil {
-			logger.Error("failed to remove temp NATS store directory", slog.String("dir", dir), slog.String("error", err.Error()))
-			return
-		}
-		logger.Info("removed temp NATS store directory", slog.String("dir", dir))
-	}, nil
-}
-
-func readEnvOrDefault(logger *slog.Logger, name, fallback string) string {
-	v := strings.TrimSpace(os.Getenv(name))
-	if v == "" {
-		logger.Warn("missing env var, using fallback (dev only)", slog.String("env", name))
-		return fallback
-	}
-	return v
 }
 
 // inviteKeyMiddleware lets only requests with the invite key through; anything else goes to the

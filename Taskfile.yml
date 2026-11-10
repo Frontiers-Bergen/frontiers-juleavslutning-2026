@@ -13,7 +13,7 @@ tasks:
     deps:
       - build:templ
     cmds:
-      - go build -tags=prod -o bin/main{{exeExt}} ./
+      - go build -tags=prod -o bin/main{{exeExt}} ./cmd/juleavslutning
 
   start:templ:
     cmds:
@@ -23,7 +23,7 @@ tasks:
     cmds:
       - |
         go tool air \
-          -build.cmd "go build -tags=dev -o tmp/bin/main{{exeExt}} ./" \
+          -build.cmd "go build -tags=dev -o tmp/bin/main{{exeExt}} ./cmd/juleavslutning" \
           -build.bin "tmp/bin/main{{exeExt}}" \
           -build.include_ext "go,templ,css,md" \
           -misc.clean_on_exit "true"
