@@ -27,7 +27,7 @@ const repositoryURL = "https://github.com/frontiers-bergen/frontiers-juleavslutn
 
 func QRCodeRoutes(router chi.Router, logger *slog.Logger) {
 	router.Get("/qr.svg", func(w http.ResponseWriter, r *http.Request) {
-		serveQRCode(w, logger, inviteLink(r, chi.URLParam(r, "inviteKey")))
+		serveQRCode(w, logger, inviteLink(r, inviteKeyOf(r)))
 	})
 	router.Get("/repo-qr.svg", func(w http.ResponseWriter, r *http.Request) {
 		serveQRCode(w, logger, repositoryURL)
@@ -48,7 +48,7 @@ func serveQRCode(w http.ResponseWriter, logger *slog.Logger, content string) {
 	}
 }
 
-func inviteLink(r *http.Request, inviteKey string) string {
+func inviteLink(r *http.Request, inviteKey InviteKey) string {
 	scheme := "http"
 	if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
 		scheme = "https"

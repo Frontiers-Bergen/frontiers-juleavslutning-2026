@@ -216,7 +216,7 @@ func pullForTeam(db *sql.DB, team tugOfWarTeam, now time.Time) (bool, error) {
 // tugOfWarTeamFor returns the attendee's team. The first time in a round (startTugOfWarRound clears the teams),
 // the attendee joins the smaller team, with a coin toss when both are the same size. Comparing and inserting happen in one statement, so many phones
 // joining at once still split evenly.
-func tugOfWarTeamFor(db *sql.DB, sessionID string) (tugOfWarTeam, error) {
+func tugOfWarTeamFor(db *sql.DB, sessionID SessionID) (tugOfWarTeam, error) {
 	coinToss := teamTeal
 	if rand.IntN(2) == 1 {
 		coinToss = teamOrange
@@ -278,7 +278,7 @@ func TugOfWarRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store sessions
 
 // countSmashForTugOfWar counts an emoji smash as a pull for the smasher's team while the rope is being pulled,
 // and makes every page show the new score. Outside a round it does nothing, so smashing never assigns a team.
-func countSmashForTugOfWar(db *sql.DB, nc *nats.Conn, sessionID string, now time.Time) error {
+func countSmashForTugOfWar(db *sql.DB, nc *nats.Conn, sessionID SessionID, now time.Time) error {
 	round, err := loadTugOfWarRound(db)
 	if err != nil {
 		return err
@@ -297,13 +297,13 @@ func countSmashForTugOfWar(db *sql.DB, nc *nats.Conn, sessionID string, now time
 	return publishDeckChanged(nc)
 }
 
-func loadTugOfWar(db *sql.DB, sessionID string) (tugOfWarRound, tugOfWarTeam, error) {
+func loadTugOfWar(db *sql.DB, sessionID SessionID) (tugOfWarRound, tugOfWarTeam, error) {
 	round, roundErr := loadTugOfWarRound(db)
 	team, teamErr := tugOfWarTeamFor(db, sessionID)
 	return round, team, errors.Join(roundErr, teamErr)
 }
 
-templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter bool) {
+templ TugOfWarSlide(db *sql.DB, inviteKey InviteKey, sessionID SessionID, isPresenter bool) {
 	{{ round, team, err := loadTugOfWar(db, sessionID) }}
 	if err != nil {
 		<div class="slide tug-of-war">

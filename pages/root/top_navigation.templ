@@ -78,11 +78,11 @@ func TopNavigationRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 // --- Templ helper ---
 
 // slideSetAction moves the deck to index; only the presenter's taps are accepted.
-func slideSetAction(inviteKey string, index int) string {
+func slideSetAction(inviteKey InviteKey, index int) string {
 	return postAction(inviteKey, fmt.Sprintf("/root/api/slides/set?index=%d", index))
 }
 
-templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
+templ TopNavigation(db *sql.DB, inviteKey InviteKey, sessionID SessionID) {
 	{{ current, err := GetCurrentSlideIndex(db) }}
 	if err != nil {
 		<nav class="presenter-nav">
@@ -93,7 +93,7 @@ templ TopNavigation(db *sql.DB, inviteKey string, sessionID string) {
 	}
 }
 
-templ topNavigation(inviteKey string, current int, deckEntries []slideEntry) {
+templ topNavigation(inviteKey InviteKey, current int, deckEntries []slideEntry) {
 	<nav class="presenter-nav">
 		<button
 			class="presenter-nav-button"
@@ -122,7 +122,7 @@ templ topNavigation(inviteKey string, current int, deckEntries []slideEntry) {
 }
 
 // presenterNavPreview is a clickable preview of the slide the presenter moves to.
-templ presenterNavPreview(label string, inviteKey string, targetIndex int, target slideEntry, isNext bool) {
+templ presenterNavPreview(label string, inviteKey InviteKey, targetIndex int, target slideEntry, isNext bool) {
 	<div
 		class={ "presenter-nav-preview", templ.KV("presenter-nav-preview-next", isNext) }
 		role="button"
@@ -163,7 +163,7 @@ func currentSlideOrNone(db *sql.DB) int {
 	return current
 }
 
-templ PresenterSlideList(db *sql.DB, inviteKey string, sessionID string) {
+templ PresenterSlideList(db *sql.DB, inviteKey InviteKey, sessionID SessionID) {
 	{{ current := currentSlideOrNone(db) }}
 	{{ deckEntries := deck(db, inviteKey, sessionID, false) }}
 	<div class="presenter-slide-list">

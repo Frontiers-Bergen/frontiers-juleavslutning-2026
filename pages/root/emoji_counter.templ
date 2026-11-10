@@ -73,7 +73,7 @@ func emojiCounts(db *sql.DB) (counts map[string]int64, err error) {
 }
 
 // patchReactionButtons sends the buttons with their current counts; Datastar morphs them into the bar.
-func patchReactionButtons(sse *datastar.ServerSentEventGenerator, db *sql.DB, inviteKey string) error {
+func patchReactionButtons(sse *datastar.ServerSentEventGenerator, db *sql.DB, inviteKey InviteKey) error {
 	counts, err := emojiCounts(db)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 			}
 		}()
 
-		inviteKey := chi.URLParam(r, "inviteKey")
+		inviteKey := inviteKeyOf(r)
 
 		// NewSSE sends the response headers; from here on, failures are logged (logStreamFailure) and end the stream.
 		sse := datastar.NewSSE(w, r, compressedStream())
@@ -176,7 +176,7 @@ func EmojiReactionRoutes(router chi.Router, db *sql.DB, nc *nats.Conn, store ses
 }
 
 // EmojiVoteWidget is the reaction bar. Its stream (data-init) keeps the counts current and brings the balloons.
-templ EmojiVoteWidget(db *sql.DB, inviteKey string) {
+templ EmojiVoteWidget(db *sql.DB, inviteKey InviteKey) {
 	<div class="reaction-bar" data-init={ streamAction(inviteKey, "/root/api/emoji/sse") }>
 		{{ counts, err := emojiCounts(db) }}
 		if err != nil {
@@ -190,7 +190,7 @@ templ EmojiVoteWidget(db *sql.DB, inviteKey string) {
 // reactionButtons are the buttons with their counts; nil counts (the database failed) show "?" until the next
 // update. Each button posts its own emoji, so a tap between two buttons sends nothing. data-emoji lets the balloons
 // (static/emoji-balloon.js) and the tests find a button; data-count is its count for the tests.
-templ reactionButtons(inviteKey string, counts map[string]int64) {
+templ reactionButtons(inviteKey InviteKey, counts map[string]int64) {
 	<div id="reaction-buttons" class="reaction-buttons">
 		for _, emoji := range reactionEmojis {
 			<button

@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func getPollOptionCounts(db *sql.DB, pollKey string) (counts map[string]int64, err error) {
+func getPollOptionCounts(db *sql.DB, pollKey PollKey) (counts map[PollOptionKey]int64, err error) {
 	rows, err := db.Query(`
 		SELECT option_key, COUNT(*) as c
 		FROM poll_votes
@@ -22,9 +22,9 @@ func getPollOptionCounts(db *sql.DB, pollKey string) (counts map[string]int64, e
 		}
 	}()
 
-	counts = make(map[string]int64, 8)
+	counts = make(map[PollOptionKey]int64, 8)
 	for rows.Next() {
-		var optionKey string
+		var optionKey PollOptionKey
 		var c int64
 		if err := rows.Scan(&optionKey, &c); err != nil {
 			return nil, fmt.Errorf("failed to read a vote count: %w", err)
@@ -37,7 +37,7 @@ func getPollOptionCounts(db *sql.DB, pollKey string) (counts map[string]int64, e
 	return counts, nil
 }
 
-func maxOptionTotal(poll PollDefinition, counts map[string]int64) int64 {
+func maxOptionTotal(poll PollDefinition, counts map[PollOptionKey]int64) int64 {
 	var max int64
 	for _, opt := range poll.Options {
 		t := counts[opt.Key]

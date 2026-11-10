@@ -16,8 +16,8 @@ type slideEntry struct {
 
 func deck(
 	db *sql.DB,
-	inviteKey string,
-	sessionID string,
+	inviteKey InviteKey,
+	sessionID SessionID,
 	isPresenter bool,
 ) []slideEntry {
 	appNamePoll := MustPoll("app-name")
@@ -84,8 +84,8 @@ func slideEntryAt(deck []slideEntry, index int) slideEntry {
 // --- Components ---
 templ ActiveSlide(
 	db *sql.DB,
-	inviteKey string,
-	sessionID string,
+	inviteKey InviteKey,
+	sessionID SessionID,
 	isPresenter bool,
 ) {
 	{{ index, err := GetCurrentSlideIndex(db) }}
