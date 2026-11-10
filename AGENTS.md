@@ -117,8 +117,10 @@ func TestPollResults_NoVotes_EveryOptionHasZeroVotes(t *testing.T) {
 Tests exist to let agents change the code safely, not to reach a coverage number.
 Prefer tests at feature boundaries with real dependencies (a real SQLite file in `t.TempDir()`, real embedded NATS) over mocks.
 Run them with `go tool task test`. `database_test.go` is a working example.
-HTTP-level tests use the harness in `app_test.go`: `startTestApp` runs the real router from `app.New` (`app.go`) with a fresh database,
-and each attendee or presenter is an `http.Client` with its own cookies. `slide_control_test.go` is a working example.
+A test lives next to the code it tests (cohesion): `pages/root/tug_of_war_test.go` next to `tug_of_war.templ`, in the external
+test package (`package root_test`). HTTP-level tests use the harness in `apptest/`: `apptest.Start` runs the real router from
+`app.New` (`app.go`) with a fresh database, and each attendee or presenter is an `http.Client` with its own cookies.
+A feature's own helpers (`smash`, `vote`) stay in its test file. `pages/root/slide_control_test.go` is a working example.
 
 ## Go
 
@@ -189,7 +191,7 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
 - **Partial updates are the exception that needs a reason:** only for data so large that rendering the whole page is
   measurably slow, such as millions of rows or a DOM with hundreds of thousands of elements. Measure first, and discuss
   it with the user before adding it.
-- **Testing follows the same idea:** HTTP tests read the full page an attendee gets (`app_test.go`), and
+- **Testing follows the same idea:** HTTP tests read the full page an attendee gets (`apptest`), and
   `go tool task browser-check` checks that open pages follow live in a real browser.
 
 ## Project conventions

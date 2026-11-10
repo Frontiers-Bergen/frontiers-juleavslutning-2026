@@ -1,10 +1,11 @@
-package app
+package app_test
 
 import (
 	"net/http"
 	"net/url"
 	"testing"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/apptest"
 	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/bdd"
 )
 
@@ -17,11 +18,11 @@ func TestAccess_WrongInviteKey_IsSentToTheNeedAKeyPage(t *testing.T) {
 
 	// Given
 	expectedPath := "/"
-	app := startTestApp(t)
-	stranger := app.newAttendee()
+	app := apptest.Start(t)
+	stranger := app.NewAttendee()
 
 	// When
-	actualPath := app.finalPathAfterGet(stranger, "/not-our-key/")
+	actualPath := finalPathAfterGet(app, stranger, "/not-our-key/")
 
 	// Then
 	if actualPath != expectedPath {
@@ -37,11 +38,11 @@ func TestAccess_InviteKey_OpensTheDeck(t *testing.T) {
 	})
 
 	// Given
-	expectedPath := "/" + testInviteKey + "/"
-	app := startTestApp(t)
+	expectedPath := "/" + apptest.InviteKey + "/"
+	app := apptest.Start(t)
 
 	// When
-	actualPath := app.finalPathAfterGet(app.newAttendee(), "/"+testInviteKey+"/")
+	actualPath := finalPathAfterGet(app, app.NewAttendee(), "/"+apptest.InviteKey+"/")
 
 	// Then
 	if actualPath != expectedPath {
@@ -59,12 +60,12 @@ func TestPresenterLogin_WrongKey_DoesNotGivePresenterControl(t *testing.T) {
 	// Given
 	expectedLoginError := "invalid_key"
 	expectedStatus := http.StatusForbidden
-	app := startTestApp(t)
-	attendee := app.newAttendee()
+	app := apptest.Start(t)
+	attendee := app.NewAttendee()
 
 	// When
-	actualLoginError := app.presenterLogin(attendee, "guessed-key")
-	actualStatus := app.post(attendee, "/root/api/slides/set?index=1")
+	actualLoginError := presenterLogin(app, attendee, "guessed-key")
+	actualStatus := app.Post(attendee, "/root/api/slides/set?index=1")
 
 	// Then
 	if actualLoginError != expectedLoginError {
@@ -84,12 +85,12 @@ func TestPresenterLogin_NoPresenterKeyConfigured_NobodyCanLogIn(t *testing.T) {
 
 	// Given
 	expectedLoginError := "invalid_key"
-	app := startTestApp(t)
+	app := apptest.Start(t)
 	t.Setenv("PRESENTER_KEY", "")
-	attendee := app.newAttendee()
+	attendee := app.NewAttendee()
 
 	// When
-	actualLoginError := app.presenterLogin(attendee, "")
+	actualLoginError := presenterLogin(app, attendee, "")
 
 	// Then
 	if actualLoginError != expectedLoginError {
@@ -100,26 +101,26 @@ func TestPresenterLogin_NoPresenterKeyConfigured_NobodyCanLogIn(t *testing.T) {
 // --- Local helpers for the access tests ---
 
 // finalPathAfterGet follows redirects and returns the path the client ends up on.
-func (app *testApp) finalPathAfterGet(client *http.Client, path string) string {
-	app.t.Helper()
-	response, err := client.Get(app.server.URL + path)
+func finalPathAfterGet(app *apptest.App, client *http.Client, path string) string {
+	app.T.Helper()
+	response, err := client.Get(app.URL() + path)
 	if err != nil {
-		app.t.Fatalf("GET %s failed: %v", path, err)
+		app.T.Fatalf("GET %s failed: %v", path, err)
 	}
-	closeBody(app.t, response)
+	apptest.CloseBody(app.T, response)
 	if response.StatusCode != http.StatusOK {
-		app.t.Fatalf("GET %s ended with status %d", path, response.StatusCode)
+		app.T.Fatalf("GET %s ended with status %d", path, response.StatusCode)
 	}
 	return response.Request.URL.Path
 }
 
 // presenterLogin submits the presenter login form and returns the error code the login page shows ("" on success).
-func (app *testApp) presenterLogin(client *http.Client, key string) string {
-	app.t.Helper()
-	response, err := client.PostForm(app.server.URL+"/presenter/login", url.Values{"key": {key}})
+func presenterLogin(app *apptest.App, client *http.Client, key string) string {
+	app.T.Helper()
+	response, err := client.PostForm(app.URL()+"/presenter/login", url.Values{"key": {key}})
 	if err != nil {
-		app.t.Fatalf("presenter login failed: %v", err)
+		app.T.Fatalf("presenter login failed: %v", err)
 	}
-	closeBody(app.t, response)
+	apptest.CloseBody(app.T, response)
 	return response.Request.URL.Query().Get("err")
 }

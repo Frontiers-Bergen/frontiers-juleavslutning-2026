@@ -94,7 +94,7 @@ Order of work: decide the repo name, then tidy first (refactoring and cleanup), 
 - [x] Remove the January `/demo` page (`handler/`, `services/demo_service.go`, `pages/demo.templ`, `components/demo.templ`)
 - [x] BDD helper (`bdd/bdd.go`, from conorganizer) and first behavior tests (`database_test.go`)
 - [x] Access tests (`access_test.go`): wrong invite keys are redirected, the invite key opens the deck, a wrong or missing presenter key gives no control
-- [x] Safety net for polls before the CSS refactor (`poll_voting_test.go`): changing a vote replaces it, every person counts once, unknown options are rejected
+- [x] Safety net for polls before the CSS refactor (`pages/root/poll_voting_test.go`): changing a vote replaces it, every person counts once, unknown options are rejected
 - [ ] Bring over conorganizer's `testutil/templtest` when a test needs to render a component on its own (not needed yet: HTTP tests read semantic `data-` attributes)
 - [x] Fix: SQLite pragmas were set on one pooled connection only, so concurrent writes failed with `SQLITE_BUSY`
 - [x] Refactor the CSS: `@layer tokens, base, layout, features` in `static/index.css`, feature CSS next to each feature (first `<style>` blocks, now `.css` files, see below), no inline styles, dead classes and unused CDN fonts/tippy.js removed (pixel-identical before/after)
