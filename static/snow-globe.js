@@ -5,8 +5,9 @@
 //   1. listens to the motion sensor (phones only: laptops have none, and mice are not "coarse pointers"),
 //   2. shows an immediate puff of snow on this phone for every shake, without waiting for the network,
 //   3. when the shaking stops, emits a `shaken` event with the number of shakes.
-// Datastar markup on the element (pages/root/snow_globe.templ) turns `shaken` into a POST, and the server
-// sends a snowfall with the same energy to every other screen. Props down, events up: the component knows
+// Datastar markup on a wrapper element around it (SnowGlobe in pages/root/snow_globe.templ) turns `shaken` into a
+// POST, and the server sends a snowfall with the same energy to every other screen. Not on <snow-globe> itself:
+// Rocket rewrites Datastar actions on its own element into calls to the component's own actions. Props down, events up: the component knows
 // nothing about URLs or the server.
 //
 // The markup of a snowfall matches the server's (Snowfall in pages/root/snow_globe.templ); the CSS for
@@ -112,9 +113,17 @@ rocket("snow-globe", {
 		button.textContent = "❄️ Shake for snow";
 		button.addEventListener("click", async () => {
 			button.remove();
-			await DeviceMotionEvent.requestPermission();
+			try {
+				// "granted" or "denied": either way the person has answered, so the button stays away.
+				await DeviceMotionEvent.requestPermission();
+			} catch {
+				// Safari refuses to ask when the request does not come from a tap it trusts: offer the button again.
+				host.append(button);
+			}
 		});
-		window.addEventListener("devicemotion", () => button.remove(), { once: true });
+		const removeButton = () => button.remove();
+		window.addEventListener("devicemotion", removeButton, { once: true });
+		cleanup(() => window.removeEventListener("devicemotion", removeButton));
 		host.append(button);
 	},
 });
