@@ -163,8 +163,8 @@ templ SnowGlobe(inviteKey string) {
 	<div
 		class="snow-globe"
 		data-signals="{ shakes: 0 }"
-		data-init={ fmt.Sprintf("@get('/%s/root/api/snow/sse',{requestCancellation: 'disabled'})", inviteKey) }
-		data-on:shaken={ fmt.Sprintf("$shakes = evt.detail.count; @post('/%s/root/api/snow/shake',{requestCancellation: 'disabled'})", inviteKey) }
+		data-init={ streamAction(inviteKey, "/root/api/snow/sse") }
+		data-on:shaken={ "$shakes = evt.detail.count; " + postAction(inviteKey, "/root/api/snow/shake") }
 	>
 		<snow-globe></snow-globe>
 	</div>

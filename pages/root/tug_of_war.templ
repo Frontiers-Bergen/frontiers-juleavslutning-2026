@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	"log/slog"
 	"math"
 	"math/rand/v2"
 	"net/http"
 	"time"
 
+	"github.com/frontiers-bergen/frontiers-juleavslutning-2026/pages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go"
@@ -297,10 +297,6 @@ func countSmashForTugOfWar(db *sql.DB, nc *nats.Conn, sessionID string, now time
 	return publishDeckChanged(nc)
 }
 
-func tugOfWarPostURL(inviteKey string, action string) string {
-	return fmt.Sprintf("@post('/%s/root/api/tug-of-war/%s',{requestCancellation: 'disabled'})", inviteKey, action)
-}
-
 func loadTugOfWar(db *sql.DB, sessionID string) (tugOfWarRound, tugOfWarTeam, error) {
 	round, roundErr := loadTugOfWarRound(db)
 	team, teamErr := tugOfWarTeamFor(db, sessionID)
@@ -329,7 +325,7 @@ templ TugOfWarSlide(db *sql.DB, inviteKey string, sessionID string, isPresenter 
 			<div class="tug-of-war-heading">
 				<h1>Tug of war</h1>
 				if isPresenter && (phase == phaseWaiting || phase == phaseFinished) {
-					<button type="button" class="tug-of-war-start" data-on:click={ templ.URL(tugOfWarPostURL(inviteKey, "start")) }>
+					<button type="button" class="tug-of-war-start" data-on:click={ postAction(inviteKey, "/root/api/tug-of-war/start") }>
 						if phase == phaseWaiting {
 							Start countdown
 						} else {

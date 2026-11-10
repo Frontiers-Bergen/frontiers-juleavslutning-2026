@@ -25,7 +25,7 @@ import (
 
 const repositoryURL = "https://github.com/frontiers-bergen/frontiers-juleavslutning-2026"
 
-func InviteQRCodeRoute(router chi.Router, logger *slog.Logger) {
+func QRCodeRoutes(router chi.Router, logger *slog.Logger) {
 	router.Get("/qr.svg", func(w http.ResponseWriter, r *http.Request) {
 		serveQRCode(w, logger, inviteLink(r, chi.URLParam(r, "inviteKey")))
 	})
