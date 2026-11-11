@@ -151,6 +151,12 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		display: flex;
 		flex: 1;
 		flex-direction: column;
+
+		/* On a phone the page scrolls; from 40rem up (the big screen) the page keeps to the screen's height, so a
+		   slide with a lot of text gives up its spacers before anything ends up out of sight. */
+		@media (width >= 40rem) {
+			min-height: 0;
+		}
 	}
 
 	/* Presenter shell: slide list on the left, controls on top, the stage below. Not part of the slide. */
@@ -176,8 +182,7 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		position: sticky;
 		top: 0;
 
-		/* Here the reactions bar has its own row below the stage instead of floating over it, so the stage
-		   needs no room for it; a slide with long notes scrolls inside the stage instead of hiding under the bar. */
+		/* A slide with long notes scrolls inside the stage, also on a small screen. */
 		.stage {
 			/* The presenter's copy of the slide is a working view on a laptop: smaller type, so the slide and its
 			   notes fit on the screen together. The projector shows it at full size, and so do the previews. */
@@ -187,7 +192,6 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 
 			min-height: 0;
 			overflow-y: auto;
-			padding-bottom: var(--stage-padding);
 		}
 	}
 
@@ -208,9 +212,14 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		display: flex;
 		flex-direction: column;
 
+		/* No room needed for the reactions bar: it has its own row below the stage. */
 		--stage-padding: clamp(1rem, 3vw, 2rem);
 		padding: var(--stage-padding);
-		padding-bottom: calc(var(--stage-padding) + var(--reactions-min-height) + env(safe-area-inset-bottom));
+
+		@media (width >= 40rem) {
+			min-height: 0;
+			overflow-y: auto;
+		}
 
 		& > * {
 			flex: 1;
@@ -226,28 +235,44 @@ Write mobile first: phones are the controllers, the big screen is the stage.
 		flex: 1;
 		width: 100%;
 		min-width: 0;
+		/* The slide keeps to the stage's height, so its spacers give way to the content (below). */
+		min-height: 0;
 		max-width: var(--stage-max-width);
 		margin: 0 auto;
 
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		/* "safe": a slide taller than the stage starts at the top and scrolls, instead of overflowing at both ends. */
+		justify-content: safe center;
 
-		/* Mobile first: little top padding on a phone, where height is scarce.
-		   From 40rem up, bias content downward: more top padding than bottom padding. */
 		padding-top: var(--space-2);
 		padding-bottom: var(--space-2);
 
+		/* From 40rem up, bias content downward: more space above than below. The space is two spacers that give way
+		   when the content needs the room, so a slide with a lot of text keeps its heading near the top and its last
+		   line on the screen; fixed padding pushed the heading down and the end of the slide out of sight. */
 		@media (width >= 40rem) {
-			padding-top: clamp(2.5rem, 12vh, 9rem);
-			padding-bottom: clamp(1.5rem, 6vh, 5rem);
+			&::before,
+			&::after {
+				content: "";
+				flex: 0 1 clamp(2.5rem, 12vh, 9rem);
+			}
+
+			&::after {
+				flex-basis: clamp(1.5rem, 6vh, 5rem);
+			}
 		}
 
 		/* The presenter's view has the controls above the slide and the notes below it: no downward bias there,
-		   or the bottom of the slide ends up out of sight. */
+		   or the bottom of the slide ends up out of sight. The slide grows with its content and the stage scrolls,
+		   so the notes always come after the slide instead of over it. */
 		.presenter-layout & {
-			padding-top: var(--space-2);
-			padding-bottom: var(--space-2);
+			min-height: auto;
+
+			&::before,
+			&::after {
+				display: none;
+			}
 		}
 
 		& h1 {
