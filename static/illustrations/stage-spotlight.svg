@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- A stage with a spotlight on a laptop running the app, a microphone, and an audience: show and tell.
+       Drawn for slides/show_and_tell.md, in the colours of static/index.css. Our own drawing. -->
+  <defs><clipPath id="stage"><rect width="240" height="240" rx="18"/></clipPath></defs>
+  <g clip-path="url(#stage)">
+  <!-- Floor -->
+  <rect x="0" y="186" width="240" height="54" fill="#2d2b55"/>
+  <rect x="0" y="186" width="240" height="4" fill="#3a3779"/>
+  <!-- Spotlight beam and its pool of light -->
+  <path d="M108 16 L132 16 L188 196 L52 196 Z" fill="#fad000" opacity="0.16"/>
+  <ellipse cx="120" cy="196" rx="70" ry="12" fill="#fad000" opacity="0.3"/>
+  <!-- Curtains -->
+  <path d="M0 0 H56 C44 60 52 130 34 200 H0 Z" fill="#d62839"/>
+  <path d="M18 10 C14 80 20 140 12 200 M38 10 C32 80 38 140 26 200" stroke="#a51d2c" stroke-width="4" fill="none"/>
+  <path d="M240 0 H184 C196 60 188 130 206 200 H240 Z" fill="#d62839"/>
+  <path d="M222 10 C226 80 220 140 228 200 M202 10 C208 80 202 140 214 200" stroke="#a51d2c" stroke-width="4" fill="none"/>
+  <path d="M0 0 H240 V16 Q225 28 210 16 Q195 28 180 16 Q165 28 150 16 Q135 28 120 16 Q105 28 90 16 Q75 28 60 16 Q45 28 30 16 Q15 28 0 16 Z" fill="#a51d2c"/>
+  <!-- The laptop, showing the app's poll -->
+  <path d="M74 194 L142 194 L136 186 L80 186 Z" fill="#a599e9"/>
+  <rect x="82" y="134" width="52" height="52" rx="4" fill="#1e1e3f" stroke="#a599e9" stroke-width="3"/>
+  <rect x="88" y="142" width="40" height="7" rx="2" fill="#e21b3c"/>
+  <rect x="88" y="152" width="30" height="7" rx="2" fill="#1368ce"/>
+  <rect x="88" y="162" width="36" height="7" rx="2" fill="#d89e00"/>
+  <rect x="88" y="172" width="22" height="7" rx="2" fill="#26890c"/>
+  <!-- Microphone on its stand -->
+  <ellipse cx="166" cy="194" rx="14" ry="4" fill="#c5c0e8"/>
+  <path d="M166 194 V128 L156 112" stroke="#c5c0e8" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="146" y="88" width="14" height="26" rx="7" fill="#c5c0e8" transform="rotate(-25 153 101)"/>
+  <path d="M146 96 L158 90 M148 102 L160 96" stroke="#3a3779" stroke-width="2" transform="rotate(-25 153 101)"/>
+  <!-- Sparkles in the light -->
+  <path d="M100 70 L103 78 L111 81 L103 84 L100 92 L97 84 L89 81 L97 78 Z" fill="#fad000"/>
+  <path d="M142 52 L144 57 L149 59 L144 61 L142 66 L140 61 L135 59 L140 57 Z" fill="#fff"/>
+  <!-- The audience -->
+  <g fill="#15152e">
+    <circle cx="30" cy="222" r="14"/><rect x="12" y="230" width="36" height="12" rx="6"/>
+    <circle cx="78" cy="226" r="13"/><rect x="61" y="233" width="34" height="10" rx="5"/>
+    <circle cx="126" cy="224" r="14"/><rect x="108" y="232" width="36" height="10" rx="5"/>
+    <circle cx="172" cy="226" r="13"/><rect x="155" y="233" width="34" height="10" rx="5"/>
+    <circle cx="216" cy="222" r="14"/><rect x="198" y="230" width="36" height="12" rx="6"/>
+  </g>
+  </g>
+</svg>

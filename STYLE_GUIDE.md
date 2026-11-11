@@ -82,6 +82,9 @@ The juleavslutning may look like Christmas, on top of the Frontiers look:
 - Emoji are welcome everywhere (🎄 ❄️ 🎁), in slides, buttons and balloons.
 - Motion is fun (balloons, confetti, snow) as long as it never hides content, slows a phone down, or ignores "reduce motion".
 - Keep the purple background and the palette; do not switch to red and green.
+- Illustrations are our own flat SVG drawings in the palette's colours, on a transparent background
+  (`static/illustrations/`). They are decoration: the slide's text carries the message, and the picture stands
+  beside the text, never on top of it (the `Illustration:` line in a slide's markdown).
 
 ## Voice and tone
 

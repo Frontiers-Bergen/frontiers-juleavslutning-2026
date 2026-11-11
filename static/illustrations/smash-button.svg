@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- A big button mid-smash, with a balloon rising for every smash: "Every button smash deserves to count".
+       Drawn for slides/origin_story.md, in the colours of static/index.css. Our own drawing. -->
+  <!-- Balloons, each on its own string: every smash counts -->
+  <path d="M62 82 C56 96 70 106 62 122" stroke="#a599e9" stroke-width="2" fill="none"/>
+  <ellipse cx="62" cy="62" rx="17" ry="21" fill="#80ffea"/>
+  <path d="M58 82 L66 82 L62 88 Z" fill="#80ffea"/>
+  <ellipse cx="56" cy="54" rx="5" ry="7" fill="#fff" opacity="0.5"/>
+  <path d="M122 52 C116 64 128 72 120 86" stroke="#a599e9" stroke-width="2" fill="none"/>
+  <ellipse cx="122" cy="30" rx="18" ry="22" fill="#d62839"/>
+  <path d="M118 51 L126 51 L122 57 Z" fill="#d62839"/>
+  <ellipse cx="115" cy="22" rx="5" ry="7" fill="#fff" opacity="0.45"/>
+  <path d="M180 78 C186 90 174 98 182 112" stroke="#a599e9" stroke-width="2" fill="none"/>
+  <ellipse cx="180" cy="58" rx="16" ry="20" fill="#fad000"/>
+  <path d="M176 77 L184 77 L180 83 Z" fill="#fad000"/>
+  <ellipse cx="174" cy="51" rx="4.5" ry="6.5" fill="#fff" opacity="0.5"/>
+  <!-- "+1" for the smash that just landed -->
+  <text x="192" y="110" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="22" font-weight="700" fill="#fad000">+1</text>
+  <!-- Shadow and base -->
+  <ellipse cx="120" cy="208" rx="88" ry="16" fill="#15152e"/>
+  <ellipse cx="120" cy="190" rx="80" ry="22" fill="#2d2b55"/>
+  <rect x="40" y="160" width="160" height="30" fill="#2d2b55"/>
+  <ellipse cx="120" cy="160" rx="80" ry="22" fill="#3a3779"/>
+  <!-- The button, pressed down -->
+  <ellipse cx="120" cy="156" rx="56" ry="15" fill="#c46a00"/>
+  <rect x="64" y="142" width="112" height="14" fill="#c46a00"/>
+  <ellipse cx="120" cy="142" rx="56" ry="15" fill="#ff9d00"/>
+  <ellipse cx="100" cy="137" rx="20" ry="5" fill="#ffd08a" opacity="0.8"/>
+  <!-- Impact lines -->
+  <g stroke="#fad000" stroke-width="6" stroke-linecap="round">
+    <path d="M30 128 L48 136"/>
+    <path d="M26 152 L44 152"/>
+    <path d="M210 128 L192 136"/>
+    <path d="M214 152 L196 152"/>
+    <path d="M86 108 L94 120"/>
+    <path d="M154 108 L146 120"/>
+  </g>
+</svg>

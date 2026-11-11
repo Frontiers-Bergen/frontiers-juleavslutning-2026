@@ -1,5 +1,7 @@
 # Every button smash deserves to count
 
+Illustration: /static/illustrations/smash-button.svg
+
 Last year's retro tool debounced our emoji reactions.
 
 We smashed. It didn't count. 😤
