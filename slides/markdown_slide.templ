@@ -1,9 +1,19 @@
 package slides
 
 // Markdown renders a content slide written in markdown (see markdown_slides.go for the file format).
+// A slide with an illustration gets two columns, the text and the picture; one without keeps the plain layout.
 templ Markdown(slide MarkdownSlide, isPresenter bool) {
 	<div class={ "slide", "markdown-slide", "slide-" + slide.Name }>
-		@templ.Raw(slide.ContentHTML)
+		if slide.Illustration != "" {
+			<div class="markdown-slide-columns">
+				<div class="markdown-slide-text">
+					@templ.Raw(slide.ContentHTML)
+				</div>
+				<img class="markdown-slide-illustration" src={ slide.Illustration } alt=""/>
+			</div>
+		} else {
+			@templ.Raw(slide.ContentHTML)
+		}
 	</div>
 	if isPresenter && slide.NotesHTML != "" {
 		<div class="presenter-notes">

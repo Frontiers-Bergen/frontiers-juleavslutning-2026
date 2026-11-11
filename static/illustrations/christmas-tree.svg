@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- A Christmas tree with presents and confetti: the juleavslutning should be fun.
+       Drawn for slides/why.md, in the colours of static/index.css. Our own drawing. -->
+  <!-- Confetti -->
+  <g>
+    <rect x="22" y="40" width="10" height="5" rx="1" fill="#ff9d00" transform="rotate(-30 27 42)"/>
+    <rect x="44" y="18" width="10" height="5" rx="1" fill="#80ffea" transform="rotate(20 49 20)"/>
+    <rect x="186" y="26" width="10" height="5" rx="1" fill="#d62839" transform="rotate(35 191 28)"/>
+    <rect x="206" y="62" width="10" height="5" rx="1" fill="#fad000" transform="rotate(-15 211 64)"/>
+    <rect x="30" y="92" width="10" height="5" rx="1" fill="#a599e9" transform="rotate(50 35 94)"/>
+    <rect x="198" y="112" width="10" height="5" rx="1" fill="#80ffea" transform="rotate(-40 203 114)"/>
+    <circle cx="70" cy="34" r="3.5" fill="#fad000"/>
+    <circle cx="168" cy="50" r="3.5" fill="#ff9d00"/>
+    <circle cx="18" cy="70" r="3" fill="#d62839"/>
+    <circle cx="222" cy="92" r="3" fill="#a599e9"/>
+    <circle cx="176" cy="14" r="3" fill="#80ffea"/>
+  </g>
+  <!-- Trunk -->
+  <rect x="110" y="186" width="20" height="24" rx="3" fill="#6d4c41"/>
+  <!-- The tree, three layers -->
+  <path d="M120 106 L190 190 Q192 194 186 194 L54 194 Q48 194 50 190 Z" fill="#05a98b"/>
+  <path d="M120 72 L176 146 Q178 150 172 150 L68 150 Q62 150 64 146 Z" fill="#07c4a1"/>
+  <path d="M120 42 L160 104 Q162 108 156 108 L84 108 Q78 108 80 104 Z" fill="#07d9b2"/>
+  <!-- Garland -->
+  <path d="M90 100 Q120 116 150 96" stroke="#fad000" stroke-width="3" fill="none"/>
+  <path d="M76 142 Q120 162 166 138" stroke="#fad000" stroke-width="3" fill="none"/>
+  <path d="M62 186 Q120 204 180 182" stroke="#fad000" stroke-width="3" fill="none"/>
+  <!-- Ornaments -->
+  <circle cx="106" cy="86" r="6" fill="#d62839"/>
+  <circle cx="136" cy="80" r="5" fill="#fff"/>
+  <circle cx="96" cy="128" r="6" fill="#ff9d00"/>
+  <circle cx="142" cy="124" r="6" fill="#80ffea"/>
+  <circle cx="120" cy="138" r="5" fill="#fff"/>
+  <circle cx="82" cy="174" r="6" fill="#80ffea"/>
+  <circle cx="122" cy="172" r="7" fill="#d62839"/>
+  <circle cx="160" cy="168" r="6" fill="#ff9d00"/>
+  <!-- Star -->
+  <path d="M120 18 L126 32 L141 33 L129 42 L133 57 L120 49 L107 57 L111 42 L99 33 L114 32 Z" fill="#fad000"/>
+  <!-- Presents -->
+  <rect x="30" y="188" width="38" height="32" rx="3" fill="#a599e9"/>
+  <rect x="45" y="188" width="8" height="32" fill="#fff"/>
+  <path d="M49 188 C40 176 32 182 40 188 M49 188 C58 176 66 182 58 188" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="168" y="182" width="44" height="38" rx="3" fill="#ff9d00"/>
+  <rect x="186" y="182" width="8" height="38" fill="#d62839"/>
+  <rect x="168" y="196" width="44" height="8" fill="#d62839"/>
+  <path d="M190 182 C180 168 172 176 182 182 M190 182 C200 168 208 176 198 182" stroke="#d62839" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

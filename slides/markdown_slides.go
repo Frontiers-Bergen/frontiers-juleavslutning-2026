@@ -18,6 +18,9 @@ import (
 // File format:
 //   - The first "# heading" is the slide title, shown on the slide and in the presenter's slide list.
 //   - Everything after a line containing only "Notes:" is presenter notes (the reveal.js convention).
+//   - An optional line "Illustration: /static/illustrations/smash-button.svg" gives the slide a picture: beside the
+//     text on the big screen, under it on a phone. The picture is decoration (alt=""): the text carries the
+//     message. Its size can be changed in the slide's CSS (.markdown-slide-illustration).
 //   - Optional per-slide CSS: welcome.css next to welcome.md, nested under .slide-welcome.
 //
 // The markdown is rendered once at startup. Raw HTML in markdown is allowed and not sanitized: slides are
@@ -28,7 +31,10 @@ import (
 //go:embed *.md
 var markdownFiles embed.FS
 
-const presenterNotesMarker = "Notes:"
+const (
+	presenterNotesMarker = "Notes:"
+	illustrationMarker   = "Illustration:"
+)
 
 type MarkdownSlide struct {
 	// Name is the file name without .md; the slide gets the CSS class "slide-<Name>".
@@ -36,6 +42,8 @@ type MarkdownSlide struct {
 	Title       string
 	ContentHTML string
 	NotesHTML   string
+	// Illustration is the URL of the slide's picture, or "" for a slide without one.
+	Illustration string
 }
 
 // File is where the slide comes from, relative to the repository root; the presenter view shows it.
@@ -86,16 +94,38 @@ func loadMarkdownSlides(files fs.FS) (map[string]MarkdownSlide, error) {
 
 func parseMarkdownSlide(name string, source string) (MarkdownSlide, error) {
 	content, notes := splitPresenterNotes(source)
+	content, illustration, err := splitIllustration(content)
+	if err != nil {
+		return MarkdownSlide{}, err
+	}
 	title, err := slideTitle(content)
 	if err != nil {
 		return MarkdownSlide{}, err
 	}
 	return MarkdownSlide{
-		Name:        name,
-		Title:       title,
-		ContentHTML: markdownToHTML(content),
-		NotesHTML:   markdownToHTML(notes),
+		Name:         name,
+		Title:        title,
+		ContentHTML:  markdownToHTML(content),
+		NotesHTML:    markdownToHTML(notes),
+		Illustration: illustration,
 	}, nil
+}
+
+// splitIllustration takes the "Illustration:" line out of the content, so it is not shown as text.
+func splitIllustration(content string) (rest string, illustration string, err error) {
+	lines := strings.Split(content, "\n")
+	for i, line := range lines {
+		value, isIllustration := strings.CutPrefix(strings.TrimSpace(line), illustrationMarker)
+		if !isIllustration {
+			continue
+		}
+		illustration = strings.TrimSpace(value)
+		if illustration == "" {
+			return "", "", errors.New(`"Illustration:" needs the picture's URL, like /static/illustrations/smash-button.svg`)
+		}
+		return strings.Join(append(lines[:i:i], lines[i+1:]...), "\n"), illustration, nil
+	}
+	return content, "", nil
 }
 
 func splitPresenterNotes(source string) (content string, notes string) {

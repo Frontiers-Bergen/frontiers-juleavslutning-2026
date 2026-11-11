@@ -1,5 +1,7 @@
 # Show and tell 🎉
 
+Illustration: /static/illustrations/stage-spotlight.svg
+
 What did you build tonight?
 
 Notes:

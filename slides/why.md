@@ -1,5 +1,7 @@
 # Why we are building this
 
+Illustration: /static/illustrations/christmas-tree.svg
+
 The people at the Frontiers juleavslutning should have fun.
 
 - Tonight is about experimenting and learning from each other

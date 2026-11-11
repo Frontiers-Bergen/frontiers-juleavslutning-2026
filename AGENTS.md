@@ -222,6 +222,7 @@ difference). See https://data-star.dev/guide/the_tao_of_datastar. conorganizer u
 - Slide order is defined in `pages/root/active_slide.templ`; slide content lives in `slides/`.
   Content slides are markdown files, one per slide (`slides/welcome.md`), added to the deck with `slides.MustMarkdownSlide("welcome")`.
   The first `# heading` is the slide title (also in the presenter's slide list); text after a line containing only `Notes:` is presenter notes;
+  a line `Illustration: /static/illustrations/smash-button.svg` puts a picture beside the text (under it on a phone), never over it;
   optional per-slide CSS goes in `slides/welcome.css`, nested under `.slide-welcome`. The format is documented in `slides/markdown_slides.go`.
   Interactive slides (polls, games) are templ components.
 - Use the Go + SQLite + Datastar stack first; it handles most interactive features. Add a web component only when a feature needs

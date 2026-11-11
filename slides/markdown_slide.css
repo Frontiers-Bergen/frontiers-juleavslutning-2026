@@ -1,5 +1,38 @@
 /* Every markdown slide (markdown_slide.templ). Loaded into @layer features via /feature-styles.css. */
 .markdown-slide {
+	/* A slide with an "Illustration:" line. Mobile first: the picture under the text, small, so the text comes
+	   first on a phone. From 40rem up the picture stands beside the text, where it never covers a word. */
+	.markdown-slide-columns {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+
+		@media (width >= 40rem) {
+			flex-direction: row;
+			align-items: center;
+			gap: var(--space-5);
+		}
+	}
+
+	.markdown-slide-text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	/* A slide's own CSS may resize its picture on the big screen with --illustration-size (slides/contribute.css). */
+	.markdown-slide-illustration {
+		align-self: center;
+		inline-size: min(50%, 10rem);
+		block-size: auto;
+
+		@media (width >= 40rem) {
+			flex: none;
+			inline-size: var(--illustration-size, clamp(10rem, 22vw, 18rem));
+			max-block-size: 50vh;
+			object-fit: contain;
+		}
+	}
+
 	& p {
 		margin: 0 0 var(--space-2) 0;
 		font-size: var(--font-body);
