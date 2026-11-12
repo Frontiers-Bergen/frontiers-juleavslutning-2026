@@ -24,6 +24,14 @@ func RootLayoutRoute(
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		isPresenter := pages.IsPresenter(r, store)
+		if !isPresenter {
+			if err := components.BaseLayout("Frontiers Meetup", AttendeeLanding()).Render(ctx, w); err != nil {
+				logger.Error("failed to render attendee landing", slog.String("error", err.Error()))
+			}
+			return
+		}
+
 		sessionID, err := attendeeSessionID(store, w, r)
 		if err != nil {
 			logger.Error("failed to get attendee session", slog.String("error", err.Error()))
@@ -34,8 +42,6 @@ func RootLayoutRoute(
 		inviteKey := inviteKeyOf(r)
 
 		dataInit := streamAction(inviteKey, "/root/api")
-
-		isPresenter := pages.IsPresenter(r, store)
 
 		renderErr := components.BaseLayout(
 			"Frontiers Meetup",

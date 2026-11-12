@@ -1,0 +1,33 @@
+package root
+
+templ AttendeeLanding() {
+	<main class="attendee-landing">
+		<h1>Make yourself at home</h1>
+		<p>Choose a name and an avatar for the juleavslutning.</p>
+		<label for="attendee-name">Your name</label>
+		<input id="attendee-name" name="username" type="text" autocomplete="nickname"/>
+		<fieldset>
+			<legend>Choose your avatar</legend>
+			<div class="attendee-landing-avatars">
+				<label>
+					<input type="radio" name="avatar" value="tree"/>
+					<span aria-hidden="true">🎄</span> Tree
+				</label>
+				<label>
+					<input type="radio" name="avatar" value="snowman"/>
+					<span aria-hidden="true">⛄</span> Snowman
+				</label>
+				<label>
+					<input type="radio" name="avatar" value="reindeer"/>
+					<span aria-hidden="true">🦌</span> Reindeer
+				</label>
+				<label>
+					<input type="radio" name="avatar" value="gift"/>
+					<span aria-hidden="true">🎁</span> Gift
+				</label>
+			</div>
+		</fieldset>
+		<button type="button" disabled aria-describedby="attendee-landing-note">Continue</button>
+		<p id="attendee-landing-note">Joining the deck is coming soon.</p>
+	</main>
+}
