@@ -70,9 +70,10 @@ tasks:
       - go test ./...
 
   # Screenshots of every screen for visual checks; see browser-tools/screenshots.sh. Needs bash and Chrome/Chromium.
+  # Through bash explicitly: Windows cannot run a .sh file itself (on Windows, start it from Git Bash).
   screenshots:
     cmds:
-      - browser-tools/screenshots.sh {{.CLI_ARGS}}
+      - bash browser-tools/screenshots.sh {{.CLI_ARGS}}
 
   # Clicks real buttons in headless Chromium (smash, vote, live slide change); see browser-tools/browser_check.mjs.
   # Needs Node and chromium or google-chrome.

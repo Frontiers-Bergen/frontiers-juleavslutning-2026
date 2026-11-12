@@ -9,7 +9,8 @@
 #   compare -metric AE -fuzz 2% before/slide0-phone.png after/slide0-phone.png diff.png
 #
 # Usage: browser-tools/screenshots.sh [output-dir]   (default: tmp/screenshots)
-# Requires: bash, curl, and Chromium or Google Chrome (Linux and macOS; on Windows use Git Bash or WSL).
+# Requires: bash, curl, and Chromium or Google Chrome. On Windows, run it from Git Bash: in PowerShell `bash`
+# can be WSL's, which has neither this Go nor Windows' Chrome.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,10 +19,14 @@ out="$(cd "${1:-$repo/tmp/screenshots}" && pwd)" # absolute path; realpath -m is
 port="${PORT:-8099}"
 base="http://localhost:$port"
 browser="$(command -v chromium || command -v google-chrome-stable || command -v google-chrome || true)"
-mac_chrome="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-if [ -z "$browser" ] && [ -x "$mac_chrome" ]; then
-	browser="$mac_chrome"
-fi
+# macOS and Windows (Git Bash) install Chrome outside the PATH.
+for installed in "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+	"/c/Program Files/Google/Chrome/Application/chrome.exe" \
+	"/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"; do
+	if [ -z "$browser" ] && [ -x "$installed" ]; then
+		browser="$installed"
+	fi
+done
 if [ -z "$browser" ]; then
 	echo "screenshots: Chromium or Google Chrome is required" >&2
 	exit 1
@@ -34,7 +39,8 @@ cd "$work"
 # Loopback only: listening on the LAN makes Windows Firewall ask on every run (a new temp path each time).
 HOST=127.0.0.1 PORT="$port" PRESENTER_KEY=screenshot-key ./app >server.log 2>&1 &
 app_pid=$!
-trap 'kill $app_pid 2>/dev/null; wait $app_pid 2>/dev/null; rm -rf "$work"' EXIT
+# `|| true`: on Windows kill is a hard stop, so wait reports 143, and set -e would skip the rm and fail the run.
+trap 'kill $app_pid 2>/dev/null || true; wait $app_pid 2>/dev/null || true; rm -rf "$work"' EXIT
 started=""
 for _ in $(seq 1 40); do curl -s -o /dev/null "$base/" && started=yes && break; sleep 0.25; done
 if [ -z "$started" ]; then
@@ -79,7 +85,12 @@ done
 
 # Log the browser profile in as presenter, then capture the presenter view of the first slide.
 printf '<form method="post" action="%s/presenter/login"><input name="key" value="screenshot-key"></form><script>document.forms[0].submit()</script>' "$base" >login.html
-shot login-step "file://$work/login.html" 800 600
+login_page="$work/login.html"
+# Chrome on Windows cannot open Git Bash paths (/tmp/...); without this the presenter shots silently show the attendee view.
+if command -v cygpath >/dev/null; then
+	login_page="/$(cygpath -m "$login_page")"
+fi
+shot login-step "file://$login_page" 800 600
 rm -f "$out/login-step.png"
 move_to_slide 0
 shot presenter-slide0-desktop "$base/dev-key/" 1440 900
