@@ -163,9 +163,9 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 	// so rapid taps never overlap and request-cancellation bugs stay invisible.
 	await send("Network.enable");
 	await send("Network.emulateNetworkConditions", { offline: false, latency: 200, downloadThroughput: -1, uploadThroughput: -1 });
-	if (reducedMotion) {
-		await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
-	}
+	// Always set, never inherited: Chrome otherwise follows the computer's own setting
+	// (Windows with "Animation effects" off, macOS with "Reduce motion" on), and the balloons would not fly.
+	await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }] });
 	if (touch) {
 		await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 	}
