@@ -31,7 +31,8 @@ work="$(mktemp -d)"
 (cd "$repo" && go tool templ generate -log-level error && go build -o "$work/app" ./cmd/juleavslutning)
 cp -r "$repo/static" "$work/"
 cd "$work"
-PORT="$port" PRESENTER_KEY=screenshot-key ./app >server.log 2>&1 &
+# Loopback only: listening on the LAN makes Windows Firewall ask on every run (a new temp path each time).
+HOST=127.0.0.1 PORT="$port" PRESENTER_KEY=screenshot-key ./app >server.log 2>&1 &
 app_pid=$!
 trap 'kill $app_pid 2>/dev/null; wait $app_pid 2>/dev/null; rm -rf "$work"' EXIT
 started=""

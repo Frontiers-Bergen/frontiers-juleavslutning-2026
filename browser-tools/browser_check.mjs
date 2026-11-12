@@ -207,7 +207,8 @@ try {
 	execFileSync("go", ["build", "-o", join(work, appBinary), "./cmd/juleavslutning"], { cwd: repo, stdio: "inherit" });
 	cpSync(join(repo, "static"), join(work, "static"), { recursive: true });
 
-	const app = spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), PRESENTER_KEY: presenterKey }, stdio: ["ignore", "pipe", "pipe"] });
+	// Loopback only, like the load test: listening on the LAN makes Windows Firewall ask on every run (a new temp path each time).
+	const app = spawn(join(work, appBinary), { cwd: work, env: { ...process.env, PORT: String(appPort), HOST: "127.0.0.1", PRESENTER_KEY: presenterKey }, stdio: ["ignore", "pipe", "pipe"] });
 	app.stdout.on("data", (chunk) => (appOutput += chunk));
 	app.stderr.on("data", (chunk) => (appOutput += chunk));
 	processes.push(app);
