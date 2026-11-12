@@ -10,7 +10,7 @@ Every item serves the Why in `README.md`: the people at the juleavslutning havin
 
 ### After the workshop
 
-- [ ] Someone tries a fresh clone on macOS and on Windows (planned for 7–8 Nov); update `SETUP.md` with the findings
+- [ ] Someone tries a fresh clone on macOS (planned for 7–8 Nov); update `SETUP.md` with the findings
 - [ ] Snow globe: try it on real phones, an iPhone in particular (the "Shake for snow" permission button); tune the shake threshold and how much snow
 - [ ] Workshop slides for Gerhard: the intro (under 15 minutes, 18:00) and show and tell (20:30), in `slides/`; text reviewed 8 Nov
 - [ ] Maybe later: the live update diagram lights up for real whenever someone smashes (needs a templ slide instead of markdown)
@@ -70,6 +70,7 @@ Every item serves the Why in `README.md`: the people at the juleavslutning havin
 - [x] Move the `poll_votes` table from the comment in `pages/root/poll.templ` into `schema.sql`
 - [x] One-command setup for attendees (`go tool task start`), documented under Getting started
 - [x] Fresh clone verified on Linux; macOS/Windows pitfalls fixed by reading (`.exe` via `{{exeExt}}`, LF line endings via `.gitattributes`, portable browser tools)
+- [x] Fresh clone verified on Windows 11 (12 Nov): findings in `SETUP.md` (admin prompt, PATH, firewall on Public wifi); `screenshots` and `browser-check` fixed for Windows
 - [x] Update Go (1.27) and dependencies (templ, datastar-go, nats, sqlite, chi) and tools (task, air, dlv)
 - [x] Datastar v1.0.4 with Rocket (`static/datastar-rocket.js`, with its source map), self-hosted in `static/`
 - [x] Rewrite `AGENTS.md` with the new engineering guidelines; make `CLAUDE.md` point to it
