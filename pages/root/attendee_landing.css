@@ -34,29 +34,72 @@
 	}
 
 	.attendee-landing-avatars {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		position: relative;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
 		gap: var(--space-1);
+		padding-top: calc(8rem + var(--space-1));
 
 		& label {
-			display: flex;
-			align-items: center;
-			gap: var(--space-1);
-			min-height: 3rem;
-			padding: var(--space-1);
+			display: grid;
+			place-items: center;
+			width: 3rem;
+			aspect-ratio: 1;
 			border: var(--border-subtle);
 			border-radius: var(--radius);
 			background: var(--color-surface);
 			cursor: pointer;
+			font-size: 1.5rem;
+		}
+
+		@media (hover: hover) {
+			& label:hover {
+				background: var(--color-border);
+				border-color: var(--color-link);
+			}
+
+			& label:has(input:checked):hover {
+				border-color: var(--color-link-hover);
+			}
 		}
 
 		& label:has(input:checked) {
-			border-color: var(--color-link);
+			border: 2px dashed var(--color-link);
+			background: var(--color-bg-base);
+		}
+
+		& label:has(input:focus-visible) {
+			outline: 2px solid var(--color-link);
+			outline-offset: 2px;
 		}
 
 		& input {
+			position: absolute;
+			width: 1px;
+			height: 1px;
 			min-height: 0;
-			accent-color: var(--color-link);
+			opacity: 0;
+		}
+
+		.attendee-landing-preview {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			display: none;
+			place-items: center;
+			width: 8rem;
+			aspect-ratio: 1;
+			border: var(--border-subtle);
+			border-radius: var(--radius);
+			background: var(--color-surface);
+			font-size: 4rem;
+			transform: translateX(-50%);
+			pointer-events: none;
+		}
+
+		& input:checked ~ .attendee-landing-preview {
+			display: grid;
 		}
 	}
 

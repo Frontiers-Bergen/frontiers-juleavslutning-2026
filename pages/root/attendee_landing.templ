@@ -1,5 +1,24 @@
 package root
 
+type landingAvatar struct {
+	value string
+	label string
+	emoji string
+}
+
+var landingAvatars = []landingAvatar{
+	{"tree", "Tree", "🎄"},
+	{"snowman", "Snowman", "⛄"},
+	{"reindeer", "Reindeer", "🦌"},
+	{"gift", "Gift", "🎁"},
+	{"astronaut", "Astronaut", "🧑‍🚀"},
+	{"firefighter", "Firefighter", "🧑‍🚒"},
+	{"scientist", "Scientist", "🧑‍🔬"},
+	{"artist", "Artist", "🧑‍🎨"},
+	{"chef", "Chef", "🧑‍🍳"},
+	{"technologist", "Technologist", "🧑‍💻"},
+}
+
 templ AttendeeLanding() {
 	<main class="attendee-landing">
 		<h1>Welcome!</h1>
@@ -9,22 +28,13 @@ templ AttendeeLanding() {
 		<fieldset>
 			<legend>Choose your avatar</legend>
 			<div class="attendee-landing-avatars">
-				<label>
-					<input type="radio" name="avatar" value="tree"/>
-					<span aria-hidden="true">🎄</span> Tree
-				</label>
-				<label>
-					<input type="radio" name="avatar" value="snowman"/>
-					<span aria-hidden="true">⛄</span> Snowman
-				</label>
-				<label>
-					<input type="radio" name="avatar" value="reindeer"/>
-					<span aria-hidden="true">🦌</span> Reindeer
-				</label>
-				<label>
-					<input type="radio" name="avatar" value="gift"/>
-					<span aria-hidden="true">🎁</span> Gift
-				</label>
+				for _, avatar := range landingAvatars {
+					<label>
+						<input type="radio" name="avatar" value={ avatar.value } aria-label={ avatar.label } checked?={ avatar.value == "tree" }/>
+						<span aria-hidden="true">{ avatar.emoji }</span>
+						<span class="attendee-landing-preview" aria-hidden="true">{ avatar.emoji }</span>
+					</label>
+				}
 			</div>
 		</fieldset>
 		<button type="button" disabled aria-describedby="attendee-landing-note">Continue</button>

@@ -198,6 +198,11 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 		},
 		// navigate opens url in this tab; Chrome answers once the new page has started loading.
 		navigate: (url) => send("Page.navigate", { url }),
+		moveMouse: (x, y) => send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y }),
+		pressArrowRight: async () => {
+			await send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+			await send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
+		},
 		close: () => socket.close(),
 	};
 }
@@ -233,6 +238,41 @@ try {
 
 	const presenter = await presenterSession();
 	const phone = await openTab(deckURL);
+
+	const avatarState = `(() => {
+		const selected = document.querySelector('input[name="avatar"]:checked');
+		const preview = [...document.querySelectorAll(".attendee-landing-preview")]
+			.filter((emoji) => getComputedStyle(emoji).display !== "none")
+			.map((emoji) => emoji.textContent);
+		return { selected: selected?.value, preview };
+	})()`;
+	const initialAvatar = await phone.run(avatarState);
+	check("the first avatar is selected and shown", initialAvatar.selected === "tree" && initialAvatar.preview.join("") === "🎄", initialAvatar);
+	for (const [value, emoji] of [
+		["snowman", "⛄"], ["reindeer", "🦌"], ["gift", "🎁"], ["astronaut", "🧑‍🚀"], ["firefighter", "🧑‍🚒"],
+		["scientist", "🧑‍🔬"], ["artist", "🧑‍🎨"], ["chef", "🧑‍🍳"], ["technologist", "🧑‍💻"], ["tree", "🎄"],
+	]) {
+		const selectedAvatar = await phone.run(`(() => {
+			document.querySelector('input[value="${value}"]').parentElement.click();
+			return ${avatarState};
+		})()`);
+		check(`choosing ${value} updates the preview`, selectedAvatar.selected === value && selectedAvatar.preview.join("") === emoji, selectedAvatar);
+	}
+	await phone.run(`document.querySelector('input[value="tree"]').focus()`);
+	await phone.pressArrowRight();
+	const keyboardAvatar = await phone.run(avatarState);
+	check("keyboard selection updates the preview", keyboardAvatar.selected === "snowman" && keyboardAvatar.preview.join("") === "⛄", keyboardAvatar);
+	const avatarStyles = await phone.run(`(() => {
+		const selected = document.querySelector('input[value="snowman"]').parentElement;
+		const other = document.querySelector('input[value="scientist"]').parentElement;
+		const rect = other.getBoundingClientRect();
+		return { selectedBorder: getComputedStyle(selected).borderStyle, selectedBackground: getComputedStyle(selected).backgroundColor,
+			otherBackground: getComputedStyle(other).backgroundColor, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+	})()`);
+	check("the selected avatar is visibly distinct", avatarStyles.selectedBorder === "dashed" && avatarStyles.selectedBackground !== avatarStyles.otherBackground, avatarStyles);
+	await phone.moveMouse(avatarStyles.x, avatarStyles.y);
+	const hoverBackground = await phone.run(`getComputedStyle(document.querySelector('input[value="scientist"]').parentElement).backgroundColor`);
+	check("an avatar responds to hover", hoverBackground !== avatarStyles.otherBackground, { before: avatarStyles.otherBackground, hover: hoverBackground });
 
 	// Every smash counts: a burst of clicks must all reach the server and all show a balloon.
 	const smashes = 10;
