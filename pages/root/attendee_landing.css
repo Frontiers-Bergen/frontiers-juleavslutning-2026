@@ -33,13 +33,42 @@
 		margin-bottom: var(--space-1);
 	}
 
+	.attendee-landing-preview {
+		display: grid;
+		place-items: center;
+		width: 8rem;
+		aspect-ratio: 1;
+		margin: var(--space-2) auto var(--space-3);
+		border: var(--border-subtle);
+		border-radius: var(--radius);
+		background: var(--color-surface);
+		font-size: 4rem;
+
+		& span {
+			display: none;
+		}
+	}
+
+	/* Keep the preview selectors in sync with landingAvatars. */
+	&:has(input[value="tree"]:checked) .attendee-landing-preview [data-avatar="tree"],
+	&:has(input[value="snowman"]:checked) .attendee-landing-preview [data-avatar="snowman"],
+	&:has(input[value="reindeer"]:checked) .attendee-landing-preview [data-avatar="reindeer"],
+	&:has(input[value="gift"]:checked) .attendee-landing-preview [data-avatar="gift"],
+	&:has(input[value="astronaut"]:checked) .attendee-landing-preview [data-avatar="astronaut"],
+	&:has(input[value="firefighter"]:checked) .attendee-landing-preview [data-avatar="firefighter"],
+	&:has(input[value="scientist"]:checked) .attendee-landing-preview [data-avatar="scientist"],
+	&:has(input[value="artist"]:checked) .attendee-landing-preview [data-avatar="artist"],
+	&:has(input[value="chef"]:checked) .attendee-landing-preview [data-avatar="chef"],
+	&:has(input[value="technologist"]:checked) .attendee-landing-preview [data-avatar="technologist"] {
+		display: block;
+	}
+
 	.attendee-landing-avatars {
 		position: relative;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: center;
 		gap: var(--space-1);
-		padding-top: calc(8rem + var(--space-1));
 
 		& label {
 			display: grid;
@@ -56,7 +85,6 @@
 		@media (hover: hover) {
 			& label:hover {
 				background: var(--color-border);
-				border-color: var(--color-link);
 			}
 
 			& label:has(input:checked):hover {
@@ -65,7 +93,7 @@
 		}
 
 		& label:has(input:checked) {
-			border: 2px dashed var(--color-link);
+			border: 2px solid var(--color-link);
 			background: var(--color-bg-base);
 		}
 
@@ -82,25 +110,6 @@
 			opacity: 0;
 		}
 
-		.attendee-landing-preview {
-			position: absolute;
-			top: 0;
-			left: 50%;
-			display: none;
-			place-items: center;
-			width: 8rem;
-			aspect-ratio: 1;
-			border: var(--border-subtle);
-			border-radius: var(--radius);
-			background: var(--color-surface);
-			font-size: 4rem;
-			transform: translateX(-50%);
-			pointer-events: none;
-		}
-
-		& input:checked ~ .attendee-landing-preview {
-			display: grid;
-		}
 	}
 
 	& button:disabled {

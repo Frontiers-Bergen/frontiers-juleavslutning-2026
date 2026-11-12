@@ -23,6 +23,11 @@ templ AttendeeLanding() {
 	<main class="attendee-landing">
 		<h1>Welcome!</h1>
 		<p>Choose a name and an avatar for the juleavslutning.</p>
+		<div class="attendee-landing-preview" aria-hidden="true">
+			for _, avatar := range landingAvatars {
+				<span data-avatar={ avatar.value }>{ avatar.emoji }</span>
+			}
+		</div>
 		<label for="attendee-name">Your name</label>
 		<input id="attendee-name" name="username" type="text" autocomplete="nickname"/>
 		<fieldset>
@@ -32,7 +37,6 @@ templ AttendeeLanding() {
 					<label>
 						<input type="radio" name="avatar" value={ avatar.value } aria-label={ avatar.label } checked?={ avatar.value == "tree" }/>
 						<span aria-hidden="true">{ avatar.emoji }</span>
-						<span class="attendee-landing-preview" aria-hidden="true">{ avatar.emoji }</span>
 					</label>
 				}
 			</div>

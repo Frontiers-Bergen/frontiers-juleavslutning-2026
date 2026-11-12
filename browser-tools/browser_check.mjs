@@ -241,13 +241,19 @@ try {
 
 	const avatarState = `(() => {
 		const selected = document.querySelector('input[name="avatar"]:checked');
-		const preview = [...document.querySelectorAll(".attendee-landing-preview")]
+		const preview = [...document.querySelectorAll(".attendee-landing-preview span")]
 			.filter((emoji) => getComputedStyle(emoji).display !== "none")
 			.map((emoji) => emoji.textContent);
 		return { selected: selected?.value, preview };
 	})()`;
 	const initialAvatar = await phone.run(avatarState);
 	check("the first avatar is selected and shown", initialAvatar.selected === "tree" && initialAvatar.preview.join("") === "🎄", initialAvatar);
+	const landingOrder = await phone.run(`(() => {
+		const elements = [...document.querySelector(".attendee-landing").children];
+		return ["H1", "P", "attendee-landing-preview", "LABEL", "INPUT", "FIELDSET", "BUTTON"].every((name, index) =>
+			elements[index]?.tagName === name || elements[index]?.classList.contains(name));
+	})()`);
+	check("the avatar preview appears between the introduction and name field", landingOrder);
 	for (const [value, emoji] of [
 		["snowman", "⛄"], ["reindeer", "🦌"], ["gift", "🎁"], ["astronaut", "🧑‍🚀"], ["firefighter", "🧑‍🚒"],
 		["scientist", "🧑‍🔬"], ["artist", "🧑‍🎨"], ["chef", "🧑‍🍳"], ["technologist", "🧑‍💻"], ["tree", "🎄"],
