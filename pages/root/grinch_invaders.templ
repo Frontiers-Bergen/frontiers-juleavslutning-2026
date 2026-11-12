@@ -1,0 +1,60 @@
+package root
+
+import "fmt"
+
+templ GrinchInvaders() {
+	<div class="grinch-stage" aria-label="The Grinch moving above three cannons" data-signals="{ shot: -1, volley: false }">
+		<div class="grinch-hud">
+			<div class="grinch-health">
+				<span class="grinch-hud-label">Grinch health</span>
+				<div class="grinch-health-meter" role="meter" aria-label="Grinch health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+					<span></span>
+				</div>
+			</div>
+			<div class="grinch-timer">
+				<span class="grinch-hud-label">Time</span>
+				<time datetime="PT1M">01:00</time>
+			</div>
+		</div>
+		<svg class="grinch" viewBox="0 0 100 120" role="img" aria-label="The Grinch">
+			<path d="M25 35 39 5l39 26-51 4Z" fill="#d73535" stroke="#7c2020" stroke-width="3" stroke-linejoin="round"/>
+			<path d="m39 14 26 17-34 2Z" fill="#fff"/><circle cx="83" cy="33" r="8" fill="#fff"/>
+			<path d="m22 48-13-9 17-2-8-12 20 9 5-16 11 15 12-14 2 19 19-6-9 17c11 9 16 22 14 38-3 20-19 33-41 33S12 108 9 89c-2-16 3-30 13-41Z" fill="#78bd38" stroke="#397b25" stroke-width="3" stroke-linejoin="round"/>
+			<path d="m27 62 20-4m6 0 21 4" fill="none" stroke="#397b25" stroke-width="5" stroke-linecap="round"/>
+			<ellipse cx="39" cy="70" rx="5" ry="7" fill="white"/><ellipse cx="69" cy="70" rx="5" ry="7" fill="white"/>
+			<circle cx="41" cy="71" r="2.5" fill="#222"/><circle cx="67" cy="71" r="2.5" fill="#222"/>
+			<path d="M49 77q6-5 12 0l-6 7Z" fill="#5b9e2b"/>
+			<path d="M28 89q24 18 51-2-7 22-30 21-14-1-21-19Z" fill="white" stroke="#397b25" stroke-width="3" stroke-linejoin="round"/>
+		</svg>
+		<div class="grinch-cannons">
+			for i := 0; i < 3; i++ {
+				<div class="grinch-cannon-launcher">
+					<span
+						class="grinch-projectile"
+						data-class:grinch-projectile-fired={ fmt.Sprintf("$shot === %d", i) }
+						data-class:grinch-projectile-alt={ fmt.Sprintf("$volley && $shot === %d", i) }
+						aria-hidden="true"
+					>
+						<svg viewBox="0 0 48 48">
+							<path d="M24 5v38M7.5 14.5l33 19m0-19-33 19M18 10l6 5 6-5m-6 28 6-5 6 5M8 22l8 1 1-8m23 18-8-1-1 8m1-26 1 8 8 1m-32 9-1-8-8-1" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</span>
+					<button
+						class="grinch-cannon-button"
+						type="button"
+						aria-label={ fmt.Sprintf("Fire snowflake cannon %d", i+1) }
+						data-on:click={ fmt.Sprintf("$shot = %d; $volley = !$volley", i) }
+					>
+						<svg class="grinch-cannon" viewBox="0 0 64 64" aria-hidden="true">
+							<path d="M27 35 22 13h20l-5 22Z" fill="#287e75" stroke="#164f4a" stroke-width="3" stroke-linejoin="round"/>
+							<ellipse cx="32" cy="13" rx="10" ry="4" fill="#f3c451" stroke="#164f4a" stroke-width="3"/>
+							<path d="M15 35h34l-4 12H19Z" fill="#e0a93b" stroke="#795323" stroke-width="3" stroke-linejoin="round"/>
+							<circle cx="21" cy="49" r="7" fill="#59636e" stroke="#303841" stroke-width="3"/>
+							<circle cx="43" cy="49" r="7" fill="#59636e" stroke="#303841" stroke-width="3"/>
+						</svg>
+					</button>
+				</div>
+			}
+		</div>
+	</div>
+}

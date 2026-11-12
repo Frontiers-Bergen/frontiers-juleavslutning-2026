@@ -264,6 +264,36 @@ try {
 	})()`);
 	check("a tap between the reaction buttons sends nothing", gapTap.after === gapTap.before, gapTap);
 
+	// Each cannon click fires a snowflake toward the Grinch, including repeated clicks on the same cannon.
+	await presenter.moveToSlideWith(/Fire snowflake cannon 1/);
+	const cannonsShown = await phone.waitUntil(`document.querySelector(".grinch-cannon-button") !== null`);
+	check("an open phone follows the presenter to Grinch Invaders", cannonsShown);
+	const cannonShots = await phone.run(`(async () => {
+		const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+		const button = document.querySelectorAll(".grinch-cannon-button")[1];
+		const projectile = document.querySelectorAll(".grinch-projectile")[1];
+		const shoot = async () => {
+			const before = projectile.getBoundingClientRect().top;
+			const previousAnimation = getComputedStyle(projectile).animationName;
+			button.click();
+			await sleep(200);
+			const after = projectile.getBoundingClientRect().top;
+			return {
+				movedUp: before - after > 10,
+				fired: projectile.classList.contains("grinch-projectile-fired"),
+				animationChanged: getComputedStyle(projectile).animationName !== previousAnimation,
+			};
+		};
+		const first = await shoot();
+		await sleep(1000);
+		const second = await shoot();
+		return { first, second };
+	})()`);
+	check("cannon buttons fire snowflakes on repeated clicks",
+		cannonShots.first.movedUp && cannonShots.first.fired &&
+		cannonShots.second.movedUp && cannonShots.second.fired && cannonShots.second.animationChanged,
+		cannonShots);
+
 	// Balloons fly, except for people who turned on "reduce motion": then a balloon appears at its button,
 	// stays still, and disappears, so every smash is still seen.
 	const balloonMotion = `(async () => {

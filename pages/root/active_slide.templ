@@ -36,6 +36,7 @@ func deck(
 		markdown("what_we_learned"),
 		markdown("add_a_game"),
 		{Title: "Tug of war", Source: "pages/root/tug_of_war.templ", Render: func() templ.Component { return TugOfWarSlide(db, inviteKey, sessionID, isPresenter) }},
+		{Title: "Grinch Invaders", Source: "pages/root/grinch_invaders.templ", Render: func() templ.Component { return GrinchInvaders() }},
 		markdown("shake_your_phone"),
 		markdown("build_what_you_want"),
 		markdown("get_it_running"),
