@@ -1,7 +1,7 @@
 # Agent Instructions
 
 Read the **Why** section in `README.md` first. Every change should serve it: the people at the Frontiers juleavslutning having fun.
-The README also holds the checklist of planned work and the non-goals.
+The README also holds the non-goals; `TODO.md` holds the planned work and what is done.
 
 When you help someone install or run the app, follow `SETUP.md`. When you help someone add a mini-game, follow `MINI_GAMES.md`.
 

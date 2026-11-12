@@ -11,7 +11,7 @@ Two finished games show the way; copy the one closest to your idea:
 Read "Page life cycle" in `AGENTS.md` first. In short: the server holds the state, every tap is a short POST,
 and every open page renders itself again, whole, after every change. No client state, no partial updates, no debouncing.
 
-Ideas waiting for someone: "Mini-game ideas" in `README.md`.
+Ideas waiting for someone: "Mini-game ideas" in `TODO.md`.
 
 ## A game without JavaScript (like tug of war)
 
