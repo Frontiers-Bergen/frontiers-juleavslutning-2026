@@ -78,7 +78,7 @@ What the tools need:
 
 - `check` needs [golangci-lint](https://golangci-lint.run) v2, built with your Go version:
   `go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`
-- `screenshots` needs bash and Chrome or Chromium; `browser-check` needs Node and Chrome or Chromium.
+- `screenshots` needs bash (Git Bash on Windows) and Chrome or Chromium; `browser-check` needs Node and Chrome or Chromium.
 - `*_templ.go` files are generated and not in git. `start` and `build` generate them; plain `go build` needs
   `go tool templ generate` first.
 
