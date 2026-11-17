@@ -198,7 +198,6 @@ async function openTab(url, { reducedMotion = false, touch = false } = {}) {
 		},
 		// navigate opens url in this tab; Chrome answers once the new page has started loading.
 		navigate: (url) => send("Page.navigate", { url }),
-		moveMouse: (x, y) => send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y }),
 		pressArrowRight: async () => {
 			await send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
 			await send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
@@ -240,45 +239,70 @@ try {
 	const phone = await openTab(deckURL);
 
 	const avatarState = `(() => {
-		const selected = document.querySelector('input[name="avatar"]:checked');
-		const preview = [...document.querySelectorAll(".attendee-landing-preview span")]
-			.filter((emoji) => getComputedStyle(emoji).display !== "none")
-			.map((emoji) => emoji.textContent);
-		return { selected: selected?.value, preview };
+		const selected = (part) => document.querySelector('input[name="avatar-' + part + '"]:checked')?.value;
+		const visible = (part) => [...document.querySelectorAll('.attendee-landing-preview [data-' + part + ']')]
+			.filter((element) => getComputedStyle(element).display !== "none")
+			.map((element) => element.dataset[part]);
+		return {
+			part: selected("part"), head: selected("head"), hat: selected("hat"), eyes: selected("eyes"),
+			preview: { head: visible("head"), hat: visible("hat"), eyes: visible("eyes") },
+			panels: [...document.querySelectorAll(".avatar-choices")].filter((panel) => getComputedStyle(panel).display !== "none")
+				.map((panel) => panel.classList[1]),
+		};
 	})()`;
 	const initialAvatar = await phone.run(avatarState);
-	check("the first avatar is selected and shown", initialAvatar.selected === "tree" && initialAvatar.preview.join("") === "🎄", initialAvatar);
-	const landingOrder = await phone.run(`(() => {
-		const elements = [...document.querySelector(".attendee-landing").children];
-		return ["H1", "P", "attendee-landing-preview", "LABEL", "INPUT", "FIELDSET", "BUTTON"].every((name, index) =>
-			elements[index]?.tagName === name || elements[index]?.classList.contains(name));
+	check("the default avatar is composed in the head tab",
+		initialAvatar.part === "head" && initialAvatar.head === "circle" && initialAvatar.hat === "beanie" &&
+		initialAvatar.eyes === "dots" && initialAvatar.preview.head.join() === "circle" &&
+		initialAvatar.preview.hat.join() === "beanie" && initialAvatar.preview.eyes.join() === "dots" &&
+		initialAvatar.panels.join() === "avatar-choices-head", initialAvatar);
+	const changedHead = await phone.run(`(() => {
+		document.querySelector('input[name="avatar-head"][value="oval"]').parentElement.click();
+		return ${avatarState};
 	})()`);
-	check("the avatar preview appears between the introduction and name field", landingOrder);
-	for (const [value, emoji] of [
-		["snowman", "⛄"], ["reindeer", "🦌"], ["gift", "🎁"], ["astronaut", "🧑‍🚀"], ["firefighter", "🧑‍🚒"],
-		["scientist", "🧑‍🔬"], ["artist", "🧑‍🎨"], ["chef", "🧑‍🍳"], ["technologist", "🧑‍💻"], ["tree", "🎄"],
-	]) {
-		const selectedAvatar = await phone.run(`(() => {
-			document.querySelector('input[value="${value}"]').parentElement.click();
-			return ${avatarState};
-		})()`);
-		check(`choosing ${value} updates the preview`, selectedAvatar.selected === value && selectedAvatar.preview.join("") === emoji, selectedAvatar);
-	}
-	await phone.run(`document.querySelector('input[value="tree"]').focus()`);
+	check("choosing a head updates only that part without switching tabs",
+		changedHead.head === "oval" && changedHead.preview.head.join() === "oval" && changedHead.part === "head" &&
+		changedHead.preview.hat.join() === "beanie" && changedHead.preview.eyes.join() === "dots", changedHead);
+	const changedHat = await phone.run(`(() => {
+		document.querySelector('input[name="avatar-part"][value="hat"]').parentElement.click();
+		document.querySelector('input[name="avatar-hat"][value="pointed"]').parentElement.click();
+		return ${avatarState};
+	})()`);
+	check("choosing a hat updates the preview without resetting the head",
+		changedHat.part === "hat" && changedHat.preview.hat.join() === "pointed" &&
+		changedHat.preview.head.join() === "oval" && changedHat.panels.join() === "avatar-choices-hat", changedHat);
+	const removedHat = await phone.run(`(() => {
+		document.querySelector('input[name="avatar-hat"][value="none"]').parentElement.click();
+		return ${avatarState};
+	})()`);
+	check("the no-hat choice leaves the head bare",
+		removedHat.part === "hat" && removedHat.hat === "none" && removedHat.preview.hat.join() === "none" &&
+		removedHat.preview.head.join() === "oval" && removedHat.panels.join() === "avatar-choices-hat", removedHat);
+	const changedEyes = await phone.run(`(() => {
+		document.querySelector('input[name="avatar-part"][value="eyes"]').parentElement.click();
+		document.querySelector('input[name="avatar-eyes"][value="smiling"]').parentElement.click();
+		return ${avatarState};
+	})()`);
+	check("choosing eyes preserves the other parts",
+		changedEyes.part === "eyes" && changedEyes.preview.eyes.join() === "smiling" &&
+		changedEyes.preview.head.join() === "oval" && changedEyes.preview.hat.join() === "none", changedEyes);
+	await phone.run(`document.querySelector('input[name="avatar-part"][value="head"]').parentElement.click()`);
+	await phone.run(`document.querySelector('input[name="avatar-head"][value="oval"]').focus()`);
 	await phone.pressArrowRight();
 	const keyboardAvatar = await phone.run(avatarState);
-	check("keyboard selection updates the preview", keyboardAvatar.selected === "snowman" && keyboardAvatar.preview.join("") === "⛄", keyboardAvatar);
-	const avatarStyles = await phone.run(`(() => {
-		const selected = document.querySelector('input[value="snowman"]').parentElement;
-		const other = document.querySelector('input[value="scientist"]').parentElement;
-		const rect = other.getBoundingClientRect();
-		return { selectedBorder: getComputedStyle(selected).borderStyle, selectedBackground: getComputedStyle(selected).backgroundColor,
-			otherBackground: getComputedStyle(other).backgroundColor, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+	check("keyboard selection updates the preview without resetting other parts",
+		keyboardAvatar.head === "square" && keyboardAvatar.preview.head.join() === "square" &&
+		keyboardAvatar.hat === "none" && keyboardAvatar.eyes === "smiling", keyboardAvatar);
+	const avatarControls = await phone.run(`(() => {
+		const selected = document.querySelector('input[name="avatar-head"]:checked').parentElement;
+		const rects = [...document.querySelectorAll(".avatar-tabs label, .avatar-choices-head label")]
+			.map((label) => label.getBoundingClientRect());
+		return {
+			checkmarkVisible: getComputedStyle(selected.querySelector(".avatar-check")).display !== "none",
+			touchSized: rects.every((rect) => rect.width >= 48 && rect.height >= 48),
+		};
 	})()`);
-	check("the selected avatar is visibly distinct", avatarStyles.selectedBorder === "dashed" && avatarStyles.selectedBackground !== avatarStyles.otherBackground, avatarStyles);
-	await phone.moveMouse(avatarStyles.x, avatarStyles.y);
-	const hoverBackground = await phone.run(`getComputedStyle(document.querySelector('input[value="scientist"]').parentElement).backgroundColor`);
-	check("an avatar responds to hover", hoverBackground !== avatarStyles.otherBackground, { before: avatarStyles.otherBackground, hover: hoverBackground });
+	check("selected choices are marked and controls are touch-sized", avatarControls.checkmarkVisible && avatarControls.touchSized, avatarControls);
 
 	// Every smash counts: a burst of clicks must all reach the server and all show a balloon.
 	const smashes = 10;

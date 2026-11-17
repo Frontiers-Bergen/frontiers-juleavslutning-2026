@@ -21,10 +21,10 @@ func TestAttendeeLanding_ShowsProfileChoicesWithoutJoining(t *testing.T) {
 	expected := []string{
 		`for="attendee-name"`,
 		`name="username"`,
-		`<legend>Choose your avatar</legend>`,
-		`type="radio" name="avatar"`,
+		`name="avatar-head"`,
+		`name="avatar-hat"`,
+		`name="avatar-eyes"`,
 		`disabled`,
-		`Joining the deck is coming soon`,
 	}
 	var page bytes.Buffer
 

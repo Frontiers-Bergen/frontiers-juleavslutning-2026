@@ -1,22 +1,26 @@
 package root
 
-type landingAvatar struct {
+type avatarOption struct {
 	value string
 	label string
-	emoji string
 }
 
-var landingAvatars = []landingAvatar{
-	{"tree", "Tree", "🎄"},
-	{"snowman", "Snowman", "⛄"},
-	{"reindeer", "Reindeer", "🦌"},
-	{"gift", "Gift", "🎁"},
-	{"astronaut", "Astronaut", "🧑‍🚀"},
-	{"firefighter", "Firefighter", "🧑‍🚒"},
-	{"scientist", "Scientist", "🧑‍🔬"},
-	{"artist", "Artist", "🧑‍🎨"},
-	{"chef", "Chef", "🧑‍🍳"},
-	{"technologist", "Technologist", "🧑‍💻"},
+var avatarHeads = []avatarOption{
+	{"circle", "Peach circle"},
+	{"oval", "Mint oval"},
+	{"square", "Lavender rounded square"},
+}
+
+var avatarHats = []avatarOption{
+	{"none", "No hat"},
+	{"beanie", "Blue beanie"},
+	{"pointed", "Red pointed hat"},
+}
+
+var avatarEyes = []avatarOption{
+	{"dots", "Round dots"},
+	{"ovals", "Tall ovals"},
+	{"smiling", "Smiling eyes"},
 }
 
 templ AttendeeLanding() {
@@ -24,23 +28,115 @@ templ AttendeeLanding() {
 		<h1>Welcome!</h1>
 		<p>Choose a name and an avatar for the juleavslutning.</p>
 		<div class="attendee-landing-preview" aria-hidden="true">
-			for _, avatar := range landingAvatars {
-				<span data-avatar={ avatar.value }>{ avatar.emoji }</span>
-			}
+			<svg viewBox="0 0 100 100">
+				for _, head := range avatarHeads {
+					<g data-head={ head.value }>
+						@avatarHead(head.value)
+					</g>
+				}
+				for _, eyes := range avatarEyes {
+					<g data-eyes={ eyes.value }>
+						@avatarEyePair(eyes.value)
+					</g>
+				}
+				for _, hat := range avatarHats {
+					<g data-hat={ hat.value }>
+						@avatarHat(hat.value)
+					</g>
+				}
+			</svg>
 		</div>
 		<label for="attendee-name">Your name</label>
 		<input id="attendee-name" name="username" type="text" autocomplete="nickname"/>
-		<fieldset>
-			<legend>Choose your avatar</legend>
-			<div class="attendee-landing-avatars">
-				for _, avatar := range landingAvatars {
-					<label>
-						<input type="radio" name="avatar" value={ avatar.value } aria-label={ avatar.label } checked?={ avatar.value == "tree" }/>
-						<span aria-hidden="true">{ avatar.emoji }</span>
-					</label>
-				}
-			</div>
+		<fieldset class="avatar-tabs">
+			<legend class="avatar-visually-hidden">Avatar part</legend>
+			<label>
+				<input type="radio" name="avatar-part" value="head" checked/>
+				<span>Head</span>
+			</label>
+			<label>
+				<input type="radio" name="avatar-part" value="hat"/>
+				<span>Hat</span>
+			</label>
+			<label>
+				<input type="radio" name="avatar-part" value="eyes"/>
+				<span>Eyes</span>
+			</label>
+		</fieldset>
+		<fieldset class="avatar-choices avatar-choices-head">
+			<legend class="avatar-visually-hidden">Choose a head</legend>
+			for _, head := range avatarHeads {
+				<label>
+					<input type="radio" name="avatar-head" value={ head.value } aria-label={ head.label } checked?={ head.value == "circle" }/>
+					<svg viewBox="0 0 100 100" aria-hidden="true">
+						@avatarHead(head.value)
+					</svg>
+					<span class="avatar-check" aria-hidden="true">✓</span>
+				</label>
+			}
+		</fieldset>
+		<fieldset class="avatar-choices avatar-choices-hat">
+			<legend class="avatar-visually-hidden">Choose a hat</legend>
+			for _, hat := range avatarHats {
+				<label>
+					<input type="radio" name="avatar-hat" value={ hat.value } aria-label={ hat.label } checked?={ hat.value == "beanie" }/>
+					<svg viewBox="0 0 100 100" aria-hidden="true">
+						@avatarHead("circle")
+						@avatarEyePair("dots")
+						@avatarHat(hat.value)
+					</svg>
+					<span class="avatar-check" aria-hidden="true">✓</span>
+				</label>
+			}
+		</fieldset>
+		<fieldset class="avatar-choices avatar-choices-eyes">
+			<legend class="avatar-visually-hidden">Choose eyes</legend>
+			for _, eyes := range avatarEyes {
+				<label>
+					<input type="radio" name="avatar-eyes" value={ eyes.value } aria-label={ eyes.label } checked?={ eyes.value == "dots" }/>
+					<svg viewBox="0 0 100 100" aria-hidden="true">
+						@avatarHead("circle")
+						@avatarEyePair(eyes.value)
+					</svg>
+					<span class="avatar-check" aria-hidden="true">✓</span>
+				</label>
+			}
 		</fieldset>
 		<button type="button" disabled aria-describedby="attendee-landing-note">Continue</button>
 	</main>
+}
+
+templ avatarHead(head string) {
+	switch head {
+		case "circle":
+			<circle cx="50" cy="58" r="30" fill="#ffc5a4"></circle>
+		case "oval":
+			<ellipse cx="50" cy="58" rx="25" ry="32" fill="#a1e9c6"></ellipse>
+		case "square":
+			<rect x="22" y="30" width="56" height="56" rx="12" fill="#d1b5f3"></rect>
+	}
+}
+
+templ avatarHat(hat string) {
+	switch hat {
+		case "beanie":
+			<path d="M24 35 Q25 8 50 8 Q75 8 76 35 Z" fill="#5795e8"></path>
+			<rect x="22" y="29" width="56" height="9" rx="4" fill="#3671c3"></rect>
+		case "pointed":
+			<path d="M24 34 L42 5 Q44 2 47 5 L76 34 Z" fill="#e85757"></path>
+			<rect x="22" y="29" width="56" height="9" rx="4" fill="#f3e8e3"></rect>
+	}
+}
+
+templ avatarEyePair(eyes string) {
+	switch eyes {
+		case "dots":
+			<circle cx="39" cy="59" r="3" fill="#1e1e3f"></circle>
+			<circle cx="61" cy="59" r="3" fill="#1e1e3f"></circle>
+		case "ovals":
+			<ellipse cx="39" cy="59" rx="3" ry="6" fill="#1e1e3f"></ellipse>
+			<ellipse cx="61" cy="59" rx="3" ry="6" fill="#1e1e3f"></ellipse>
+		case "smiling":
+			<path d="M33 62 Q39 54 45 62 M55 62 Q61 54 67 62" fill="none" stroke="#1e1e3f" stroke-width="3" stroke-linecap="round"></path>
+	}
 }
